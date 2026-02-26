@@ -80,21 +80,46 @@ function chartRows(source) {
     }));
 }
 
-const dailyRows = computed(() => chartRows(dailyChart.value));
+// Memotong data menjadi 7 hari terakhir agar pas di layar
+const dailyRows = computed(() => {
+    const rows = chartRows(dailyChart.value);
+    return rows.slice(-7);
+});
+
 const monthlyRows = computed(() => chartRows(monthlyChart.value));
 
 function maxValue(rows) {
+    if (!rows || rows.length === 0) return 1;
     return Math.max(
         1,
-        ...rows.map((r) => Math.max(r.sales, r.purchases, r.profit))
+        ...rows.map((r) =>
+            Math.max(r.sales || 0, r.purchases || 0, r.profit || 0)
+        )
     );
 }
 
+// Konfigurasi dinamis untuk kedua grafik
+const chartsData = computed(() => [
+    {
+        title: "Grafik 7 Hari Terakhir",
+        rows: dailyRows.value,
+        max: maxValue(dailyRows.value),
+    },
+    {
+        title: `Grafik Bulanan (${new Date().getFullYear()})`,
+        rows: monthlyRows.value,
+        max: maxValue(monthlyRows.value),
+    },
+]);
+
+// Logika tinggi batang (0% jika nilainya kosong/nol)
 function barHeight(value, max) {
-    return `${Math.max(2, (value / max) * 100)}%`; // minimal 2% agar bar yang isinya 0 tetap terlihat sedikit garis bawahnya
+    if (!value || value <= 0) return "0%";
+    if (!max) return "0%";
+    return `${Math.max(1.5, (value / max) * 100)}%`;
 }
 
-// Fungsi baru untuk menghasilkan angka Y-Axis dari atas (100%) ke bawah (0%)
+// Logika pembagian sumbu Y
 function getYAxisTicks(max) {
     return [1, 0.75, 0.5, 0.25, 0].map((ratio) => compact.format(max * ratio));
 }
@@ -138,7 +163,7 @@ onMounted(fetchSummary);
                 </p>
             </div>
             <div
-                class="absolute rounded-full -right-10 -top-24 h-96 w-96 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl"
+                class="absolute rounded-full pointer-events-none -right-10 -top-24 h-96 w-96 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl"
             ></div>
         </div>
 
@@ -237,21 +262,12 @@ onMounted(fetchSummary);
 
                 <div class="grid gap-6 xl:grid-cols-2">
                     <section
-                        v-for="(chart, idx) in [
-                            {
-                                title: 'Grafik 14 Hari Terakhir',
-                                rows: dailyRows,
-                            },
-                            {
-                                title: `Grafik Bulanan (${new Date().getFullYear()})`,
-                                rows: monthlyRows,
-                            },
-                        ]"
+                        v-for="(chart, idx) in chartsData"
                         :key="idx"
-                        class="p-6 bg-white shadow-sm rounded-3xl ring-1 ring-slate-200/60"
+                        class="flex flex-col p-6 bg-white shadow-sm rounded-3xl ring-1 ring-slate-200/60"
                     >
                         <header
-                            class="flex flex-wrap items-center justify-between gap-4 mb-8"
+                            class="flex flex-wrap items-center justify-between gap-4 mb-6"
                         >
                             <h3 class="text-base font-extrabold text-slate-800">
                                 {{ chart.title }}
@@ -286,21 +302,19 @@ onMounted(fetchSummary);
                             </div>
                         </header>
 
-                        <div class="flex h-[320px] w-full gap-4">
+                        <div class="flex h-[300px] w-full gap-2 mt-auto">
                             <div
-                                class="flex flex-col justify-between pb-8 text-right text-[11px] font-semibold text-slate-400 w-12"
+                                class="flex flex-col justify-between pb-8 text-right text-[10px] font-semibold text-slate-400 w-10"
                             >
                                 <span
-                                    v-for="tick in getYAxisTicks(
-                                        maxValue(chart.rows)
-                                    )"
+                                    v-for="tick in getYAxisTicks(chart.max)"
                                     :key="tick"
                                     >{{ tick }}</span
                                 >
                             </div>
 
                             <div
-                                class="relative flex-1 border-b border-l rounded-lg border-slate-200"
+                                class="relative flex-1 border-b border-l border-slate-200"
                             >
                                 <div
                                     class="absolute inset-0 z-0 flex flex-col justify-between pb-8"
@@ -308,66 +322,78 @@ onMounted(fetchSummary);
                                     <div
                                         v-for="i in 5"
                                         :key="i"
-                                        class="w-full h-0 border-t border-dashed border-slate-200/70"
+                                        class="w-full border-t border-dashed border-slate-200"
                                     ></div>
                                 </div>
 
                                 <div
-                                    class="absolute inset-0 z-10 flex items-end gap-3 px-2 pb-8 overflow-x-auto scrollbar-hide"
+                                    class="absolute inset-0 z-10 w-full px-1 sm:px-2"
                                 >
                                     <div
-                                        v-for="item in chart.rows"
-                                        :key="item.label"
-                                        class="group relative flex min-w-[48px] flex-col items-center gap-2 h-full justify-end"
+                                        class="flex justify-between w-full h-full gap-1 sm:gap-2"
                                     >
                                         <div
-                                            class="flex h-full w-full items-end justify-center gap-[2px]"
+                                            v-for="item in chart.rows"
+                                            :key="item.label"
+                                            class="flex flex-col items-center flex-1 h-full group"
                                         >
                                             <div
-                                                class="w-3.5 rounded-t-md bg-gradient-to-t from-sky-600 to-sky-400 opacity-90 transition-all duration-300 hover:opacity-100 cursor-pointer"
-                                                :style="{
-                                                    height: barHeight(
-                                                        item.sales,
-                                                        maxValue(chart.rows)
-                                                    ),
-                                                }"
-                                                :title="`Penjualan: ${currency.format(
-                                                    item.sales
-                                                )}`"
-                                            ></div>
+                                                class="relative flex-1 w-full transition-transform group-hover:-translate-y-1"
+                                            >
+                                                <div
+                                                    class="absolute inset-x-0 bottom-0 flex h-full items-end justify-center gap-[1px] sm:gap-[2px]"
+                                                >
+                                                    <div
+                                                        v-if="item.sales > 0"
+                                                        class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-sky-600 to-sky-400 transition-opacity hover:opacity-80 cursor-pointer"
+                                                        :style="{
+                                                            height: barHeight(
+                                                                item.sales,
+                                                                chart.max
+                                                            ),
+                                                        }"
+                                                        :title="`Penjualan: ${currency.format(
+                                                            item.sales
+                                                        )}`"
+                                                    ></div>
+                                                    <div
+                                                        v-if="item.profit > 0"
+                                                        class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-amber-500 to-amber-300 transition-opacity hover:opacity-80 cursor-pointer"
+                                                        :style="{
+                                                            height: barHeight(
+                                                                item.profit,
+                                                                chart.max
+                                                            ),
+                                                        }"
+                                                        :title="`Laba: ${currency.format(
+                                                            item.profit
+                                                        )}`"
+                                                    ></div>
+                                                    <div
+                                                        v-if="
+                                                            item.purchases > 0
+                                                        "
+                                                        class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-rose-600 to-rose-400 transition-opacity hover:opacity-80 cursor-pointer"
+                                                        :style="{
+                                                            height: barHeight(
+                                                                item.purchases,
+                                                                chart.max
+                                                            ),
+                                                        }"
+                                                        :title="`Pembelian: ${currency.format(
+                                                            item.purchases
+                                                        )}`"
+                                                    ></div>
+                                                </div>
+                                            </div>
                                             <div
-                                                class="w-3.5 rounded-t-md bg-gradient-to-t from-amber-500 to-amber-300 opacity-90 transition-all duration-300 hover:opacity-100 cursor-pointer"
-                                                :style="{
-                                                    height: barHeight(
-                                                        item.profit,
-                                                        maxValue(chart.rows)
-                                                    ),
-                                                }"
-                                                :title="`Laba: ${currency.format(
-                                                    item.profit
-                                                )}`"
-                                            ></div>
-                                            <div
-                                                class="w-3.5 rounded-t-md bg-gradient-to-t from-rose-600 to-rose-400 opacity-90 transition-all duration-300 hover:opacity-100 cursor-pointer"
-                                                :style="{
-                                                    height: barHeight(
-                                                        item.purchases,
-                                                        maxValue(chart.rows)
-                                                    ),
-                                                }"
-                                                :title="`Pembelian: ${currency.format(
-                                                    item.purchases
-                                                )}`"
-                                            ></div>
+                                                class="h-8 flex w-full items-center justify-center text-center text-[9px] sm:text-[10px] font-medium text-slate-500"
+                                            >
+                                                <span class="truncate">{{
+                                                    item.label
+                                                }}</span>
+                                            </div>
                                         </div>
-                                        <span
-                                            class="absolute -bottom-6 text-[11px] font-semibold text-slate-400 whitespace-nowrap"
-                                            >{{ item.label }}</span
-                                        >
-
-                                        <div
-                                            class="absolute top-0 bottom-0 hidden rounded-lg -inset-x-1 -z-10 bg-slate-50 group-hover:block"
-                                        ></div>
                                     </div>
                                 </div>
                             </div>
@@ -378,14 +404,3 @@ onMounted(fetchSummary);
         </template>
     </section>
 </template>
-
-<style scoped>
-/* Opsional: Menyembunyikan scrollbar agar lebih bersih tapi tetap bisa di-scroll secara horizontal */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
-}
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-</style>
