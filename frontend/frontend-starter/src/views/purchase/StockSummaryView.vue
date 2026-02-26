@@ -92,7 +92,7 @@ watch(
     () => {
         fetchItems(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -105,13 +105,13 @@ function formatCurrency(val) {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
-        <div class="flex justify-between items-center">
+    <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
+        <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Stok Barang (Ready)
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">
+                <p class="mt-1 text-sm text-slate-400">
                     Ringkasan stok barang yang tersedia untuk dijual (digabung
                     per tipe/grade)
                 </p>
@@ -119,7 +119,7 @@ function formatCurrency(val) {
         </div>
 
         <!-- Filter Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <div class="p-5 bg-white border shadow-sm rounded-2xl border-slate-100">
             <div class="flex flex-wrap items-end gap-5">
                 <!-- Search -->
                 <div class="flex-1 min-w-[280px]">
@@ -132,7 +132,7 @@ function formatCurrency(val) {
                             v-model="searchQuery"
                             type="text"
                             placeholder="Cari nama barang..."
-                            class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
+                            class="w-full py-2 pl-10 pr-4 text-sm transition-all border-none bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
                         />
                         <div
                             class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors"
@@ -226,7 +226,7 @@ function formatCurrency(val) {
 
         <!-- Table Card -->
         <div
-            class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+            class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-100"
         >
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -252,11 +252,11 @@ function formatCurrency(val) {
                             >
                                 Total Stok
                             </th>
-                            <th
+                            <!-- <th
                                 class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right"
                             >
                                 Harga Jual
-                            </th>
+                            </th> -->
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -267,7 +267,7 @@ function formatCurrency(val) {
                             >
                                 <div class="flex flex-col items-center gap-3">
                                     <div
-                                        class="w-6 h-6 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin"
+                                        class="w-6 h-6 border-2 rounded-full border-slate-200 border-t-blue-500 animate-spin"
                                     ></div>
                                     <span class="text-xs font-medium"
                                         >Memuat data stok...</span
@@ -277,7 +277,7 @@ function formatCurrency(val) {
                         </tr>
                         <tr
                             v-else-if="items.length === 0"
-                            class="hover:bg-slate-50/50 transition-colors"
+                            class="transition-colors hover:bg-slate-50/50"
                         >
                             <td
                                 colspan="5"
@@ -306,12 +306,12 @@ function formatCurrency(val) {
                         <tr
                             v-for="item in items"
                             :key="item.id"
-                            class="hover:bg-slate-50/50 transition-all group"
+                            class="transition-all hover:bg-slate-50/50 group"
                         >
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0"
+                                        class="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 text-slate-400 shrink-0"
                                     >
                                         <svg
                                             class="w-5 h-5"
@@ -329,7 +329,7 @@ function formatCurrency(val) {
                                     </div>
                                     <div>
                                         <div
-                                            class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors capitalize"
+                                            class="font-bold capitalize transition-colors text-slate-700 group-hover:text-blue-600"
                                         >
                                             {{ item.nama }}
                                         </div>
@@ -373,11 +373,11 @@ function formatCurrency(val) {
                                     >Ready</span
                                 >
                             </td>
-                            <td class="px-6 py-4 text-right">
+                            <!-- <td class="px-6 py-4 text-right">
                                 <div class="font-black text-blue-600">
                                     {{ formatCurrency(item.harga_jual) }}
                                 </div>
-                            </td>
+                            </td> -->
                         </tr>
                     </tbody>
                 </table>
@@ -385,16 +385,16 @@ function formatCurrency(val) {
 
             <!-- Pagination -->
             <div
-                class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between"
+                class="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 border-slate-100"
             >
                 <div class="flex items-center gap-4">
-                    <span class="text-xs text-slate-500 font-medium">
+                    <span class="text-xs font-medium text-slate-500">
                         Menampilkan <b>{{ items.length }}</b> dari
                         <b>{{ pagination.total }}</b> produk
                     </span>
                     <select
                         v-model="perPage"
-                        class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:ring-0"
+                        class="px-2 py-1 text-xs font-semibold bg-white border rounded-lg border-slate-200 focus:ring-0"
                     >
                         <option :value="10">10 / hal</option>
                         <option :value="25">25 / hal</option>
@@ -410,7 +410,7 @@ function formatCurrency(val) {
                         Sebelumnya
                     </button>
                     <div
-                        class="flex items-center px-4 rounded-lg bg-blue-50 text-blue-600 font-bold text-xs border border-blue-100"
+                        class="flex items-center px-4 text-xs font-bold text-blue-600 border border-blue-100 rounded-lg bg-blue-50"
                     >
                         {{ pagination.current_page }} /
                         {{ pagination.last_page }}

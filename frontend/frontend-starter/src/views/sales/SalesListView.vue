@@ -107,14 +107,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
             );
             filters.value.end_date = "";
             return;
         }
         fetchSales(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 const showDeleteDialog = ref(false);
@@ -181,25 +181,25 @@ function formatDate(dateStr) {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
-        <div class="flex justify-between items-center">
+    <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
+        <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold text-slate-800">Data Penjualan</h1>
             <router-link
                 to="/dashboard/pos"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition"
+                class="px-4 py-2 font-medium text-white transition bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700"
             >
                 + Input Penjualan (POS)
             </router-link>
         </div>
 
         <!-- Dashboard Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div
-                class="bg-gradient-to-br from-rose-500 to-rose-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden group"
+                class="relative p-6 overflow-hidden text-white shadow-sm bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl group"
             >
                 <div class="relative z-10">
                     <div
-                        class="text-rose-100 text-sm font-medium mb-1 uppercase tracking-wider"
+                        class="mb-1 text-sm font-medium tracking-wider uppercase text-rose-100"
                     >
                         Penjualan Hari Ini
                     </div>
@@ -208,7 +208,7 @@ function formatDate(dateStr) {
                     </div>
                 </div>
                 <svg
-                    class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 group-hover:scale-110 transition-transform"
+                    class="absolute w-24 h-24 transition-transform -right-4 -bottom-4 text-white/10 group-hover:scale-110"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -218,11 +218,11 @@ function formatDate(dateStr) {
                 </svg>
             </div>
             <div
-                class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden group"
+                class="relative p-6 overflow-hidden text-white shadow-sm bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl group"
             >
                 <div class="relative z-10">
                     <div
-                        class="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wider"
+                        class="mb-1 text-sm font-medium tracking-wider text-blue-100 uppercase"
                     >
                         Penjualan Bulan Ini
                     </div>
@@ -231,7 +231,7 @@ function formatDate(dateStr) {
                     </div>
                 </div>
                 <svg
-                    class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 group-hover:scale-110 transition-transform"
+                    class="absolute w-24 h-24 transition-transform -right-4 -bottom-4 text-white/10 group-hover:scale-110"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -241,11 +241,11 @@ function formatDate(dateStr) {
                 </svg>
             </div>
             <div
-                class="bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden group"
+                class="relative p-6 overflow-hidden text-white shadow-sm bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl group"
             >
                 <div class="relative z-10">
                     <div
-                        class="text-amber-100 text-sm font-medium mb-1 uppercase tracking-wider"
+                        class="mb-1 text-sm font-medium tracking-wider uppercase text-amber-100"
                     >
                         Penjualan Tahun Ini
                     </div>
@@ -254,7 +254,7 @@ function formatDate(dateStr) {
                     </div>
                 </div>
                 <svg
-                    class="absolute -right-4 -bottom-4 w-24 h-24 text-white/10 group-hover:scale-110 transition-transform"
+                    class="absolute w-24 h-24 transition-transform -right-4 -bottom-4 text-white/10 group-hover:scale-110"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -264,11 +264,11 @@ function formatDate(dateStr) {
                 </svg>
             </div>
             <div
-                class="bg-slate-800 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden group border border-slate-700"
+                class="relative p-6 overflow-hidden text-white border shadow-sm bg-slate-800 rounded-2xl group border-slate-700"
             >
                 <div class="relative z-10">
                     <div
-                        class="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider"
+                        class="mb-1 text-sm font-medium tracking-wider uppercase text-slate-400"
                     >
                         Total Seluruh Penjualan
                     </div>
@@ -277,7 +277,7 @@ function formatDate(dateStr) {
                     </div>
                 </div>
                 <svg
-                    class="absolute -right-4 -bottom-4 w-24 h-24 text-white/5 group-hover:scale-110 transition-transform"
+                    class="absolute w-24 h-24 transition-transform -right-4 -bottom-4 text-white/5 group-hover:scale-110"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                 >
@@ -289,15 +289,15 @@ function formatDate(dateStr) {
         </div>
 
         <div
-            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+            class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
         >
             <!-- Header Actions -->
             <div
-                class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center"
+                class="flex flex-col items-start justify-between gap-4 px-6 py-4 border-b border-slate-200 bg-slate-50 md:flex-row md:items-center"
             >
                 <!-- Left Side: Advanced Filters -->
                 <div
-                    class="grid grid-cols-2 md:grid-cols-4 lg:flex gap-3 w-full md:w-auto"
+                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-4 lg:flex md:w-auto"
                 >
                     <div class="flex flex-col gap-1">
                         <label
@@ -345,7 +345,7 @@ function formatDate(dateStr) {
                                 class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
                             >
                                 <svg
-                                    class="h-4 w-4"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -383,7 +383,7 @@ function formatDate(dateStr) {
                                 class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
                             >
                                 <svg
-                                    class="h-4 w-4"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -408,7 +408,7 @@ function formatDate(dateStr) {
                                     sales_rep_id: '',
                                 }
                             "
-                            class="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
                             title="Reset Filter"
                         >
                             <svg
@@ -429,7 +429,7 @@ function formatDate(dateStr) {
                 </div>
 
                 <!-- Right Side: Per Page & Search Combined -->
-                <div class="flex flex-row items-end gap-2 w-full md:w-auto">
+                <div class="flex flex-row items-end w-full gap-2 md:w-auto">
                     <!-- Per Page -->
                     <div class="flex flex-col gap-1">
                         <label
@@ -449,7 +449,7 @@ function formatDate(dateStr) {
                                 class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400"
                             >
                                 <svg
-                                    class="h-4 w-4"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -479,10 +479,10 @@ function formatDate(dateStr) {
                                 class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
                             <div
-                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
                             >
                                 <svg
-                                    class="h-4 w-4 text-slate-400"
+                                    class="w-4 h-4 text-slate-400"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -513,9 +513,9 @@ function formatDate(dateStr) {
                             <th class="w-32">Sales</th>
                             <th class="w-40 text-right">Sub Total</th>
                             <th class="w-20 text-center">Qty</th>
-                            <th class="w-40 text-right">Total Bayar</th>
+                            <th class="w-40 text-right">Uang Masuk</th>
                             <th
-                                class="w-32 text-right sticky right-0 bg-slate-50 border-l border-slate-200 z-20 px-6"
+                                class="sticky right-0 z-20 w-32 px-6 text-right border-l bg-slate-50 border-slate-200"
                             >
                                 AKSI
                             </th>
@@ -529,7 +529,7 @@ function formatDate(dateStr) {
                             >
                                 <div class="flex flex-col items-center gap-2">
                                     <div
-                                        class="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"
+                                        class="w-8 h-8 border-4 rounded-full border-slate-200 border-t-blue-500 animate-spin"
                                     ></div>
                                     <span class="text-sm font-medium"
                                         >Memuat data...</span
@@ -540,7 +540,7 @@ function formatDate(dateStr) {
                         <tr v-else-if="sales.length === 0">
                             <td
                                 colspan="10"
-                                class="px-6 py-12 text-center text-slate-500 italic"
+                                class="px-6 py-12 italic text-center text-slate-500"
                             >
                                 Tidak ada data penjualan ditemukan.
                             </td>
@@ -551,7 +551,7 @@ function formatDate(dateStr) {
                             class="table-row group"
                         >
                             <td
-                                class="table-cell text-slate-500 text-center font-medium"
+                                class="table-cell font-medium text-center text-slate-500"
                             >
                                 {{
                                     (pagination.current_page - 1) *
@@ -580,22 +580,22 @@ function formatDate(dateStr) {
                                 {{ s.sales_rep?.nama || "-" }}
                             </td>
                             <td
-                                class="table-cell text-right font-bold text-slate-600"
+                                class="table-cell font-bold text-right text-slate-600"
                             >
                                 {{ formatCurrency(s.subtotal) }}
                             </td>
                             <td
-                                class="table-cell text-center font-black text-slate-700"
+                                class="table-cell font-black text-center text-slate-700"
                             >
                                 {{ s.items_sum_qty || 0 }}
                             </td>
                             <td
-                                class="table-cell text-right font-bold text-emerald-600"
+                                class="table-cell font-bold text-right text-emerald-600"
                             >
                                 {{ formatCurrency(s.grand_total) }}
                             </td>
                             <td
-                                class="table-cell sticky right-0 bg-white group-hover:bg-slate-50 border-l border-slate-100 z-10 text-right px-6"
+                                class="sticky right-0 z-10 table-cell px-6 text-right bg-white border-l group-hover:bg-slate-50 border-slate-100"
                             >
                                 <div
                                     class="flex items-center justify-end gap-1"
@@ -690,7 +690,7 @@ function formatDate(dateStr) {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50"
+                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan
@@ -701,7 +701,7 @@ function formatDate(dateStr) {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari
@@ -712,7 +712,7 @@ function formatDate(dateStr) {
                     <button
                         @click="fetchSales(pagination.current_page - 1)"
                         :disabled="pagination.current_page === 1"
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Sebelumnya
                     </button>
@@ -721,7 +721,7 @@ function formatDate(dateStr) {
                         :disabled="
                             pagination.current_page === pagination.last_page
                         "
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Selanjutnya
                     </button>
@@ -742,7 +742,7 @@ function formatDate(dateStr) {
                 class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden"
             >
                 <div
-                    class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"
+                    class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50"
                 >
                     <h3 class="text-lg font-bold text-slate-800">
                         Detail Transaksi Penjualan
@@ -772,7 +772,7 @@ function formatDate(dateStr) {
                             class="text-slate-400 hover:text-slate-600"
                         >
                             <svg
-                                class="h-6 w-6"
+                                class="w-6 h-6"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -788,52 +788,52 @@ function formatDate(dateStr) {
                     </div>
                 </div>
 
-                <div class="p-6 overflow-y-auto w-full">
+                <div class="w-full p-6 overflow-y-auto">
                     <!-- Info Meta -->
                     <div
-                        class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 text-sm"
+                        class="grid grid-cols-2 gap-6 mb-8 text-sm md:grid-cols-4"
                     >
                         <div
-                            class="bg-slate-50 p-4 rounded-xl border border-slate-100"
+                            class="p-4 border bg-slate-50 rounded-xl border-slate-100"
                         >
                             <span
-                                class="block text-slate-500 font-medium mb-1 text-xs uppercase tracking-wider"
+                                class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
                                 >No. Invoice</span
                             >
-                            <span class="font-bold text-blue-600 block">{{
+                            <span class="block font-bold text-blue-600">{{
                                 selectedSale.no_invoice
                             }}</span>
                         </div>
                         <div
-                            class="bg-slate-50 p-4 rounded-xl border border-slate-100"
+                            class="p-4 border bg-slate-50 rounded-xl border-slate-100"
                         >
                             <span
-                                class="block text-slate-500 font-medium mb-1 text-xs uppercase tracking-wider"
+                                class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
                                 >Tanggal</span
                             >
-                            <span class="font-bold text-slate-800 block">{{
+                            <span class="block font-bold text-slate-800">{{
                                 formatDate(selectedSale.tanggal)
                             }}</span>
                         </div>
                         <div
-                            class="bg-slate-50 p-4 rounded-xl border border-slate-100"
+                            class="p-4 border bg-slate-50 rounded-xl border-slate-100"
                         >
                             <span
-                                class="block text-slate-500 font-medium mb-1 text-xs uppercase tracking-wider"
+                                class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
                                 >Pelanggan</span
                             >
-                            <span class="font-bold text-slate-800 block">{{
+                            <span class="block font-bold text-slate-800">{{
                                 selectedSale.pelanggan || "Umum"
                             }}</span>
                         </div>
                         <div
-                            class="bg-slate-50 p-4 rounded-xl border border-slate-100"
+                            class="p-4 border bg-slate-50 rounded-xl border-slate-100"
                         >
                             <span
-                                class="block text-slate-500 font-medium mb-1 text-xs uppercase tracking-wider"
+                                class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
                                 >Kasir / Sales</span
                             >
-                            <span class="font-bold text-slate-800 block"
+                            <span class="block font-bold text-slate-800"
                                 >{{ selectedSale.user?.name }}
                                 <span v-if="selectedSale.sales_rep"
                                     >/ {{ selectedSale.sales_rep.nama }}</span
@@ -843,39 +843,39 @@ function formatDate(dateStr) {
                     </div>
 
                     <!-- Item Table -->
-                    <h4 class="font-bold text-slate-800 mb-3 ml-1 text-sm">
+                    <h4 class="mb-3 ml-1 text-sm font-bold text-slate-800">
                         Daftar Produk
                     </h4>
                     <div
-                        class="border border-slate-200 rounded-xl overflow-hidden mb-8"
+                        class="mb-8 overflow-hidden border border-slate-200 rounded-xl"
                     >
                         <table class="w-full text-sm text-left">
                             <thead
-                                class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200"
+                                class="font-medium border-b bg-slate-50 text-slate-500 border-slate-200"
                             >
                                 <tr>
                                     <th
-                                        class="py-3 px-4 uppercase text-xs tracking-wider"
+                                        class="px-4 py-3 text-xs tracking-wider uppercase"
                                     >
                                         No
                                     </th>
                                     <th
-                                        class="py-3 px-4 uppercase text-xs tracking-wider"
+                                        class="px-4 py-3 text-xs tracking-wider uppercase"
                                     >
                                         Produk Info
                                     </th>
                                     <th
-                                        class="py-3 px-4 uppercase text-xs tracking-wider text-right"
+                                        class="px-4 py-3 text-xs tracking-wider text-right uppercase"
                                     >
                                         Harga
                                     </th>
                                     <th
-                                        class="py-3 px-4 uppercase text-xs tracking-wider text-center"
+                                        class="px-4 py-3 text-xs tracking-wider text-center uppercase"
                                     >
                                         Qty
                                     </th>
                                     <th
-                                        class="py-3 px-4 uppercase text-xs tracking-wider text-right"
+                                        class="px-4 py-3 text-xs tracking-wider text-right uppercase"
                                     >
                                         Subtotal
                                     </th>
@@ -885,13 +885,13 @@ function formatDate(dateStr) {
                                 <tr v-if="detailLoading">
                                     <td
                                         colspan="5"
-                                        class="py-8 text-center text-slate-400 italic"
+                                        class="py-8 italic text-center text-slate-400"
                                     >
                                         <div
                                             class="flex items-center justify-center gap-2"
                                         >
                                             <div
-                                                class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
+                                                class="w-4 h-4 border-2 border-blue-600 rounded-full border-t-transparent animate-spin"
                                             ></div>
                                             Memuat daftar produk...
                                         </div>
@@ -905,7 +905,7 @@ function formatDate(dateStr) {
                                 >
                                     <td
                                         colspan="5"
-                                        class="py-8 text-center text-slate-400 italic"
+                                        class="py-8 italic text-center text-slate-400"
                                     >
                                         Tidak ada produk dalam transaksi ini.
                                     </td>
@@ -916,15 +916,15 @@ function formatDate(dateStr) {
                                     :key="item.id"
                                     class="hover:bg-slate-50/50"
                                 >
-                                    <td class="py-3 px-4 align-top">
+                                    <td class="px-4 py-3 align-top">
                                         {{ idx + 1 }}
                                     </td>
-                                    <td class="py-3 px-4 align-top">
+                                    <td class="px-4 py-3 align-top">
                                         <div class="font-bold text-slate-800">
                                             {{ item.product?.nama || "-" }}
                                         </div>
                                         <div
-                                            class="text-xs text-slate-500 mt-1 font-mono leading-relaxed"
+                                            class="mt-1 font-mono text-xs leading-relaxed text-slate-500"
                                         >
                                             <div>
                                                 IMEI 1:
@@ -935,17 +935,17 @@ function formatDate(dateStr) {
                                         </div>
                                     </td>
                                     <td
-                                        class="py-3 px-4 align-top text-right whitespace-nowrap"
+                                        class="px-4 py-3 text-right align-top whitespace-nowrap"
                                     >
                                         {{ formatCurrency(item.harga_satuan) }}
                                     </td>
                                     <td
-                                        class="py-3 px-4 align-top text-center font-bold"
+                                        class="px-4 py-3 font-bold text-center align-top"
                                     >
                                         {{ item.qty }}
                                     </td>
                                     <td
-                                        class="py-3 px-4 align-top text-right font-bold whitespace-nowrap text-blue-600"
+                                        class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap"
                                     >
                                         {{ formatCurrency(item.subtotal) }}
                                     </td>
@@ -958,7 +958,7 @@ function formatDate(dateStr) {
                     <div class="flex justify-end pr-4">
                         <div class="w-full md:w-80">
                             <div
-                                class="flex justify-between py-2 border-b border-slate-100 text-sm"
+                                class="flex justify-between py-2 text-sm border-b border-slate-100"
                             >
                                 <span class="font-semibold text-slate-600"
                                     >Sub Total</span
@@ -968,27 +968,27 @@ function formatDate(dateStr) {
                                 }}</span>
                             </div>
                             <div
-                                class="flex justify-between py-2 border-b border-slate-100 text-sm"
+                                class="flex justify-between py-2 text-sm border-b border-slate-100"
                             >
                                 <span
-                                    class="font-semibold text-slate-600 opacity-75"
+                                    class="font-semibold opacity-75 text-slate-600"
                                     >Diskon</span
                                 >
                                 <span class="font-bold text-rose-500"
                                     >-
                                     {{
                                         formatCurrency(
-                                            selectedSale.diskon_nominal,
+                                            selectedSale.diskon_nominal
                                         )
                                     }}</span
                                 >
                             </div>
                             <div
-                                class="flex justify-between py-2 border-b border-slate-100 text-sm"
+                                class="flex justify-between py-2 text-sm border-b border-slate-100"
                             >
                                 <span class="font-semibold text-slate-600"
                                     >Pajak
-                                    <span class="opacity-50 font-normal"
+                                    <span class="font-normal opacity-50"
                                         >({{
                                             selectedSale.tax_persen || 0
                                         }}%)</span
@@ -1002,14 +1002,14 @@ function formatDate(dateStr) {
                                 >
                             </div>
                             <div
-                                class="flex justify-between py-3 border-b-2 border-slate-800 mb-3 mt-1"
+                                class="flex justify-between py-3 mt-1 mb-3 border-b-2 border-slate-800"
                             >
                                 <span
-                                    class="font-black text-slate-800 uppercase tracking-wider text-base"
+                                    class="text-base font-black tracking-wider uppercase text-slate-800"
                                     >Total Bayar</span
                                 >
                                 <span
-                                    class="font-black text-blue-600 text-lg"
+                                    class="text-lg font-black text-blue-600"
                                     >{{
                                         formatCurrency(selectedSale.grand_total)
                                     }}</span
@@ -1017,10 +1017,10 @@ function formatDate(dateStr) {
                             </div>
 
                             <div
-                                class="bg-blue-50/50 rounded-lg p-3 text-sm mt-4 border border-blue-100"
+                                class="p-3 mt-4 text-sm border border-blue-100 rounded-lg bg-blue-50/50"
                             >
                                 <div class="flex justify-between mb-1">
-                                    <span class="text-blue-800/70 font-medium"
+                                    <span class="font-medium text-blue-800/70"
                                         >Metode (Tipe)</span
                                     >
                                     <span
@@ -1038,12 +1038,12 @@ function formatDate(dateStr) {
                                     "
                                     class="flex justify-between mb-1"
                                 >
-                                    <span class="text-blue-800/70 font-medium"
+                                    <span class="font-medium text-blue-800/70"
                                         >Jumlah Bayar</span
                                     >
                                     <span class="font-bold text-emerald-600">{{
                                         formatCurrency(
-                                            selectedSale.jumlah_bayar,
+                                            selectedSale.jumlah_bayar
                                         )
                                     }}</span>
                                 </div>
@@ -1054,7 +1054,7 @@ function formatDate(dateStr) {
                                     "
                                     class="flex justify-between"
                                 >
-                                    <span class="text-blue-800/70 font-medium"
+                                    <span class="font-medium text-blue-800/70"
                                         >Kembalian</span
                                     >
                                     <span class="font-bold text-orange-500">{{

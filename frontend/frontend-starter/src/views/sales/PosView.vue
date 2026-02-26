@@ -83,7 +83,7 @@ watch(
         if (displayJumlahBayar.value !== formatted) {
             displayJumlahBayar.value = formatted;
         }
-    },
+    }
 );
 
 watch(
@@ -97,7 +97,7 @@ watch(
         if (displayDiskonNominal.value !== formatted) {
             displayDiskonNominal.value = formatted;
         }
-    },
+    }
 );
 
 const isProcessing = ref(false);
@@ -186,7 +186,7 @@ async function fetchSaleDetails() {
 
         if (sale.diskon_nominal > 0) {
             displayDiskonNominal.value = formatInputCurrency(
-                sale.diskon_nominal,
+                sale.diskon_nominal
             );
         }
 
@@ -325,7 +325,7 @@ function removeFromCart(itemIdx) {
 const subtotal = computed(() => {
     return cart.value.reduce(
         (acc, item) => acc + item.harga_jual * item.qty,
-        0,
+        0
     );
 });
 
@@ -419,18 +419,18 @@ async function processTransaction() {
 <template>
     <div class="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-6">
         <!-- Main POS Area (Cart & Scanning) -->
-        <div class="flex-1 flex flex-col gap-6">
+        <div class="flex flex-col flex-1 gap-6">
             <!-- Scan / Search Bar -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 relative"
+                class="relative p-3 bg-white border shadow-sm rounded-2xl border-slate-200"
                 ref="searchContainer"
             >
                 <div class="relative">
                     <div
-                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                        class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
                     >
                         <svg
-                            class="h-5 w-5 text-slate-400"
+                            class="w-5 h-5 text-slate-400"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -450,7 +450,7 @@ async function processTransaction() {
                         @input="onSearchInput"
                         @focus="handleSearchFocus"
                         @keydown.enter.prevent="onSearchEnter"
-                        class="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-base font-medium shadow-sm"
+                        class="block w-full py-2 pl-10 pr-3 text-base font-medium leading-5 transition bg-white border shadow-sm border-slate-300 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Scan Barcode / IMEI / Cari nama barang... [/]"
                     />
                 </div>
@@ -469,7 +469,7 @@ async function processTransaction() {
                         class="absolute z-[100] mt-3 w-full left-0 glass rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/40 max-h-[500px] overflow-hidden flex flex-col animate-in-fade"
                     >
                         <div
-                            class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0"
+                            class="flex items-center justify-between px-4 py-2 border-b bg-slate-50 border-slate-100 shrink-0"
                         >
                             <span
                                 class="text-[10px] font-black uppercase tracking-widest text-slate-400"
@@ -481,7 +481,7 @@ async function processTransaction() {
                                 ditemukan</span
                             >
                         </div>
-                        <div class="overflow-y-auto flex-1 custom-scrollbar">
+                        <div class="flex-1 overflow-y-auto custom-scrollbar">
                             <ul class="divide-y divide-slate-50">
                                 <li
                                     v-for="res in searchResults"
@@ -490,16 +490,16 @@ async function processTransaction() {
                                     class="px-4 py-1.5 hover:bg-blue-50/50 cursor-pointer flex items-center gap-4 transition group"
                                 >
                                     <div
-                                        class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 group-hover:border-blue-200 transition shadow-sm"
+                                        class="flex items-center justify-center w-10 h-10 overflow-hidden transition border rounded-lg shadow-sm bg-slate-100 shrink-0 border-slate-200 group-hover:border-blue-200"
                                     >
                                         <img
                                             v-if="res.foto"
                                             :src="storageUrl(res.foto)"
-                                            class="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                                            class="object-cover w-full h-full transition duration-500 group-hover:scale-110"
                                         />
                                         <svg
                                             v-else
-                                            class="w-7 h-7 text-slate-300 group-hover:text-blue-300 transition"
+                                            class="transition w-7 h-7 text-slate-300 group-hover:text-blue-300"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -514,7 +514,7 @@ async function processTransaction() {
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <h4
-                                            class="text-xs font-black text-slate-800 truncate group-hover:text-blue-700 transition"
+                                            class="text-xs font-black truncate transition text-slate-800 group-hover:text-blue-700"
                                         >
                                             {{ res.nama }}
                                         </h4>
@@ -546,7 +546,7 @@ async function processTransaction() {
                                     </div>
                                     <div class="text-right shrink-0">
                                         <p
-                                            class="text-sm font-black text-blue-600 tracking-tight"
+                                            class="text-sm font-black tracking-tight text-blue-600"
                                         >
                                             {{ formatCurrency(res.harga_jual) }}
                                         </p>
@@ -571,7 +571,7 @@ async function processTransaction() {
 
             <!-- Cart Table -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col"
+                class="flex flex-col flex-1 overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
             >
                 <div
                     class="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"
@@ -588,7 +588,7 @@ async function processTransaction() {
                 <div class="flex-1 overflow-y-auto">
                     <div
                         v-if="cart.length === 0"
-                        class="h-full flex flex-col items-center justify-center text-slate-400 p-8 space-y-4"
+                        class="flex flex-col items-center justify-center h-full p-8 space-y-4 text-slate-400"
                     >
                         <svg
                             class="w-16 h-16 opacity-50"
@@ -612,15 +612,15 @@ async function processTransaction() {
                         <li
                             v-for="(item, idx) in cart"
                             :key="item.id"
-                            class="p-4 hover:bg-slate-50 transition flex items-center gap-4"
+                            class="flex items-center gap-4 p-4 transition hover:bg-slate-50"
                         >
                             <div
-                                class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden"
+                                class="flex items-center justify-center w-12 h-12 overflow-hidden rounded-lg bg-slate-100 shrink-0"
                             >
                                 <img
                                     v-if="item.foto"
                                     :src="storageUrl(item.foto)"
-                                    class="w-full h-full object-cover"
+                                    class="object-cover w-full h-full"
                                 />
                                 <svg
                                     v-else
@@ -640,7 +640,7 @@ async function processTransaction() {
 
                             <div class="flex-1 min-w-0">
                                 <h4
-                                    class="text-sm font-bold text-slate-800 truncate"
+                                    class="text-sm font-bold truncate text-slate-800"
                                 >
                                     {{ item.nama }}
                                 </h4>
@@ -648,7 +648,7 @@ async function processTransaction() {
                                     class="flex items-center gap-3 mt-1 text-xs text-slate-500"
                                 >
                                     <span
-                                        class="font-mono text-blue-600 font-semibold"
+                                        class="font-mono font-semibold text-blue-600"
                                         >{{ item.barcode }}</span
                                     >
                                     <span>{{
@@ -658,11 +658,11 @@ async function processTransaction() {
                             </div>
 
                             <div
-                                class="flex items-center gap-2 bg-slate-100 rounded-lg p-1 shrink-0"
+                                class="flex items-center gap-2 p-1 rounded-lg bg-slate-100 shrink-0"
                             >
                                 <button
                                     @click="updateQty(item, -1)"
-                                    class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-slate-600 transition"
+                                    class="flex items-center justify-center w-8 h-8 transition rounded-md hover:bg-white hover:shadow-sm text-slate-600"
                                 >
                                     <svg
                                         class="w-4 h-4"
@@ -679,12 +679,12 @@ async function processTransaction() {
                                     </svg>
                                 </button>
                                 <span
-                                    class="w-8 text-center text-sm font-bold text-slate-700"
+                                    class="w-8 text-sm font-bold text-center text-slate-700"
                                     >{{ item.qty }}</span
                                 >
                                 <button
                                     @click="updateQty(item, 1)"
-                                    class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-slate-600 transition"
+                                    class="flex items-center justify-center w-8 h-8 transition rounded-md hover:bg-white hover:shadow-sm text-slate-600"
                                 >
                                     <svg
                                         class="w-4 h-4"
@@ -706,7 +706,7 @@ async function processTransaction() {
                                 <p class="text-sm font-bold text-slate-800">
                                     {{
                                         formatCurrency(
-                                            item.harga_jual * item.qty,
+                                            item.harga_jual * item.qty
                                         )
                                     }}
                                 </p>
@@ -714,7 +714,7 @@ async function processTransaction() {
 
                             <button
                                 @click="removeFromCart(idx)"
-                                class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition ml-2 shrink-0"
+                                class="p-2 ml-2 transition rounded-lg text-rose-400 hover:text-rose-600 hover:bg-rose-50 shrink-0"
                             >
                                 <svg
                                     class="w-5 h-5"
@@ -740,13 +740,13 @@ async function processTransaction() {
         <div class="w-full lg:w-[380px] flex flex-col gap-6 shrink-0">
             <!-- Payment Block -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col"
+                class="flex flex-col overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
             >
                 <div class="p-4 space-y-4">
                     <div>
                         <label
-                            class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
-                            >Pelanggan</label
+                            class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
+                            >Nama Pelanggan</label
                         >
                         <input
                             type="text"
@@ -759,13 +759,13 @@ async function processTransaction() {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4"
+                                class="block mb-4 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Pajak</label
                             >
                             <select
                                 v-model="form.tax_id"
                                 @change="onTaxChange"
-                                class="block w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="block w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Tanpa Pajak</option>
                                 <option
@@ -778,9 +778,9 @@ async function processTransaction() {
                             </select>
                         </div>
                         <div>
-                            <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center justify-between mb-2">
                                 <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-widest"
+                                    class="block text-xs font-semibold tracking-widest uppercase text-slate-500"
                                     >Diskon</label
                                 >
                                 <div
@@ -817,7 +817,7 @@ async function processTransaction() {
                                 min="0"
                                 max="100"
                                 v-model.number="form.diskon_persen"
-                                class="block w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"
+                                class="block w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
                                 placeholder="Contoh: 10"
                             />
                             <div class="relative">
@@ -825,12 +825,12 @@ async function processTransaction() {
                                     v-if="form.diskon_type === 'nominal'"
                                     type="text"
                                     v-model="displayDiskonNominal"
-                                    class="block w-full pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-rose-600"
+                                    class="block w-full py-2 pl-8 pr-3 text-sm font-bold border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-rose-600"
                                     placeholder="0"
                                 />
                                 <span
                                     v-if="form.diskon_type === 'nominal'"
-                                    class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400"
+                                    class="absolute text-xs font-bold -translate-y-1/2 left-3 top-1/2 text-slate-400"
                                     >Rp</span
                                 >
                             </div>
@@ -839,13 +839,13 @@ async function processTransaction() {
 
                     <div>
                         <label
-                            class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                            class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                             >Kasir</label
                         >
                         <select
                             v-model="form.user_id"
                             :disabled="!authStore.isAdmin"
-                            class="block w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                            class="block w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
                         >
                             <option
                                 v-for="u in users"
@@ -859,12 +859,12 @@ async function processTransaction() {
 
                     <div>
                         <label
-                            class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                            class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                             >Sales Rep</label
                         >
                         <select
                             v-model="form.sales_rep_id"
-                            class="block w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            class="block w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">
                                 -- Pilih Sales (Opsional) --
@@ -879,33 +879,33 @@ async function processTransaction() {
                         </select>
                     </div>
 
-                    <div class="h-px bg-slate-100 my-1"></div>
+                    <div class="h-px my-1 bg-slate-100"></div>
 
                     <!-- Cost Details -->
                     <div class="space-y-2">
                         <div
-                            class="flex justify-between items-center text-xs font-medium text-slate-600"
+                            class="flex items-center justify-between text-xs font-medium text-slate-600"
                         >
                             <span>Subtotal</span>
                             <span>{{ formatCurrency(subtotal) }}</span>
                         </div>
                         <div
                             v-if="diskonNominal > 0"
-                            class="flex justify-between items-center text-xs font-medium text-emerald-600"
+                            class="flex items-center justify-between text-xs font-medium text-emerald-600"
                         >
                             <span>Diskon ({{ form.diskon_persen }}%)</span>
                             <span>- {{ formatCurrency(diskonNominal) }}</span>
                         </div>
                         <div
                             v-if="taxNominal > 0"
-                            class="flex justify-between items-center text-xs font-medium text-rose-500"
+                            class="flex items-center justify-between text-xs font-medium text-rose-500"
                         >
                             <span>Pajak ({{ form.tax_persen }}%)</span>
                             <span>+ {{ formatCurrency(taxNominal) }}</span>
                         </div>
                         <div class="h-px bg-slate-100 my-0.5"></div>
                         <div
-                            class="flex justify-between items-center text-sm font-bold text-slate-800"
+                            class="flex items-center justify-between text-sm font-bold text-slate-800"
                         >
                             <span>Total</span>
                             <span>{{ formatCurrency(grandTotal) }}</span>
@@ -914,15 +914,15 @@ async function processTransaction() {
 
                     <!-- Payment Section -->
                     <div
-                        class="bg-blue-50/50 rounded-xl p-4 border border-blue-100 mt-4"
+                        class="p-4 mt-4 border border-blue-100 bg-blue-50/50 rounded-xl"
                     >
                         <label
-                            class="block text-xs font-semibold text-blue-800 uppercase tracking-widest mb-2"
+                            class="block mb-2 text-xs font-semibold tracking-widest text-blue-800 uppercase"
                             >Metode Pembayaran</label
                         >
                         <select
                             v-model="form.metode_pembayaran"
-                            class="block w-full px-3 py-2 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-3"
+                            class="block w-full px-3 py-2 mb-3 text-sm bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="cash">tunai / Cash</option>
                             <option value="transfer">Bank Transfer</option>
@@ -931,14 +931,14 @@ async function processTransaction() {
 
                         <div v-if="form.metode_pembayaran === 'cash'">
                             <label
-                                class="block text-xs font-semibold text-blue-800 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest text-blue-800 uppercase"
                                 >Jumlah Bayar</label
                             >
                             <div class="relative">
                                 <input
                                     type="text"
                                     v-model="displayJumlahBayar"
-                                    class="block w-full pl-10 pr-3 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm mb-3 font-black text-blue-700 text-xl bg-white shadow-inner"
+                                    class="block w-full py-3 pl-10 pr-3 mb-3 text-sm text-xl font-black text-blue-700 bg-white border border-blue-200 shadow-inner rounded-xl focus:ring-2 focus:ring-blue-500"
                                     placeholder="0"
                                 />
                                 <span
@@ -948,7 +948,7 @@ async function processTransaction() {
                             </div>
 
                             <div
-                                class="flex justify-between items-center text-sm"
+                                class="flex items-center justify-between text-sm"
                             >
                                 <span class="font-medium text-blue-800"
                                     >Kembalian</span
@@ -963,7 +963,7 @@ async function processTransaction() {
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 border-t border-slate-100">
+                <div class="p-4 border-t bg-slate-50 border-slate-100">
                     <div
                         class="flex justify-between items-center mb-1 text-[10px] text-slate-400 uppercase tracking-widest font-bold"
                     >
@@ -975,9 +975,9 @@ async function processTransaction() {
                             }}</span
                         >
                     </div>
-                    <div class="flex justify-between items-end mb-4">
+                    <div class="flex items-end justify-between mb-4">
                         <span
-                            class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+                            class="text-xs font-bold tracking-widest uppercase text-slate-400"
                             >Total Bayar</span
                         >
                         <span
@@ -989,11 +989,11 @@ async function processTransaction() {
                     <button
                         @click="processTransaction"
                         :disabled="cart.length === 0 || isProcessing"
-                        class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30 transition transform active:scale-95"
+                        class="flex items-center justify-center w-full gap-2 py-3 font-bold text-white transition transform shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-blue-500/30 active:scale-95"
                     >
                         <template v-if="isProcessing">
                             <svg
-                                class="animate-spin h-5 w-5 text-white"
+                                class="w-5 h-5 text-white animate-spin"
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="none"
                                 viewBox="0 0 24 24"
