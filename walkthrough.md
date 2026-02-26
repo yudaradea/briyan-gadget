@@ -1,109 +1,97 @@
-# 🗺️ Perjalanan Pengembangan — App Kasir
+﻿# App Kasir Walkthrough
 
-Halaman ini mencatat "perjalanan" pengembangan aplikasi ini dari awal hingga saat ini.
+Last update: 2026-02-27 (WIB, malam)
 
----
+## 1. Product Direction
+App Kasir is a retail + service system for gadget stores:
+- Purchase and stock management
+- POS sales and invoice
+- Service intake, sparepart usage, payment finalization, and service invoice
+- Role-based operations (super admin, admin/owner, kasir)
 
-## 🏁 Destinasi Akhir
+## 2. Current Architecture State
+- Backend: Laravel repositories + resources + permission middleware
+- Frontend: Vue 3 + Pinia + route-based module pages
+- Stock logic: FIFO for non-serialized products, per-unit handling for serialized products
 
-Membangun aplikasi POS (Point of Sale) modern untuk toko ponsel menggunakan **Laravel 12 + Vue.js 3**.
+## 3. What Has Been Delivered
 
----
+### Master and Catalog
+- Relational master data for product catalog
+- Quick-add references from forms to avoid context switching
 
-## 🛤️ Log Perjalanan (Batch demi Batch)
+### Purchase and Inventory
+- Purchase invoice flow with item-level stock entries
+- Barcode handling aligned to product type
+- Stock summary grouped by SKU
+- SKU detail modal to inspect underlying lots
 
-### 📦 Batch 1: Fondasi Bangunan
+### Sales
+- POS input with payment and discount
+- Sales transaction listing and detailed modal
+- Invoice print flow
+- HPP allocation and subtotal_hpp tracking
 
-Membangun struktur data inti.
+### Service
+- Service intake and progress states
+- Sparepart stock deduction/restoration rules
+- Cancel process with explicit stock restoration option
+- Final payment flow:
+  1) set status selesai
+  2) input payment (discount + method + paid amount)
+  3) system creates/updates service transaction
+  4) system auto-sets delivered status
+  5) invoice auto-opens for print
+  6) payment panel locked after finalization
 
-- **Outcome**: 14 tabel database siap pakai.
-- **Teknologi**: UUID as Primary Key untuk keamanan data.
-- **Pencapaian**: Sistem role & permission (Super Admin, Admin, Kasir) aktif.
+- Service transaction page:
+  - separated in sidebar
+  - uses service-only data
+  - shows sparepart usage summary
+  - detail modal adapted for service
+  - detail modal no longer forces IMEI for non-serialized items
+  - service jasa row shown without qty
+  - data service list table alignment fixed (aksi and estimasi column)
+  - date range filter now blocks end date earlier than start date
 
-### 💎 Batch 2: Master Data (The Core Parts)
+### Date and Time Consistency
+- Backend timezone source is now env-driven (`APP_TIMEZONE`, currently `Asia/Jakarta`).
+- Service create default date now follows local browser date, not UTC string conversion.
+- Sales invoice print date now formatted from raw `YYYY-MM-DD` string, avoiding timezone shifts.
 
-Membuat input data dasar seperti Merk, Kategori, Supplier, dll.
+### Invoice Item Identifier Rules
+- Invoice/detail rendering now follows product `identifier_type`:
+  - `none`: no IMEI/SN line
+  - `imei1`: show one IMEI line
+  - `imei2`: show IMEI 1 and IMEI 2 if available
+  - `serial`: show serial number line
 
-- **Outcome**: 7 modul CRUD selesai (Backend & Frontend).
-- **Inovasi**: Komponen `DataTable.vue` reusable yang bisa search & filter di semua halaman.
-- **Fitur Cepat**: Lahirnya `QuickAddModal.vue` agar bisa tambah data supplier/merk sambil mengisi form lain.
+### Reporting (Implemented)
+- API report endpoints now available:
+  - `/api/reports/sales` (includes POS + service, with `tipe` filter)
+  - `/api/reports/purchases`
+  - `/api/reports/profit`
+- Common capabilities per report:
+  - date range filter with validation (`end_date >= start_date`)
+  - search
+  - pagination (10/50/100)
+  - excel export (`export=excel`, CSV)
+- Frontend report pages are now functional:
+  - table list with live filters
+  - export PDF via print layout
+  - export Excel button
 
-### 🧾 Batch 3: Stok Barang & Barcode (The Heart of Inventory)
+### Dashboard
+- Backend summary endpoint and frontend dashboard cards/charts
+- Store branding in sidebar (logo + store name)
 
-Menangani input stok barang masuk dan penomeran otomatis.
+## 4. Open Items
+- Formal testing pass for edge cases:
+  - overpayment and change calculation
+  - service cancel after stock operations
+  - report export validation on large datasets (performance and completeness)
 
-- **Outcome**: Sistem invoice pembelian selesai.
-- **Inovasi**: Auto-barcode generator (misal: `BG-20260225-00001`) yang unik untuk setiap barang.
-- **Refinement (The Final Touch)**:
-    - **Image Modal**: Foto produk sekarang bisa diklik untuk preview (Lightbox).
-    - **Fix Upload**: Mengatasi masalah "file tidak masuk database" dengan perbaikan interceptor API.
-    - **UI Alignment**: Detail barang sekarang rapi (Qty & Harga sejajar).
-    - **Timezone Fix**: Tanggal otomatis menyesuaikan waktu lokal Indonesia.
-
-### 💹 Batch 4: Penjualan (POS) & Kendali User
-
-Transformasi dari pengelolaan stok ke mesin uang (transaksi).
-
-- **Outcome**: Sistem POS yang cerdas dan Dashboard Penjualan yang informatif.
-
-- **Fitur Unggulan**:
-    - **Smart POS**: Admin & Owner bisa pilih kasir, sementara Kasir asli terkunci pada akunnya sendiri.
-    - **Advanced Filtering**: Cari data penjualan berdasarkan rentang tanggal, kasir, atau sales secara instan.
-    - **Real-time Stats**: Statistik penjualan langsung diperbarui saat ada transaksi dihapus tanpa refresh halaman.
-
-- **Role Owner & Kasir**: Pengaturan hak akses yang lebih detail untuk Owner dan Kasir (Pilihan kasir hanya muncul di role tertentu).
-
-- **UX Polish (The Professional Look)**:
-    - Re-labeling "Opsi" menjadi "AKSI" dan right-alignment di semua tabel.
-    - Perbaikan Sidebar Dashboard agar tidak menabrak konten (Sticky & Width fix).
-    - Desain POS yang lebih compact (Search kecil, Cart pendek, Layout 1400px) untuk kecepatan kerja.
-    - Sold Items Tracking: Penambahan kolom "No Transaksi Keluar" dan perbaikan "Tanggal Terjual".
-
-- **Stability**: Perbaikan error `router.back()` pada Invoice Print View.
-  63:
-  64: ### 🏗️ Batch 6: Evolusi Master Produk & Refaktor Pembelian
-  65:
-  66: Memisahkan identitas barang (Katalog) dengan stok fisik untuk pendataan yang lebih akurat.
-  67:
-  68: - **Outcome**: Struktur database dua tingkat (Master Product + Produk/Stok).
-  69: - **Inovasi**:
-  70: - **Cascading Selection**: Input pembelian tidak lagi mencari manual, tapi memilih bertahap (Kategori -> Merk -> Grade -> Nama Produk) sehingga data seragam.
-  71: - **Sistem Grade**: Penambahan identitas Grade (New, Like New, Grade A, dll) pada setiap stok barang.
-  72: - **Flexible Barcode**: Dukungan penuh untuk Serial Number (SN) manual pada Gadget namun tetap otomatis untuk Sparepart/Aksesoris.
-  73: - **UX Polish**:
-  74: - Form pembelian lebih cerdas, otomatis menyembunyikan/menampilkan field IMEI berdasarkan kategori barang yang dipilih.
-  75: - Integrasi pencarian dari Katalog yang langsung mengisi detail barang secara otomatis.
-
----
-
-## 🚀 Apa Yang Sedang Kita Kerjakan Sekarang?
-
-### ⚒️ Batch 5: Service HP (Repair Order System)
-
-- [x] Backend: ServiceRepository & Resource
-- [x] Backend: ServiceController with Status Management
-- [x] Backend: Sparepart tracking with Stock Sync
-- [x] Frontend: Service List with Status Tracking & Filtering
-- [x] Frontend: Service Detail & Status Update
-- [x] Frontend: Sparsepart addition UX
-- [x] Frontend: Service Receipt & Invoice Print (Auto-print layout)
-- [x] Refaktif: Purchase Input Flow (Katalog Based Selection)
-- [ ] Frontend: Service Order Form (Scanner integration for fast lookup)
-
----
-
-## 📋 Checklist Task Saat Ini
-
-| Task                         | Status         | Note                        |
-| ---------------------------- | -------------- | --------------------------- |
-| POS System & Cart            | 🟢 Done        | Completed with Tax/Discount |
-| Multi-role Cashier Selection | 🟢 Done        | Admin check implemented     |
-| Advanced Sales Filter        | 🟢 Done        | Date/User/Sales filters     |
-| Real-time Stats Updates      | 🟢 Done        | Auto-refresh totals         |
-| Role Owner Implementation    | 🟢 Done        | Permissions synced          |
-| Master Product Refactoring   | 🟢 Done        | Katalog vs Stock separation |
-| Service Order System         | 🟡 In Progress | Menuju Batch 5              |
-
----
-
-_Dokumentasi ini akan terus diperbarui seiring berjalannya proyek._
+## 5. Suggested Next Focus
+1. Lock in report pages (sales, purchase, laba rugi/HPP) with verified service contribution.
+2. Add a compact QA checklist and run through all critical transaction states.
+3. Standardize shared currency input behavior as a reusable component.

@@ -22,7 +22,7 @@ class SaleRepository
     public function index($perPage, $search, $startDate = null, $endDate = null, $tipe = null, $userId = null, $salesRepId = null)
     {
         $query = $this->model->newQuery()
-            ->with(['user', 'salesRep', 'tax'])
+            ->with(['user', 'salesRep', 'tax', 'serviceOrder.parts.product.masterProduct'])
             ->withCount('items')
             ->withSum('items', 'qty')
             ->search($search)
@@ -44,17 +44,19 @@ class SaleRepository
     /**
      * Get sales statistics for cards
      */
-    public function stats()
+    public function stats($tipe = null)
     {
         $today = now()->startOfDay();
         $thisMonth = now()->startOfMonth();
         $thisYear = now()->startOfYear();
 
+        $baseQuery = $this->model->newQuery()->when($tipe, fn($q) => $q->where('tipe', $tipe));
+
         $stats = [
-            'today' => $this->model->where('tanggal', '>=', $today)->sum('grand_total'),
-            'month' => $this->model->where('tanggal', '>=', $thisMonth)->sum('grand_total'),
-            'year' => $this->model->where('tanggal', '>=', $thisYear)->sum('grand_total'),
-            'total' => $this->model->sum('grand_total'),
+            'today' => (float) (clone $baseQuery)->where('tanggal', '>=', $today)->sum('grand_total'),
+            'month' => (float) (clone $baseQuery)->where('tanggal', '>=', $thisMonth)->sum('grand_total'),
+            'year' => (float) (clone $baseQuery)->where('tanggal', '>=', $thisYear)->sum('grand_total'),
+            'total' => (float) (clone $baseQuery)->sum('grand_total'),
         ];
 
         return ResponseHelper::success($stats, 'Sales statistics retrieved successfully');
@@ -69,6 +71,7 @@ class SaleRepository
             'user',
             'salesRep',
             'tax',
+            'serviceOrder.parts.product.masterProduct',
             'items.product.masterProduct.brand',
             'items.product.masterProduct.category',
             'items.product.masterProduct.unit',

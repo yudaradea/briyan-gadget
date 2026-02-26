@@ -66,7 +66,20 @@ watch(searchQuery, throttledSearch);
 watch(perPage, () => fetchServices(1));
 watch(
     () => filters.value,
-    () => fetchServices(1),
+    () => {
+        if (
+            filters.value.start_date &&
+            filters.value.end_date &&
+            filters.value.end_date < filters.value.start_date
+        ) {
+            toast.error(
+                "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai",
+            );
+            filters.value.end_date = "";
+            return;
+        }
+        fetchServices(1);
+    },
     { deep: true },
 );
 
@@ -126,7 +139,7 @@ const statusLabels = {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6 max-w-[1400px]">
+    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
         <!-- Header Section -->
         <div
             class="flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -205,6 +218,7 @@ const statusLabels = {
                         <input
                             type="date"
                             v-model="filters.end_date"
+                            :min="filters.start_date || undefined"
                             class="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition bg-white shadow-sm"
                         />
                     </div>
@@ -235,7 +249,7 @@ const statusLabels = {
                             <input
                                 type="text"
                                 v-model="searchQuery"
-                                placeholder="Cari pelanggan/unit..."
+                                placeholder="Cari no service / pelanggan / unit..."
                                 class="block w-full md:w-64 pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition shadow-sm"
                             />
                             <div
@@ -261,53 +275,38 @@ const statusLabels = {
             </div>
 
             <!-- Table Section -->
-            <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-100">
-                            <th
-                                class="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-20"
-                            >
+            <div class="table-container">
+                <table class="table-fixed-layout table-wide">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="w-16 text-center">
                                 No
                             </th>
-                            <th
-                                class="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"
-                            >
+                            <th class="w-32">
+                                No Service
+                            </th>
+                            <th class="w-44">
                                 Pelanggan
                             </th>
-                            <th
-                                class="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"
-                            >
+                            <th class="w-40">
                                 Unit / IMEI
                             </th>
-                            <th
-                                class="px-4 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]"
-                            >
+                            <th class="w-52">
                                 Kerusakan
                             </th>
-                            <th
-                                class="px-4 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-32"
-                            >
+                            <th class="w-28 text-center">
                                 Perbaikan
                             </th>
-                            <th
-                                class="px-4 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-32"
-                            >
+                            <th class="w-32 text-center">
                                 Pengambilan
                             </th>
-                            <th
-                                class="px-4 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-32"
-                            >
+                            <th class="w-32 text-center">
                                 Tgl Masuk
                             </th>
-                            <th
-                                class="px-4 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-40"
-                            >
+                            <th class="w-40 text-right">
                                 Estimasi
                             </th>
-                            <th
-                                class="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] w-20 bg-slate-50/80 sticky right-0 border-l border-slate-100"
-                            >
+                            <th class="table-col-action-h">
                                 Aksi
                             </th>
                         </tr>
@@ -315,7 +314,7 @@ const statusLabels = {
                     <tbody class="divide-y divide-slate-100">
                         <tr v-if="isLoading">
                             <td
-                                colspan="9"
+                                colspan="10"
                                 class="px-6 py-20 text-center text-slate-500"
                             >
                                 <div class="flex flex-col items-center gap-3">
@@ -331,7 +330,7 @@ const statusLabels = {
                         </tr>
                         <tr v-else-if="services.length === 0">
                             <td
-                                colspan="9"
+                                colspan="10"
                                 class="px-6 py-20 text-center text-slate-400 italic font-medium"
                             >
                                 Tidak ada data servis ditemukan.
@@ -340,11 +339,9 @@ const statusLabels = {
                         <tr
                             v-for="(item, index) in services"
                             :key="item.id"
-                            class="hover:bg-blue-50/30 transition-colors group"
+                            class="table-row group"
                         >
-                            <td
-                                class="px-6 py-4 text-center text-xs font-black text-slate-400 group-hover:text-blue-500"
-                            >
+                            <td class="table-cell text-center text-xs font-black text-slate-400 group-hover:text-blue-500">
                                 {{
                                     (pagination.current_page - 1) *
                                         pagination.per_page +
@@ -352,7 +349,12 @@ const statusLabels = {
                                     1
                                 }}
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="table-cell">
+                                <div class="font-bold text-slate-700 text-xs">
+                                    {{ item.no_service || "-" }}
+                                </div>
+                            </td>
+                            <td class="table-cell">
                                 <div class="font-bold text-slate-800 text-sm">
                                     {{ item.nama_pelanggan }}
                                 </div>
@@ -362,7 +364,7 @@ const statusLabels = {
                                     {{ item.no_hp_pelanggan || "-" }}
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="table-cell">
                                 <div class="font-bold text-slate-700 text-sm">
                                     {{ item.merk_hp }} {{ item.tipe_hp }}
                                 </div>
@@ -372,14 +374,14 @@ const statusLabels = {
                                     {{ item.imei_hp || "-" }}
                                 </div>
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="table-cell">
                                 <p
                                     class="text-slate-500 line-clamp-1 italic text-xs font-medium"
                                 >
                                     "{{ item.kerusakan }}"
                                 </p>
                             </td>
-                            <td class="px-4 py-4 text-center">
+                            <td class="table-cell text-center">
                                 <span
                                     :class="statusBadges[item.status]"
                                     class="inline-block px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm"
@@ -387,7 +389,7 @@ const statusLabels = {
                                     {{ statusLabels[item.status] }}
                                 </span>
                             </td>
-                            <td class="px-4 py-4 text-center">
+                            <td class="table-cell text-center">
                                 <span
                                     v-if="
                                         item.status_pengambilan ===
@@ -404,12 +406,10 @@ const statusLabels = {
                                     BELUM DIAMBIL
                                 </span>
                             </td>
-                            <td
-                                class="px-4 py-4 text-center text-slate-500 text-[11px] font-bold"
-                            >
+                            <td class="table-cell text-center text-slate-500 text-[11px] font-bold">
                                 {{ formatDate(item.tanggal_masuk) }}
                             </td>
-                            <td class="px-4 py-4 text-right">
+                            <td class="table-cell text-right">
                                 <span
                                     class="text-[10px] font-bold text-slate-400 uppercase mr-1"
                                     >Rp</span
@@ -420,11 +420,9 @@ const statusLabels = {
                                     {{ formatCurrency(item.grand_total) }}
                                 </span>
                             </td>
-                            <td
-                                class="px-6 py-4 text-center sticky right-0 bg-white group-hover:bg-blue-50/30 border-l border-slate-50 transition-colors"
-                            >
+                            <td class="table-col-action">
                                 <div
-                                    class="flex items-center justify-center gap-1"
+                                    class="table-actions"
                                 >
                                     <button
                                         @click="

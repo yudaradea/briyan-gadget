@@ -8,6 +8,7 @@ use App\Http\Controllers\GradeController;
 use App\Http\Controllers\MasterProductController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SalesRepController;
 use App\Http\Controllers\StoreSettingController;
@@ -117,6 +118,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Product Search Routes (POS)
     // ============================================
     Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/stock-details', [ProductController::class, 'stockDetails']);
     Route::get('/products/scan', [ProductController::class, 'scan']);
     Route::get('/products/search', [ProductController::class, 'search']);
 
@@ -135,6 +137,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/sales/{id}', [SaleController::class, 'update']);
     Route::get('/sales/{id}', [SaleController::class, 'show']);
     Route::delete('/sales/{id}', [SaleController::class, 'destroy']);
+
+    // ============================================
+    // Report Routes
+    // ============================================
+    Route::get('/reports/sales', [ReportController::class, 'sales']);
+    Route::get('/reports/purchases', [ReportController::class, 'purchases']);
+    Route::get('/reports/profit', [ReportController::class, 'profit']);
 
     // ============================================
     // Service Routes (Servis HP)

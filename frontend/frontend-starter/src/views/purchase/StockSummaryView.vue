@@ -23,6 +23,13 @@ const filters = ref({
     category_id: "",
     brand_id: "",
 });
+const showDetailModal = ref(false);
+const detailLoading = ref(false);
+const detailItems = ref([]);
+const detailHeader = ref({
+    nama: "",
+    grade: "-",
+});
 
 onMounted(() => {
     fetchItems();
@@ -101,6 +108,35 @@ function formatCurrency(val) {
         currency: "IDR",
         minimumFractionDigits: 0,
     }).format(val || 0);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return "-";
+    const [y, m, d] = dateStr.split("-");
+    return `${d}-${m}-${y}`;
+}
+
+async function openDetail(item) {
+    showDetailModal.value = true;
+    detailLoading.value = true;
+    detailItems.value = [];
+    detailHeader.value = {
+        nama: item.nama,
+        grade: item.grade?.nama || "-",
+    };
+    try {
+        const { data } = await api.get("/products/stock-details", {
+            params: {
+                master_product_id: item.master_product_id,
+                grade_id: item.grade_id || undefined,
+            },
+        });
+        detailItems.value = data.data || [];
+    } catch (error) {
+        toast.error("Gagal memuat detail SKU");
+    } finally {
+        detailLoading.value = false;
+    }
 }
 </script>
 
@@ -252,6 +288,11 @@ function formatCurrency(val) {
                             >
                                 Total Stok
                             </th>
+                            <th
+                                class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center"
+                            >
+                                Aksi
+                            </th>
                             <!-- <th
                                 class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right"
                             >
@@ -262,7 +303,7 @@ function formatCurrency(val) {
                     <tbody class="divide-y divide-slate-50">
                         <tr v-if="isLoading">
                             <td
-                                colspan="5"
+                                colspan="6"
                                 class="px-6 py-12 text-center text-slate-400"
                             >
                                 <div class="flex flex-col items-center gap-3">
@@ -280,7 +321,7 @@ function formatCurrency(val) {
                             class="transition-colors hover:bg-slate-50/50"
                         >
                             <td
-                                colspan="5"
+                                colspan="6"
                                 class="px-6 py-12 text-center text-slate-400"
                             >
                                 <div class="flex flex-col items-center gap-2">
@@ -373,6 +414,14 @@ function formatCurrency(val) {
                                     >Ready</span
                                 >
                             </td>
+                            <td class="px-6 py-4 text-center">
+                                <button
+                                    @click="openDetail(item)"
+                                    class="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100 transition"
+                                >
+                                    Detail
+                                </button>
+                            </td>
                             <!-- <td class="px-6 py-4 text-right">
                                 <div class="font-black text-blue-600">
                                     {{ formatCurrency(item.harga_jual) }}
@@ -424,6 +473,78 @@ function formatCurrency(val) {
                     >
                         Selanjutnya
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <div
+            v-if="showDetailModal"
+            class="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            @click.self="showDetailModal = false"
+        >
+            <div class="w-full max-w-6xl bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">
+                            Detail SKU
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            {{ detailHeader.nama }} - Grade: {{ detailHeader.grade }}
+                        </p>
+                    </div>
+                    <button
+                        @click="showDetailModal = false"
+                        class="p-2 rounded-lg text-slate-500 hover:bg-slate-200 transition"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Produk</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Invoice</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Supplier</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase">Grade</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Harga Beli</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Harga Jual</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase">Stok</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-if="detailLoading">
+                                <td colspan="7" class="px-4 py-8 text-center text-slate-500">Memuat detail...</td>
+                            </tr>
+                            <tr v-else-if="detailItems.length === 0">
+                                <td colspan="7" class="px-4 py-8 text-center text-slate-400">Tidak ada data detail SKU.</td>
+                            </tr>
+                            <tr v-for="row in detailItems" :key="row.id">
+                                <td class="px-4 py-3">
+                                    <div class="font-semibold text-slate-800">{{ row.nama }}</div>
+                                    <div class="text-xs text-slate-500 mt-1">
+                                        {{ row.barcode || "-" }}
+                                        <span v-if="row.imei1 || row.imei2">
+                                            | IMEI: {{ row.imei1 || "-" }} / {{ row.imei2 || "-" }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">
+                                    {{ row.invoice_pembelian || "-" }}
+                                    <div class="text-xs text-slate-500">
+                                        {{ formatDate(row.tanggal_pembelian) }}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-slate-700">{{ row.supplier || "-" }}</td>
+                                <td class="px-4 py-3 text-slate-700">{{ row.grade || "-" }}</td>
+                                <td class="px-4 py-3 text-right font-semibold text-slate-700">{{ formatCurrency(row.harga_modal) }}</td>
+                                <td class="px-4 py-3 text-right font-semibold text-blue-700">{{ formatCurrency(row.harga_jual) }}</td>
+                                <td class="px-4 py-3 text-center font-bold text-slate-800">{{ row.stok }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

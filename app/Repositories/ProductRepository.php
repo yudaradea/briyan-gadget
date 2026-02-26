@@ -132,6 +132,7 @@ class ProductRepository
         $data->getCollection()->transform(function ($item) {
             return [
                 'master_product_id' => $item->master_product_id,
+                'grade_id' => $item->grade_id,
                 'nama' => $item->nama,
                 'total_stok' => (int) $item->total_stok,
                 'harga_jual' => (float) $item->harga_jual,
@@ -143,6 +144,44 @@ class ProductRepository
         });
 
         return ResponseHelper::success($data, 'Grouped stock retrieved successfully');
+    }
+
+    public function groupedStockDetails(string $masterProductId, ?string $gradeId = null)
+    {
+        $products = Product::query()
+            ->with([
+                'masterProduct.brand',
+                'masterProduct.category',
+                'grade',
+                'purchaseItems.purchase.supplier',
+            ])
+            ->where('master_product_id', $masterProductId)
+            ->when($gradeId, fn($q) => $q->where('grade_id', $gradeId), fn($q) => $q->whereNull('grade_id'))
+            ->where('stok', '>', 0)
+            ->orderBy('created_at')
+            ->get()
+            ->map(function (Product $product) {
+                $purchaseItem = $product->purchaseItems->sortByDesc('created_at')->first();
+                $purchase = $purchaseItem?->purchase;
+
+                return [
+                    'id' => $product->id,
+                    'nama' => $product->nama,
+                    'barcode' => $product->barcode,
+                    'imei1' => $product->imei1,
+                    'imei2' => $product->imei2,
+                    'stok' => (int) $product->stok,
+                    'harga_modal' => (float) $product->harga_modal,
+                    'harga_jual' => (float) $product->harga_jual,
+                    'grade' => $product->grade?->nama,
+                    'invoice_pembelian' => $purchase?->no_invoice,
+                    'supplier' => $purchase?->supplier?->nama,
+                    'tanggal_pembelian' => optional($purchase?->tanggal)->format('Y-m-d'),
+                ];
+            })
+            ->values();
+
+        return ResponseHelper::success($products, 'Grouped stock details retrieved successfully');
     }
 
     private function resolveAvailableStock(Product $product): int

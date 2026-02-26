@@ -479,9 +479,7 @@ async function doDelete() {
                             <th class="w-32">Tanggal</th>
                             <th class="w-48">Keterangan</th>
                             <th class="w-28 text-left">Status</th>
-                            <th
-                                class="w-28 text-right sticky right-0 bg-slate-50 border-l border-slate-200 shadow-[-4px_0_10px_rgba(0,0,0,0.02)] z-20 px-6"
-                            >
+                            <th class="table-col-action-h">
                                 AKSI
                             </th>
                         </tr>
@@ -594,12 +592,8 @@ async function doDelete() {
                                 </span>
                             </td>
                             <!-- Sticky Ops Column for better UX -->
-                            <td
-                                class="table-cell sticky right-0 bg-white group-hover:bg-slate-50 border-l border-slate-200 z-10 text-right px-6"
-                            >
-                                <div
-                                    class="flex items-center justify-end gap-1"
-                                >
+                            <td class="table-col-action">
+                                <div class="table-actions">
                                     <button
                                         @click="printBarcode(item.purchase_id)"
                                         class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"

@@ -49,4 +49,17 @@ class ProductController extends Controller
             $request->query('brand_id')
         );
     }
+
+    public function stockDetails(Request $request)
+    {
+        $request->validate([
+            'master_product_id' => 'required|uuid|exists:master_products,id',
+            'grade_id' => 'nullable|uuid|exists:grades,id',
+        ]);
+
+        return $this->repository->groupedStockDetails(
+            $request->query('master_product_id'),
+            $request->query('grade_id')
+        );
+    }
 }

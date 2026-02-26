@@ -1,73 +1,84 @@
-# 📋 Roadmap & Task Progress — App Kasir
+﻿# App Kasir Task Tracker
 
-Status Proyek: **Batch 4 Completed (UX Polished) | Batch 5 Starting**
-Terakhir diperbarui: 2026-02-25 19:40
+Last update: 2026-02-27 (WIB, malam)
+Current phase: Service workflow stabilization and reporting alignment
 
----
+## Completed
 
-## ✅ Batch 1: Fondasi Database & Model (Selesai)
+### Core and Master Data
+- Database foundations (UUID models, roles, permissions, master tables)
+- Master data CRUD modules (brand, category, grade, unit, supplier, sales rep, tax)
+- Quick-add modal flow for master references
 
-- [x] Migrations (14 tabel inti: brands, products, purchases, sales, dll)
-- [x] Models dengan Trait UUID & relasi lengkap
-- [x] Role & Permission Seeder (Super Admin, Admin, Kasir)
-- [x] Master Data Seeders (Brand, Category, Grade, Satuan, Pajak)
+### Purchase and Stock
+- Purchase header and item flow with invoice generation
+- Catalog-based purchase input (category -> brand -> grade -> product)
+- Barcode generation strategy by product type
+- Stock summary by SKU (grouped)
+- SKU detail modal in stock summary (lot-level list, invoice, supplier, grade, buy/sell price)
 
-## ✅ Batch 2: Master Data CRUD (Selesai)
+### Sales and POS
+- POS transaction flow with discount, payment method, cashier handling
+- Sales list, filters, stats, and invoice print
+- FIFO HPP allocation for non-serialized stock
 
-- [x] Backend API dengan Repository Pattern (7 Modul)
-- [x] Frontend UI Master Data (Brand, Category, Grade, Unit, SalesRep, Supplier, Tax)
-- [x] Komponen Reusable (DataTable, ConfirmDialog, QuickAddModal)
+### Dashboard and Sidebar
+- Dashboard home cards and charts from backend summary endpoint
+- Sidebar logo and store name loaded from store settings
 
-## ✅ Batch 3: Stok Barang (Pembelian) & Barcode (Selesai)
+### Service Module
+- Service create/list/detail/edit/print flows
+- Sparepart suggestion and add/remove improvements
+- Cancel flow with modal option to restore stock or not
+- Status safeguard: cannot move from selesai back to dikerjakan
+- Service payment panel with discount and payment method
+- Discount mode supports percentage or nominal
+- Numeric inputs formatted with Indonesian thousands separator
+- Final payment locks transaction, auto marks as delivered, and auto opens invoice print
+- Detail page print button hidden when service already selesai
+- Service transaction menu added
+- Service transaction list uses sales endpoint with tipe=service
+- Service transaction list removes sales filter/column, shows sparepart summary
+- Service transaction detail modal enlarged and adapted for service context
+- Service invoice aligned to sales invoice template and includes service-specific rows
+- No service display standardized to short UUID (8 chars)
+- Service list width aligned with transaction list container style
+- Service print invoice: IMEI block removed from sparepart rows
+- Service print/detail invoice: biaya jasa no longer uses qty
+- Service list table alignment fix:
+  - kolom `Aksi` dirapikan agar icon tidak tumpang tindih
+  - kolom `Estimasi` header dan isi disejajarkan
+  - filter tanggal `sampai` tidak bisa lebih kecil dari `mulai`
 
-- [x] Header & Item Purchase CRUD
-- [x] Barcode Automation (BG-YYYYMMDD-XXXXX)
-- [x] Print Barcode A4 Layout
-- [x] **Bug Fixes & Refinement**:
-    - [x] Fix Image Upload (Multipart Boundary Issue)
-    - [x] Reusable Image Modal (Lightbox)
-    - [x] Form Request Validation (Purchase & Items)
-    - [x] Timezone Date fix (Default hari ini)
-    - [x] Column Alignment (Qty & Harga)
+### Timezone and Date Consistency
+- Laravel app timezone now reads `APP_TIMEZONE` from environment
+- Frontend default `tanggal_masuk` on Service Create now uses local date (non-UTC)
+- Sales invoice print date rendering no longer uses JS `Date` parsing (prevents UTC day-shift)
 
-## ✅ Batch 4: Transaksi Penjualan (POS) & Management (Selesai)
+### Invoice Identifier Logic
+- Sales API now includes `identifier_type` in item product payload
+- Sales invoice and transaction detail only show IMEI/SN when product type requires it
 
-- [x] Backend: SalesTransaction Repository & Controller (CRUD & Scopes)
-- [x] Backend: Advanced Filtering (By Date, Cashier, Salesperson)
-- [x] Backend: Real-time Stats API
-- [x] Frontend: POS View (Cart system, Tax, Discount)
-- [x] Frontend: Multi-Role POS (Admin can select Cashier, Kasir is locked)
-- [x] Frontend: Sales List with Advanced Filter & Real-time Stats Update
-- [x] Frontend: Print Nota Penjualan (Thermal & Standard)
-- [x] UI: End-Date Validation (Min-date attribute & Watcher)
-- [x] **UX Polish & Stability (Final Touch)**:
-    - [x] Standardize "AKSI" labels & Right-alignment
-    - [x] Fix Dashboard Sidebar layout (Sticky/Width)
-    - [x] Refine POS UI (Compact Search & Cart)
-    - [x] Fix Sold Items "Tanggal Terjual" & Add "No Transaksi Keluar"
-    - [x] Fix Invoice Print View `router` error
+### Reporting Module (NEW)
+- Backend endpoint laporan:
+  - `GET /api/reports/sales`
+  - `GET /api/reports/purchases`
+  - `GET /api/reports/profit`
+- Semua endpoint support:
+  - filter tanggal (`start_date`, `end_date`)
+  - validasi tanggal akhir `after_or_equal` tanggal mulai
+  - search
+  - pagination (`per_page`: 10/50/100)
+  - export excel (`export=excel`, CSV UTF-8 BOM)
+- Frontend pages laporan sekarang aktif penuh (bukan placeholder):
+  - [Laporan Penjualan & Service] dengan kolom tipe transaksi
+  - Laporan Pembelian
+  - Laba Rugi / HPP
+- Tiap halaman laporan sudah ada:
+  - filter tanggal + search + pagination
+  - Export PDF (print layout dari data terfilter)
+  - Export Excel (CSV)
 
-## 🧾 Batch 5: Role & User Management Refinement (Selesai)
-
-- [x] Implement **Owner** role (Permissions sync with Admin)
-- [x] Filter User Management to use relevant roles (Super Admin, Owner, Admin, Kasir)
-- [x] Secure System Roles from deletion (Super Admin, Admin, Owner, Kasir)
-- [x] Dynamic Cashier filtering in POS & Sales List (Only show 'kasir' role)
-
-## ⚒️ Batch 5: Service HP (Repair Order System)
-
-- [ ] Backend: ServiceOrders Migration & Model
-- [ ] Backend: ServiceStatus management (Waiting, Repairing, Completed, Cancelled)
-- [ ] Backend: Sparepart tracking in Service
-- [ ] Frontend: Service Order Form (Scanner integration for fast lookup)
-- [ ] Frontend: Service List with Status Tracking & Filtering
-- [ ] Frontend: Service Invoice Print
-
-## ⏳ Batch 6-7: Future Tasks
-
-- [ ] **Batch 6: Laporan & Dashboard** (Sales report, Profit/Loss, Charts)
-- [ ] **Batch 7: Maintenance & Polish** (Final testing, Performance optimization)
-
----
-
-_Gunakan file ini sebagai acuan utama progres pengerjaan kita._
+## Next
+- Add regression test checklist for service final payment and lock behavior
+- Optional UI polish: unify currency input component across POS, service, purchase

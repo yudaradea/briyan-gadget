@@ -29,9 +29,9 @@ class SaleController extends Controller
     /**
      * Get sales statistics
      */
-    public function stats()
+    public function stats(Request $request)
     {
-        return $this->repository->stats();
+        return $this->repository->stats($request->query('tipe'));
     }
 
     /**

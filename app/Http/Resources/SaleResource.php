@@ -36,6 +36,23 @@ class SaleResource extends JsonResource
             'jumlah_bayar' => (float) $this->jumlah_bayar,
             'kembalian' => (float) $this->kembalian,
             'tipe' => $this->tipe,
+            'service_order' => $this->whenLoaded('serviceOrder', function () {
+                if (!$this->serviceOrder) {
+                    return null;
+                }
+
+                return [
+                    'id' => $this->serviceOrder->id,
+                    'no_service' => strtoupper(substr((string) $this->serviceOrder->id, 0, 8)),
+                    'biaya_jasa' => (float) ($this->serviceOrder->biaya_jasa ?? 0),
+                    'parts' => $this->serviceOrder->parts->map(fn($part) => [
+                        'id' => $part->id,
+                        'nama_part' => $part->nama_part,
+                        'qty' => (int) $part->qty,
+                        'subtotal' => (float) $part->subtotal,
+                    ])->values(),
+                ];
+            }),
             'items' => $this->whenLoaded(
                 'items',
                 fn() =>
@@ -51,6 +68,7 @@ class SaleResource extends JsonResource
                         'brand' => $item->product->masterProduct?->brand?->nama,
                         'category' => $item->product->masterProduct?->category?->nama,
                         'unit' => $item->product->masterProduct?->unit?->nama,
+                        'identifier_type' => $item->product->masterProduct?->identifier_type ?? 'none',
                         'foto' => $item->product->foto,
                     ] : null,
                     'qty' => $item->qty,

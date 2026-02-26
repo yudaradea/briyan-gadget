@@ -12,6 +12,7 @@ class ServiceOrder extends Model
     use HasFactory, UUID, SoftDeletes;
 
     protected $fillable = [
+        'no_service',
         'sales_transaction_id',
         'nama_pelanggan',
         'no_hp_pelanggan',
@@ -41,7 +42,9 @@ class ServiceOrder extends Model
     {
         if (empty($search)) return $query;
         return $query->where(function ($q) use ($search) {
-            $q->where('nama_pelanggan', 'like', '%' . $search . '%')
+            $q->where('no_service', 'like', '%' . $search . '%')
+                ->orWhere('id', 'like', '%' . $search . '%')
+                ->orWhere('nama_pelanggan', 'like', '%' . $search . '%')
                 ->orWhere('merk_hp', 'like', '%' . $search . '%')
                 ->orWhere('tipe_hp', 'like', '%' . $search . '%')
                 ->orWhere('no_hp_pelanggan', 'like', '%' . $search . '%')

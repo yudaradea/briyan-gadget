@@ -6,7 +6,10 @@ use App\Helpers\ResponseHelper;
 use App\Models\ServiceOrder;
 use App\Models\ServicePart;
 use App\Models\Product;
+use App\Models\SaleItem;
+use App\Models\SalesTransaction;
 use App\Http\Resources\PaginateResource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ServiceRepository
@@ -55,6 +58,9 @@ class ServiceRepository
                 'status' => 'dikerjakan',
                 'tanggal_masuk' => $data['tanggal_masuk'] ?? now()->toDateString(),
             ]);
+            $service->update([
+                'no_service' => strtoupper(substr((string) $service->id, 0, 8)),
+            ]);
 
             if (!empty($data['parts'])) {
                 foreach ($data['parts'] as $part) {
@@ -101,7 +107,7 @@ class ServiceRepository
     public function updateStatus($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
-            $service = $this->model->with(['parts.product'])->findOrFail($id);
+            $service = $this->model->with(['parts.product', 'salesTransaction.items'])->findOrFail($id);
             $updateData = [];
             $restoreParts = array_key_exists('restore_parts', $data)
                 ? (bool) $data['restore_parts']
@@ -109,6 +115,14 @@ class ServiceRepository
             $statusToBatal = array_key_exists('status', $data)
                 && $data['status'] === 'batal'
                 && $service->status !== 'batal';
+            if (array_key_exists('status', $data) && $data['status'] !== null) {
+                if ($service->status === 'selesai' && $data['status'] === 'dikerjakan') {
+                    throw new \Exception('Status selesai tidak bisa dikembalikan ke proses.');
+                }
+                if ($service->status_pengambilan === 'sudah_diambil' && $data['status'] !== 'selesai') {
+                    throw new \Exception('Service yang sudah diserahkan tidak bisa diubah ke status lain.');
+                }
+            }
 
             if (array_key_exists('status', $data) && $data['status'] !== null) {
                 $updateData['status'] = $data['status'];
@@ -129,6 +143,12 @@ class ServiceRepository
             }
 
             if ($statusToBatal) {
+                if ($service->salesTransaction) {
+                    $service->salesTransaction->items()->delete();
+                    $service->salesTransaction->forceDelete();
+                    $updateData['sales_transaction_id'] = null;
+                }
+
                 if ($restoreParts) {
                     foreach ($service->parts as $part) {
                         if ($part->product) {
@@ -142,6 +162,19 @@ class ServiceRepository
 
             $service->update($updateData);
 
+            $hasPaymentPayload = array_key_exists('diskon_persen', $data)
+                || array_key_exists('diskon_nominal', $data)
+                || array_key_exists('metode_pembayaran', $data)
+                || array_key_exists('jumlah_bayar', $data);
+
+            if ($hasPaymentPayload && $service->fresh()->status === 'selesai') {
+                if ($service->fresh()->status_pengambilan === 'sudah_diambil') {
+                    throw new \Exception('Pembayaran sudah final dan transaksi service telah dikunci.');
+                }
+                $this->syncServiceTransaction($service->fresh()->load('parts.product', 'salesTransaction'), $data);
+                $service->update(['status_pengambilan' => 'sudah_diambil']);
+            }
+
             return ResponseHelper::success(
                 new \App\Http\Resources\ServiceOrderResource(
                     $service->fresh()->load(['parts.product', 'salesTransaction'])
@@ -149,6 +182,88 @@ class ServiceRepository
                 "Status updated successfully"
             );
         });
+    }
+
+    private function syncServiceTransaction(ServiceOrder $service, array $payload): void
+    {
+        $partsSubtotal = (float) $service->parts()->sum('subtotal');
+        $subtotal = (float) $service->biaya_jasa + $partsSubtotal;
+
+        $transaction = $service->salesTransaction;
+        $diskonPersen = (float) ($payload['diskon_persen'] ?? $transaction?->diskon_persen ?? 0);
+        $diskonNominalInput = (float) ($payload['diskon_nominal'] ?? $transaction?->diskon_nominal ?? 0);
+        $metodePembayaran = $payload['metode_pembayaran'] ?? $transaction?->metode_pembayaran ?? 'cash';
+        $taxPersen = (float) ($transaction?->tax_persen ?? 0);
+
+        $diskonNominal = $diskonPersen > 0
+            ? ($subtotal * ($diskonPersen / 100))
+            : $diskonNominalInput;
+        $afterDiskon = max($subtotal - $diskonNominal, 0);
+        $taxNominal = $afterDiskon * ($taxPersen / 100);
+        $grandTotal = $afterDiskon + $taxNominal;
+
+        $jumlahBayarInput = (float) ($payload['jumlah_bayar'] ?? $transaction?->jumlah_bayar ?? 0);
+        if ($metodePembayaran !== 'cash') {
+            $jumlahBayar = $grandTotal;
+            $kembalian = 0;
+        } else {
+            $jumlahBayar = $jumlahBayarInput;
+            $kembalian = $jumlahBayar > $grandTotal ? ($jumlahBayar - $grandTotal) : 0;
+        }
+
+        $txData = [
+            'tanggal' => $service->tanggal_selesai ?? now()->toDateString(),
+            'pelanggan' => $service->nama_pelanggan,
+            'user_id' => Auth::id() ?? $transaction?->user_id,
+            'sales_rep_id' => null,
+            'subtotal' => $subtotal,
+            'diskon_persen' => $diskonPersen,
+            'diskon_nominal' => $diskonNominal,
+            'tax_id' => null,
+            'tax_persen' => $taxPersen,
+            'tax_nominal' => $taxNominal,
+            'grand_total' => $grandTotal,
+            'metode_pembayaran' => $metodePembayaran,
+            'jumlah_bayar' => $jumlahBayar,
+            'kembalian' => $kembalian,
+            'tipe' => 'service',
+        ];
+
+        if (!$transaction) {
+            $transaction = SalesTransaction::create(array_merge($txData, [
+                'no_invoice' => $this->generateServiceInvoiceNumber(),
+            ]));
+            $service->update(['sales_transaction_id' => $transaction->id]);
+        } else {
+            $transaction->update($txData);
+            $transaction->items()->delete();
+        }
+
+        foreach ($service->parts as $part) {
+            SaleItem::create([
+                'sales_transaction_id' => $transaction->id,
+                'product_id' => $part->product_id,
+                'qty' => $part->qty,
+                'harga_satuan' => $part->harga_satuan,
+                'subtotal' => $part->subtotal,
+                'hpp_total' => (float) (($part->product?->harga_modal ?? 0) * $part->qty),
+            ]);
+        }
+    }
+
+    private function generateServiceInvoiceNumber(): string
+    {
+        $prefix = 'INV-SRV';
+        $date = now()->format('Ymd');
+
+        $latest = SalesTransaction::withTrashed()
+            ->where('no_invoice', 'like', "{$prefix}-{$date}-%")
+            ->orderByDesc('no_invoice')
+            ->value('no_invoice');
+
+        $nextNum = $latest ? ((int) substr($latest, -4) + 1) : 1;
+
+        return sprintf('%s-%s-%04d', $prefix, $date, $nextNum);
     }
 
     public function addPart($id, array $data)

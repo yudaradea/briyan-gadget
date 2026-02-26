@@ -179,6 +179,12 @@ const router = createRouter({
                     meta: { requiresAdmin: true },
                 },
                 {
+                    path: "service-transactions",
+                    name: "service-transaction-list",
+                    component: () => import("../views/sales/SalesListView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
                     path: "pos/:id/invoice",
                     name: "pos-invoice",
                     component: () =>

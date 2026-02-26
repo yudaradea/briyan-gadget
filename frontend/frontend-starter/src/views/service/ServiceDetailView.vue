@@ -3,7 +3,6 @@ import { ref, onMounted, onBeforeUnmount, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
-import QuickAddModal from "../../components/QuickAddModal.vue";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 
 const route = useRoute();
@@ -14,6 +13,8 @@ const serviceId = route.params.id;
 const service = ref(null);
 const isLoading = ref(true);
 const isUpdatingStatus = ref(false);
+const cancelModalOpen = ref(false);
+const savingPayment = ref(false);
 
 // Spareparts management
 const showAddPart = ref(false);
@@ -27,6 +28,14 @@ const partForm = ref({
     qty: 1,
     harga_satuan: 0,
 });
+const paymentForm = ref({
+    discount_type: "percent",
+    discount_value: 0,
+    metode_pembayaran: "cash",
+    jumlah_bayar: 0,
+});
+const discountNominalDisplay = ref("");
+const amountPaidDisplay = ref("");
 
 const confirmState = ref({
     show: false,
@@ -47,6 +56,21 @@ async function fetchService(quiet = false) {
     try {
         const { data } = await api.get(`/services/${serviceId}`);
         service.value = data.data;
+        const diskonPersen = Number(service.value.transaction?.diskon_persen || 0);
+        const diskonNominal = Number(service.value.transaction?.diskon_nominal || 0);
+        paymentForm.value.discount_type = diskonPersen > 0 ? "percent" : "nominal";
+        paymentForm.value.discount_value =
+            paymentForm.value.discount_type === "percent" ? diskonPersen : diskonNominal;
+        paymentForm.value.metode_pembayaran =
+            service.value.transaction?.metode_pembayaran || "cash";
+        paymentForm.value.jumlah_bayar =
+            Number(
+                service.value.transaction?.jumlah_bayar ||
+                    service.value.grand_total ||
+                    0,
+            );
+        discountNominalDisplay.value = formatNumberInput(diskonNominal);
+        amountPaidDisplay.value = formatNumberInput(paymentForm.value.jumlah_bayar);
     } catch (err) {
         toast.error("Gagal memuat detail service");
     } finally {
@@ -55,30 +79,16 @@ async function fetchService(quiet = false) {
 }
 
 async function updateStatus(status) {
-    const payload = { status };
-
     if (status === "batal") {
-        const confirmCancel = window.confirm("Batalkan service ini?");
-        if (!confirmCancel) return;
-
-        const restoreParts = window.confirm(
-            "Kembalikan sparepart ke stok?\nOK = Ya, kembalikan\nCancel = Tidak, tetap keluar dari stok"
-        );
-        payload.restore_parts = restoreParts;
+        cancelModalOpen.value = true;
+        return;
     }
+    const payload = { status };
 
     isUpdatingStatus.value = true;
     try {
         await api.patch(`/services/${serviceId}/status`, payload);
-        if (status === "batal") {
-            toast.success(
-                payload.restore_parts
-                    ? "Service dibatalkan dan sparepart dikembalikan ke stok"
-                    : "Service dibatalkan tanpa pengembalian sparepart ke stok"
-            );
-        } else {
-            toast.success(`Status perbaikan diubah ke ${statusLabels[status]}`);
-        }
+        toast.success(`Status perbaikan diubah ke ${statusLabels[status]}`);
         await fetchService(true);
     } catch (err) {
         toast.error(err.response?.data?.message || "Gagal mengubah status");
@@ -106,13 +116,6 @@ async function doHandover() {
             status_pengambilan: "sudah_diambil",
         });
         toast.success("Unit telah diserahkan ke pelanggan");
-
-        // If it was successful, offer to print invoice
-        if (service.value.status === "selesai") {
-            const printConfirmed = confirm("Cetak Nota / Invoice sekarang?");
-            if (printConfirmed) printService();
-        }
-
         await fetchService(true);
     } catch (err) {
         toast.error("Gagal memproses penyerahan");
@@ -225,6 +228,117 @@ async function handleConfirm() {
     }
 }
 
+async function cancelService(restoreParts) {
+    isUpdatingStatus.value = true;
+    try {
+        await api.patch(`/services/${serviceId}/status`, {
+            status: "batal",
+            restore_parts: restoreParts,
+        });
+        toast.success(
+            restoreParts
+                ? "Service dibatalkan dan sparepart dikembalikan ke stok"
+                : "Service dibatalkan tanpa pengembalian sparepart ke stok",
+        );
+        cancelModalOpen.value = false;
+        await fetchService(true);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal membatalkan service");
+    } finally {
+        isUpdatingStatus.value = false;
+    }
+}
+
+const paymentSummary = computed(() => {
+    const subtotal = Number(service.value?.grand_total || 0);
+    const diskonNominal =
+        paymentForm.value.discount_type === "percent"
+            ? subtotal * (Number(paymentForm.value.discount_value || 0) / 100)
+            : Number(paymentForm.value.discount_value || 0);
+    const grandTotal = Math.max(subtotal - diskonNominal, 0);
+    const jumlahBayar =
+        paymentForm.value.metode_pembayaran === "cash"
+            ? Number(paymentForm.value.jumlah_bayar || 0)
+            : grandTotal;
+    const kembalian = Math.max(jumlahBayar - grandTotal, 0);
+
+    return {
+        subtotal,
+        diskonNominal,
+        grandTotal,
+        jumlahBayar,
+        kembalian,
+    };
+});
+
+async function savePayment() {
+    if (paymentLocked.value) return;
+    savingPayment.value = true;
+    try {
+        const diskonPersen =
+            paymentForm.value.discount_type === "percent"
+                ? Number(paymentForm.value.discount_value || 0)
+                : 0;
+        const diskonNominal =
+            paymentForm.value.discount_type === "nominal"
+                ? Number(paymentForm.value.discount_value || 0)
+                : 0;
+
+        await api.patch(`/services/${serviceId}/status`, {
+            diskon_persen: diskonPersen,
+            diskon_nominal: diskonNominal,
+            metode_pembayaran: paymentForm.value.metode_pembayaran,
+            jumlah_bayar:
+                paymentForm.value.metode_pembayaran === "cash"
+                    ? Number(paymentForm.value.jumlah_bayar || 0)
+                    : paymentSummary.value.grandTotal,
+        });
+        toast.success("Pembayaran service berhasil disimpan");
+        await fetchService(true);
+        if (service.value?.transaction?.id) {
+            window.open(
+                `/dashboard/pos/${service.value.transaction.id}/invoice`,
+                "_blank",
+            );
+        }
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal menyimpan pembayaran");
+    } finally {
+        savingPayment.value = false;
+    }
+}
+
+const paymentLocked = computed(() => {
+    return service.value?.status_pengambilan === "sudah_diambil";
+});
+
+function formatNumberInput(value) {
+    const num = Number(value || 0);
+    return new Intl.NumberFormat("id-ID").format(num);
+}
+
+function parseNumberInput(value) {
+    const clean = String(value || "").replace(/[^\d]/g, "");
+    return Number(clean || 0);
+}
+
+function onDiscountNominalInput(event) {
+    const num = parseNumberInput(event.target.value);
+    paymentForm.value.discount_value = num;
+    discountNominalDisplay.value = formatNumberInput(num);
+}
+
+function onAmountPaidInput(event) {
+    const num = parseNumberInput(event.target.value);
+    paymentForm.value.jumlah_bayar = num;
+    amountPaidDisplay.value = formatNumberInput(num);
+}
+
+function onDiscountTypeChange() {
+    paymentForm.value.discount_value = 0;
+    discountNominalDisplay.value = "0";
+}
+
 const printService = () => {
     window.open(`/dashboard/services/${serviceId}/print`, "_blank");
 };
@@ -304,7 +418,7 @@ function formatDate(dateStr) {
                     <h1
                         class="text-2xl font-bold tracking-tight text-slate-800"
                     >
-                        Detail Service #{{ service.id.substring(0, 8) }}
+                        Detail Service #{{ service.no_service || service.id.substring(0, 8) }}
                     </h1>
                     <div class="flex items-center gap-2 mt-1">
                         <span
@@ -362,7 +476,11 @@ function formatDate(dateStr) {
                         v-for="key in ['dikerjakan', 'selesai', 'batal']"
                         :key="key"
                         @click="updateStatus(key)"
-                        :disabled="isUpdatingStatus || service.status === key"
+                        :disabled="
+                            isUpdatingStatus ||
+                            service.status === key ||
+                            (service.status === 'selesai' && key === 'dikerjakan')
+                        "
                         :class="[
                             service.status === key
                                 ? 'bg-white text-blue-600 shadow-sm border-slate-200'
@@ -410,6 +528,7 @@ function formatDate(dateStr) {
                 ></div>
 
                 <button
+                    v-if="service.status !== 'selesai'"
                     @click="printService"
                     class="bg-white border-2 border-slate-100 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all inline-flex items-center gap-2 active:scale-95"
                 >
@@ -820,10 +939,10 @@ function formatDate(dateStr) {
                                 formatCurrency(service.total_biaya_parts)
                             }}</span>
                         </div>
-                        <div class="flex items-center justify-between pt-3">
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
                             <span
                                 class="text-base font-black tracking-widest uppercase text-slate-800"
-                                >Total Biaya Akhir</span
+                                >Subtotal Tagihan</span
                             >
                             <div class="text-right">
                                 <span
@@ -838,6 +957,130 @@ function formatDate(dateStr) {
                                 >
                             </div>
                         </div>
+
+                        <template v-if="service.status === 'selesai'">
+                            <div class="pt-4 space-y-4 border-t border-slate-100">
+                                <h4 class="text-xs font-black uppercase tracking-widest text-slate-600">
+                                    Pembayaran Service
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                            Jenis Diskon
+                                        </label>
+                                        <select
+                                            v-model="paymentForm.discount_type"
+                                            @change="onDiscountTypeChange"
+                                            :disabled="paymentLocked"
+                                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
+                                        >
+                                            <option value="percent">Persentase (%)</option>
+                                            <option value="nominal">Nominal (Rp)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                            {{
+                                                paymentForm.discount_type === "percent"
+                                                    ? "Nilai Diskon (%)"
+                                                    : "Nilai Diskon (Rp)"
+                                            }}
+                                        </label>
+                                        <input
+                                            v-if="paymentForm.discount_type === 'percent'"
+                                            v-model.number="paymentForm.discount_value"
+                                            :disabled="paymentLocked"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
+                                        />
+                                        <div v-else class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
+                                            <input
+                                                :value="discountNominalDisplay"
+                                                @input="onDiscountNominalInput"
+                                                :disabled="paymentLocked"
+                                                type="text"
+                                                inputmode="numeric"
+                                                class="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                            Metode Pembayaran
+                                        </label>
+                                        <select
+                                            v-model="paymentForm.metode_pembayaran"
+                                            :disabled="paymentLocked"
+                                            class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
+                                        >
+                                            <option value="cash">Cash</option>
+                                            <option value="transfer">Transfer</option>
+                                            <option value="qris">QRIS</option>
+                                        </select>
+                                    </div>
+                                    <div v-if="paymentForm.metode_pembayaran === 'cash'">
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                            Uang Dibayar
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
+                                            <input
+                                                :value="amountPaidDisplay"
+                                                @input="onAmountPaidInput"
+                                                :disabled="paymentLocked"
+                                                type="text"
+                                                inputmode="numeric"
+                                                class="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-slate-500">Subtotal</span>
+                                        <span class="font-black text-slate-800">{{ formatCurrency(paymentSummary.subtotal) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-slate-500">Diskon</span>
+                                        <span class="font-black text-rose-600">- {{ formatCurrency(paymentSummary.diskonNominal) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm border-t border-slate-200 pt-2">
+                                        <span class="text-slate-500">Total Tagihan</span>
+                                        <span class="font-black text-slate-800">{{ formatCurrency(paymentSummary.grandTotal) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm" v-if="paymentForm.metode_pembayaran === 'cash'">
+                                        <span class="text-slate-500">Uang Dibayar</span>
+                                        <span class="font-black text-blue-600">{{ formatCurrency(paymentSummary.jumlahBayar) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm" v-if="paymentForm.metode_pembayaran === 'cash'">
+                                        <span class="text-slate-500">Kembalian</span>
+                                        <span class="font-black text-emerald-600">{{ formatCurrency(paymentSummary.kembalian) }}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    @click="savePayment"
+                                    :disabled="savingPayment || paymentLocked"
+                                    class="w-full py-3 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-blue-700 disabled:opacity-50 transition"
+                                >
+                                    {{
+                                        paymentLocked
+                                            ? "Pembayaran Sudah Final"
+                                            : savingPayment
+                                              ? "Menyimpan..."
+                                              : "Selesaikan Pembayaran"
+                                    }}
+                                </button>
+                                <p
+                                    v-if="paymentLocked"
+                                    class="text-[11px] text-emerald-700 font-semibold text-center"
+                                >
+                                    Transaksi service sudah selesai, unit sudah diserahkan, dan data terkunci.
+                                </p>
+                            </div>
+                        </template>
                     </div>
                     <div
                         class="p-5 text-center border-t bg-blue-600/5 border-blue-600/10"
@@ -1087,6 +1330,39 @@ function formatDate(dateStr) {
             @confirm="handleConfirm"
             @cancel="closeConfirm"
         />
+        <div
+            v-if="cancelModalOpen"
+            class="fixed inset-0 z-[90] bg-black/45 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+            <div class="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-xl p-6">
+                <h3 class="text-lg font-black text-slate-800">Batalkan Service</h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Pilih perlakuan sparepart saat service dibatalkan.
+                </p>
+                <div class="mt-5 grid gap-3">
+                    <button
+                        @click="cancelService(true)"
+                        :disabled="isUpdatingStatus"
+                        class="w-full py-2.5 rounded-xl bg-amber-500 text-white text-xs font-black uppercase tracking-wider hover:bg-amber-600 disabled:opacity-50 transition"
+                    >
+                        Batalkan + Kembalikan Sparepart ke Stok
+                    </button>
+                    <button
+                        @click="cancelService(false)"
+                        :disabled="isUpdatingStatus"
+                        class="w-full py-2.5 rounded-xl bg-rose-600 text-white text-xs font-black uppercase tracking-wider hover:bg-rose-700 disabled:opacity-50 transition"
+                    >
+                        Batalkan Tanpa Kembalikan Sparepart
+                    </button>
+                    <button
+                        @click="cancelModalOpen = false"
+                        class="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-black uppercase tracking-wider hover:bg-slate-50 transition"
+                    >
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 

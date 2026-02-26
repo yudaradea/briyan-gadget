@@ -11,6 +11,7 @@ class ServiceOrderResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'no_service' => strtoupper(substr((string) $this->id, 0, 8)),
             'sales_transaction_id' => $this->sales_transaction_id,
             'nama_pelanggan' => $this->nama_pelanggan,
             'no_hp_pelanggan' => $this->no_hp_pelanggan,
@@ -49,6 +50,16 @@ class ServiceOrderResource extends JsonResource
             'transaction' => $this->whenLoaded('salesTransaction', fn() => [
                 'id' => $this->salesTransaction->id,
                 'no_invoice' => $this->salesTransaction->no_invoice,
+                'tanggal' => optional($this->salesTransaction->tanggal)->format('Y-m-d'),
+                'subtotal' => (float) $this->salesTransaction->subtotal,
+                'diskon_persen' => (float) $this->salesTransaction->diskon_persen,
+                'diskon_nominal' => (float) $this->salesTransaction->diskon_nominal,
+                'tax_persen' => (float) $this->salesTransaction->tax_persen,
+                'tax_nominal' => (float) $this->salesTransaction->tax_nominal,
+                'grand_total' => (float) $this->salesTransaction->grand_total,
+                'metode_pembayaran' => $this->salesTransaction->metode_pembayaran,
+                'jumlah_bayar' => (float) $this->salesTransaction->jumlah_bayar,
+                'kembalian' => (float) $this->salesTransaction->kembalian,
             ]),
         ];
     }

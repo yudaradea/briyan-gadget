@@ -250,7 +250,7 @@ onMounted(() => {
                             <th class="w-40">Joined</th>
                             <th
                                 v-if="authStore.isAdmin"
-                                class="w-32 text-right px-6"
+                                class="w-32 text-center"
                             >
                                 Aksi
                             </th>

@@ -39,7 +39,7 @@
     }
 
     .table-header th {
-        @apply px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest;
+        @apply px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap align-middle;
     }
 
     .table-row {
@@ -49,10 +49,38 @@
     .table-cell {
         @apply px-4 py-3.5 text-sm align-middle;
     }
+
+    .table-header th.text-right {
+        text-align: right;
+    }
+
+    .table-cell.text-right {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .table-col-action-h {
+        @apply sticky right-0 z-20 w-36 px-4 text-center border-l bg-slate-50 border-slate-200;
+    }
+
+    .table-col-action {
+        @apply sticky right-0 z-10 table-cell px-4 text-center bg-white border-l border-slate-100 group-hover:bg-slate-50;
+    }
+
+    .table-actions {
+        @apply flex items-center justify-center gap-2;
+    }
 }
 
 .animate-in-fade {
     animation: fadeIn 0.3s ease-out;
+}
+
+table th.text-right,
+table td.text-right {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 @keyframes fadeIn {

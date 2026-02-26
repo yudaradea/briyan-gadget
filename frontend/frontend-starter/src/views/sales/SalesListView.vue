@@ -1,13 +1,17 @@
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 import debounce from "lodash-es/debounce";
 import { useAuthStore } from "../../stores/auth";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
+import { useRoute } from "vue-router";
 
 const toast = useToast();
 const authStore = useAuthStore();
+const route = useRoute();
+const isServiceMode = computed(() => route.name === "service-transaction-list");
+const transactionType = computed(() => (isServiceMode.value ? "service" : "penjualan"));
 
 const sales = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
@@ -37,12 +41,13 @@ onMounted(() => {
 
 const loadFilterOptions = async () => {
     try {
-        const [uRes, sRes] = await Promise.all([
-            api.get("/user/all?role=kasir"),
-            api.get("/sales-reps/all"),
-        ]);
+        const requests = [api.get("/user/all?role=kasir")];
+        if (!isServiceMode.value) {
+            requests.push(api.get("/sales-reps/all"));
+        }
+        const [uRes, sRes] = await Promise.all(requests);
         users.value = uRes.data.data;
-        salesReps.value = sRes.data.data;
+        salesReps.value = sRes?.data?.data || [];
     } catch (e) {
         console.error("Gagal memuat opsi filter", e);
     }
@@ -50,7 +55,9 @@ const loadFilterOptions = async () => {
 
 const fetchStats = async () => {
     try {
-        const res = await api.get("/sales/stats");
+        const res = await api.get("/sales/stats", {
+            params: { tipe: transactionType.value },
+        });
         stats.value = res.data.data;
     } catch (e) {
         console.error("Gagal memuat stats", e);
@@ -68,7 +75,10 @@ const fetchSales = async (page = 1) => {
                 start_date: filters.value.start_date,
                 end_date: filters.value.end_date,
                 user_id: filters.value.user_id,
-                sales_rep_id: filters.value.sales_rep_id,
+                sales_rep_id: isServiceMode.value
+                    ? undefined
+                    : filters.value.sales_rep_id,
+                tipe: transactionType.value,
             },
         });
         sales.value = res.data.data.data;
@@ -91,6 +101,13 @@ const throttledSearch = debounce(() => {
 
 watch(searchQuery, () => {
     throttledSearch();
+});
+
+watch(transactionType, () => {
+    filters.value.sales_rep_id = "";
+    fetchSales(1);
+    fetchStats();
+    loadFilterOptions();
 });
 
 watch(perPage, () => {
@@ -131,7 +148,11 @@ const deleteSale = async () => {
     deleteLoading.value = true;
     try {
         await api.delete(`/sales/${saleToDelete.value}`);
-        toast.success("Transaksi dihapus dan stok dikembalikan");
+        toast.success(
+            isServiceMode.value
+                ? "Transaksi service dihapus"
+                : "Transaksi dihapus dan stok dikembalikan",
+        );
         showDeleteDialog.value = false;
         fetchSales(pagination.value.current_page);
         fetchStats(); // Update stats cards immediately
@@ -178,13 +199,51 @@ function formatDate(dateStr) {
     const year = y && y.length > 4 ? y.substring(0, 4) : y;
     return `${d}-${m}-${year}`;
 }
+
+function getProductIdentifierLines(product) {
+    if (!product) return [];
+
+    const identifierType = String(product.identifier_type || "none");
+    const imei1 = product.imei1 ? String(product.imei1).trim() : "";
+    const imei2 = product.imei2 ? String(product.imei2).trim() : "";
+    const serial = product.barcode ? String(product.barcode).trim() : "";
+
+    if (identifierType === "imei1") {
+        return imei1 ? [`IMEI: ${imei1}`] : [];
+    }
+
+    if (identifierType === "imei2") {
+        const lines = [];
+        if (imei1) lines.push(`IMEI 1: ${imei1}`);
+        if (imei2) lines.push(`IMEI 2: ${imei2}`);
+        return lines;
+    }
+
+    if (identifierType === "serial") {
+        return serial ? [`SN: ${serial}`] : [];
+    }
+
+    return [];
+}
+
+function servicePartsSummary(sale) {
+    const parts = sale?.service_order?.parts || [];
+    if (!parts.length) return "-";
+    return parts
+        .slice(0, 2)
+        .map((p) => `${p.nama_part} (${p.qty})`)
+        .join(", ");
+}
 </script>
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
         <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-slate-800">Data Penjualan</h1>
+            <h1 class="text-2xl font-bold text-slate-800">
+                {{ isServiceMode ? "Transaksi Service" : "Data Penjualan" }}
+            </h1>
             <router-link
+                v-if="!isServiceMode"
                 to="/dashboard/pos"
                 class="px-4 py-2 font-medium text-white transition bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700"
             >
@@ -201,7 +260,7 @@ function formatDate(dateStr) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-rose-100"
                     >
-                        Penjualan Hari Ini
+                        {{ isServiceMode ? "Service Hari Ini" : "Penjualan Hari Ini" }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.today) }}
@@ -224,7 +283,7 @@ function formatDate(dateStr) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider text-blue-100 uppercase"
                     >
-                        Penjualan Bulan Ini
+                        {{ isServiceMode ? "Service Bulan Ini" : "Penjualan Bulan Ini" }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.month) }}
@@ -247,7 +306,7 @@ function formatDate(dateStr) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-amber-100"
                     >
-                        Penjualan Tahun Ini
+                        {{ isServiceMode ? "Service Tahun Ini" : "Penjualan Tahun Ini" }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.year) }}
@@ -270,7 +329,7 @@ function formatDate(dateStr) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-slate-400"
                     >
-                        Total Seluruh Penjualan
+                        {{ isServiceMode ? "Total Seluruh Service" : "Total Seluruh Penjualan" }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.total) }}
@@ -297,7 +356,10 @@ function formatDate(dateStr) {
             >
                 <!-- Left Side: Advanced Filters -->
                 <div
-                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-4 lg:flex md:w-auto"
+                    :class="[
+                        'grid w-full gap-3 lg:flex md:w-auto',
+                        isServiceMode ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4',
+                    ]"
                 >
                     <div class="flex flex-col gap-1">
                         <label
@@ -360,7 +422,7 @@ function formatDate(dateStr) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1" v-if="!isServiceMode">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sales</label
@@ -510,13 +572,12 @@ function formatDate(dateStr) {
                             <th class="w-32">Tanggal</th>
                             <th class="w-48">Pelanggan</th>
                             <th class="w-32">Kasir</th>
-                            <th class="w-32">Sales</th>
+                            <th v-if="!isServiceMode" class="w-32">Sales</th>
+                            <th v-else class="w-56">Sparepart Digunakan</th>
                             <th class="w-40 text-right">Sub Total</th>
                             <th class="w-20 text-center">Qty</th>
                             <th class="w-40 text-right">Uang Masuk</th>
-                            <th
-                                class="sticky right-0 z-20 w-32 px-6 text-right border-l bg-slate-50 border-slate-200"
-                            >
+                            <th class="table-col-action-h">
                                 AKSI
                             </th>
                         </tr>
@@ -524,7 +585,7 @@ function formatDate(dateStr) {
                     <tbody class="bg-white divide-y divide-slate-200">
                         <tr v-if="isLoading">
                             <td
-                                colspan="10"
+                                :colspan="isServiceMode ? 10 : 10"
                                 class="px-6 py-12 text-center text-slate-500"
                             >
                                 <div class="flex flex-col items-center gap-2">
@@ -539,10 +600,14 @@ function formatDate(dateStr) {
                         </tr>
                         <tr v-else-if="sales.length === 0">
                             <td
-                                colspan="10"
+                                :colspan="isServiceMode ? 10 : 10"
                                 class="px-6 py-12 italic text-center text-slate-500"
                             >
-                                Tidak ada data penjualan ditemukan.
+                                {{
+                                    isServiceMode
+                                        ? "Tidak ada data transaksi service ditemukan."
+                                        : "Tidak ada data penjualan ditemukan."
+                                }}
                             </td>
                         </tr>
                         <tr
@@ -575,9 +640,16 @@ function formatDate(dateStr) {
                                 {{ s.user?.name || "-" }}
                             </td>
                             <td
+                                v-if="!isServiceMode"
                                 class="table-cell text-slate-500 uppercase text-[10px] font-bold"
                             >
                                 {{ s.sales_rep?.nama || "-" }}
+                            </td>
+                            <td
+                                v-else
+                                class="table-cell text-slate-600 text-[11px] font-semibold"
+                            >
+                                {{ servicePartsSummary(s) }}
                             </td>
                             <td
                                 class="table-cell font-bold text-right text-slate-600"
@@ -594,12 +666,8 @@ function formatDate(dateStr) {
                             >
                                 {{ formatCurrency(s.grand_total) }}
                             </td>
-                            <td
-                                class="sticky right-0 z-10 table-cell px-6 text-right bg-white border-l group-hover:bg-slate-50 border-slate-100"
-                            >
-                                <div
-                                    class="flex items-center justify-end gap-1"
-                                >
+                            <td class="table-col-action">
+                                <div class="table-actions">
                                     <button
                                         @click="viewDetails(s)"
                                         class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
@@ -620,6 +688,7 @@ function formatDate(dateStr) {
                                         </svg>
                                     </button>
                                     <router-link
+                                        v-if="!isServiceMode"
                                         :to="`/dashboard/pos?edit_id=${s.id}`"
                                         class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
                                         title="Edit Transaksi"
@@ -739,13 +808,17 @@ function formatDate(dateStr) {
                 @click="closeDetailModal"
             ></div>
             <div
-                class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden"
+                class="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden"
             >
                 <div
                     class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50"
                 >
                     <h3 class="text-lg font-bold text-slate-800">
-                        Detail Transaksi Penjualan
+                        {{
+                            isServiceMode
+                                ? "Detail Transaksi Service"
+                                : "Detail Transaksi Penjualan"
+                        }}
                     </h3>
                     <div class="flex items-center gap-3">
                         <router-link
@@ -820,10 +893,12 @@ function formatDate(dateStr) {
                         >
                             <span
                                 class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
-                                >Pelanggan</span
+                                >{{ isServiceMode ? "No. Service" : "Pelanggan" }}</span
                             >
                             <span class="block font-bold text-slate-800">{{
-                                selectedSale.pelanggan || "Umum"
+                                isServiceMode
+                                    ? selectedSale.service_order?.no_service || "-"
+                                    : selectedSale.pelanggan || "Umum"
                             }}</span>
                         </div>
                         <div
@@ -831,11 +906,12 @@ function formatDate(dateStr) {
                         >
                             <span
                                 class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
-                                >Kasir / Sales</span
+                                >{{ isServiceMode ? "Kasir" : "Kasir / Sales" }}</span
                             >
                             <span class="block font-bold text-slate-800"
                                 >{{ selectedSale.user?.name }}
-                                <span v-if="selectedSale.sales_rep"
+                                <span
+                                    v-if="!isServiceMode && selectedSale.sales_rep"
                                     >/ {{ selectedSale.sales_rep.nama }}</span
                                 ></span
                             >
@@ -844,7 +920,7 @@ function formatDate(dateStr) {
 
                     <!-- Item Table -->
                     <h4 class="mb-3 ml-1 text-sm font-bold text-slate-800">
-                        Daftar Produk
+                        {{ isServiceMode ? "Daftar Sparepart" : "Daftar Produk" }}
                     </h4>
                     <div
                         class="mb-8 overflow-hidden border border-slate-200 rounded-xl"
@@ -862,7 +938,7 @@ function formatDate(dateStr) {
                                     <th
                                         class="px-4 py-3 text-xs tracking-wider uppercase"
                                     >
-                                        Produk Info
+                                        {{ isServiceMode ? "Sparepart" : "Produk Info" }}
                                     </th>
                                     <th
                                         class="px-4 py-3 text-xs tracking-wider text-right uppercase"
@@ -905,9 +981,13 @@ function formatDate(dateStr) {
                                 >
                                     <td
                                         colspan="5"
-                                        class="py-8 italic text-center text-slate-400"
-                                    >
-                                        Tidak ada produk dalam transaksi ini.
+                                    class="py-8 italic text-center text-slate-400"
+                                >
+                                        {{
+                                            isServiceMode
+                                                ? "Tidak ada sparepart dalam transaksi service ini."
+                                                : "Tidak ada produk dalam transaksi ini."
+                                        }}
                                     </td>
                                 </tr>
                                 <tr
@@ -924,13 +1004,17 @@ function formatDate(dateStr) {
                                             {{ item.product?.nama || "-" }}
                                         </div>
                                         <div
+                                            v-if="
+                                                !isServiceMode &&
+                                                getProductIdentifierLines(item.product).length > 0
+                                            "
                                             class="mt-1 font-mono text-xs leading-relaxed text-slate-500"
                                         >
-                                            <div>
-                                                IMEI 1:
-                                                {{ item.product?.imei1 || "-" }}
-                                                | IMEI 2:
-                                                {{ item.product?.imei2 || "-" }}
+                                            <div
+                                                v-for="(line, lineIndex) in getProductIdentifierLines(item.product)"
+                                                :key="`identifier-${item.id}-${lineIndex}`"
+                                            >
+                                                {{ line }}
                                             </div>
                                         </div>
                                     </td>
@@ -950,6 +1034,41 @@ function formatDate(dateStr) {
                                         {{ formatCurrency(item.subtotal) }}
                                     </td>
                                 </tr>
+                                <tr
+                                    v-if="
+                                        isServiceMode &&
+                                        (selectedSale.service_order?.biaya_jasa || 0) > 0
+                                    "
+                                    class="hover:bg-slate-50/50"
+                                >
+                                    <td class="px-4 py-3 align-top">
+                                        {{ (selectedSale.items?.length || 0) + 1 }}
+                                    </td>
+                                    <td class="px-4 py-3 align-top">
+                                        <div class="font-bold text-slate-800">
+                                            Biaya Jasa Service
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-right align-top whitespace-nowrap">
+                                        {{
+                                            formatCurrency(
+                                                selectedSale.service_order
+                                                    ?.biaya_jasa || 0,
+                                            )
+                                        }}
+                                    </td>
+                                    <td class="px-4 py-3 font-bold text-center align-top">
+                                        -
+                                    </td>
+                                    <td class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap">
+                                        {{
+                                            formatCurrency(
+                                                selectedSale.service_order
+                                                    ?.biaya_jasa || 0,
+                                            )
+                                        }}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -965,6 +1084,17 @@ function formatDate(dateStr) {
                                 >
                                 <span class="font-bold text-slate-800">{{
                                     formatCurrency(selectedSale.subtotal)
+                                }}</span>
+                            </div>
+                            <div
+                                v-if="isServiceMode"
+                                class="flex justify-between py-2 text-sm border-b border-slate-100"
+                            >
+                                <span class="font-semibold opacity-75 text-slate-600"
+                                    >Biaya Jasa</span
+                                >
+                                <span class="font-bold text-slate-700">{{
+                                    formatCurrency(selectedSale.service_order?.biaya_jasa || 0)
                                 }}</span>
                             </div>
                             <div

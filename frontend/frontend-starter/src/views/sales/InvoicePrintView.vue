@@ -47,6 +47,39 @@ function formatCurrency(val) {
     }).format(val || 0);
 }
 
+function formatDisplayDate(dateStr) {
+    if (!dateStr) return "-";
+    const [y, m, d] = String(dateStr).split("-");
+    if (!y || !m || !d) return dateStr;
+    return `${d}-${m}-${y}`;
+}
+
+function getProductIdentifierLines(product) {
+    if (!product) return [];
+
+    const identifierType = String(product.identifier_type || "none");
+    const imei1 = product.imei1 ? String(product.imei1).trim() : "";
+    const imei2 = product.imei2 ? String(product.imei2).trim() : "";
+    const serial = product.barcode ? String(product.barcode).trim() : "";
+
+    if (identifierType === "imei1") {
+        return imei1 ? [`IMEI: ${imei1}`] : [];
+    }
+
+    if (identifierType === "imei2") {
+        const lines = [];
+        if (imei1) lines.push(`IMEI 1: ${imei1}`);
+        if (imei2) lines.push(`IMEI 2: ${imei2}`);
+        return lines;
+    }
+
+    if (identifierType === "serial") {
+        return serial ? [`SN: ${serial}`] : [];
+    }
+
+    return [];
+}
+
 function printInvoice() {
     window.print();
 }
@@ -179,21 +212,22 @@ function printInvoice() {
                                     {{ sale.no_invoice }}
                                 </td>
                             </tr>
+                            <tr v-if="sale.tipe === 'service'">
+                                <td class="py-1 font-bold uppercase">
+                                    No. Service
+                                </td>
+                                <td class="py-1 text-center">:</td>
+                                <td class="py-1 text-right uppercase font-bold">
+                                    {{ sale.service_order?.no_service || "-" }}
+                                </td>
+                            </tr>
                             <tr>
                                 <td class="py-1 font-bold uppercase">
                                     Tanggal
                                 </td>
                                 <td class="py-1 text-center">:</td>
                                 <td class="py-1 text-right">
-                                    {{
-                                        new Date(sale.tanggal)
-                                            .toLocaleDateString("id-ID", {
-                                                day: "2-digit",
-                                                month: "2-digit",
-                                                year: "numeric",
-                                            })
-                                            .replace(/\//g, "-")
-                                    }}
+                                    {{ formatDisplayDate(sale.tanggal) }}
                                 </td>
                             </tr>
                             <tr>
@@ -214,7 +248,7 @@ function printInvoice() {
             <div
                 class="text-[10px] font-black mb-4 uppercase tracking-widest border-l-4 border-black pl-3 py-0.5"
             >
-                Daftar Pembelian
+                {{ sale.tipe === "service" ? "Rincian Service" : "Daftar Pembelian" }}
             </div>
 
             <!-- Items Table -->
@@ -272,10 +306,19 @@ function printInvoice() {
                                 {{ item.product?.brand || "-" }}
                             </div>
                             <div
+                                v-if="
+                                    sale.tipe !== 'service' &&
+                                    getProductIdentifierLines(item.product)
+                                        .length > 0
+                                "
                                 class="text-[8px] text-blue-800 font-mono mt-2 pt-1 border-t border-slate-100 border-dashed"
                             >
-                                IMEI 1: {{ item.product?.imei1 || "-" }}<br />
-                                IMEI 2: {{ item.product?.imei2 || "-" }}
+                                <div
+                                    v-for="(line, lineIndex) in getProductIdentifierLines(item.product)"
+                                    :key="`identifier-${idx}-${lineIndex}`"
+                                >
+                                    {{ line }}
+                                </div>
                             </div>
                         </td>
                         <td
@@ -293,6 +336,42 @@ function printInvoice() {
                         </td>
                         <td class="p-3 text-right font-bold text-black">
                             Rp.{{ formatCurrency(item.subtotal) }},-
+                        </td>
+                    </tr>
+                    <tr
+                        v-if="sale.tipe === 'service' && (sale.service_order?.biaya_jasa || 0) > 0"
+                        class="border-b border-slate-200 align-top"
+                    >
+                        <td
+                            class="border-r border-slate-200 p-3 text-center text-slate-500"
+                        >
+                            {{ (sale.items?.length || 0) + 1 }}
+                        </td>
+                        <td class="border-r border-slate-200 p-3">
+                            <div
+                                class="font-bold text-black uppercase mb-1 leading-tight"
+                            >
+                                Biaya Jasa Service
+                            </div>
+                            <div class="text-[9px] text-slate-500 uppercase">
+                                Jasa Perbaikan
+                            </div>
+                        </td>
+                        <td
+                            class="border-r border-slate-200 p-3 text-center uppercase text-slate-500 italic"
+                        >
+                            Jasa
+                        </td>
+                        <td class="border-r border-slate-200 p-3 text-right">
+                            Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-
+                        </td>
+                        <td
+                            class="border-r border-slate-200 p-3 text-center font-bold"
+                        >
+                            -
+                        </td>
+                        <td class="p-3 text-right font-bold text-black">
+                            Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-
                         </td>
                     </tr>
                 </tbody>

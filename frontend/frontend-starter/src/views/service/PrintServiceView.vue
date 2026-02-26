@@ -21,11 +21,10 @@ const isFinalInvoice = computed(() => {
 
 const totalQty = computed(() => {
     if (!service.value) return 0;
-    const partsQty = (service.value.parts || []).reduce(
+    return (service.value.parts || []).reduce(
         (acc, part) => acc + (part.qty || 0),
         0
     );
-    return partsQty + (service.value.biaya_jasa > 0 ? 1 : 0);
 });
 
 const subtotalParts = computed(() => {
@@ -199,9 +198,7 @@ function printNow() {
                                 </td>
                                 <td class="w-4 py-1 text-center">:</td>
                                 <td class="py-1 font-bold text-right">
-                                    {{
-                                        service.id.substring(0, 8).toUpperCase()
-                                    }}
+                                    {{ service.no_service || "-" }}
                                 </td>
                             </tr>
                             <tr>
@@ -295,11 +292,6 @@ function printNow() {
                             <div class="text-[9px] text-slate-500 uppercase">
                                 {{ part.product?.brand || "-" }}
                             </div>
-                            <div
-                                class="text-[8px] text-blue-800 font-mono mt-2 pt-1 border-t border-slate-100 border-dashed"
-                            >
-                                IMEI/SN UNIT: {{ service.imei_hp || "-" }}
-                            </div>
                         </td>
                         <td
                             class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500"
@@ -349,7 +341,7 @@ function printNow() {
                         <td
                             class="p-3 font-bold text-center border-r border-slate-200"
                         >
-                            1
+                            -
                         </td>
                         <td class="p-3 font-bold text-right text-black">
                             Rp.{{ formatCurrency(service.biaya_jasa) }},-
