@@ -1,6 +1,6 @@
 ﻿# App Kasir Walkthrough
 
-Last update: 2026-02-27 (WIB, malam)
+Last update: 2026-02-27 (WIB, malam lanjut)
 
 ## 1. Product Direction
 App Kasir is a retail + service system for gadget stores:
@@ -80,6 +80,14 @@ App Kasir is a retail + service system for gadget stores:
   - table list with live filters
   - export PDF via print layout
   - export Excel button
+- Revisi terbaru laporan penjualan & service:
+  - added `Sales` filter in backend and frontend (`sales_rep_id`)
+  - table structure changed to match requested layout:
+    - No, No.Invoice, Tanggal, Pelanggan, Kasir, Sales, Qty, Total Bayar, Modal, Laba
+  - removed subtotal column from list
+  - added dynamic bottom `TOTAL` row (qty, total bayar, modal/hpp, laba)
+  - totals recalculate based on active filters (tanggal, search, tipe, sales)
+  - export outputs (Excel/PDF) aligned with the new report structure
 
 ### Dashboard
 - Backend summary endpoint and frontend dashboard cards/charts
@@ -90,6 +98,7 @@ App Kasir is a retail + service system for gadget stores:
   - overpayment and change calculation
   - service cancel after stock operations
   - report export validation on large datasets (performance and completeness)
+- Finish full table visual consistency pass on legacy pages that still mix old classes and new table classes
 
 ## 5. Suggested Next Focus
 1. Lock in report pages (sales, purchase, laba rugi/HPP) with verified service contribution.

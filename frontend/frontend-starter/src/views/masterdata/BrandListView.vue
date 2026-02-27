@@ -74,13 +74,33 @@ async function doDelete() {
 
 <template>
     <div>
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Merk / Brand</h1>
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="mt-1 text-sm text-gray-500">
                     Kelola data merk produk
                 </p>
             </div>
+
+            <button
+                @click="openCreate"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                    />
+                </svg>
+                Tambah Merk
+            </button>
         </div>
 
         <DataTable
@@ -89,27 +109,11 @@ async function doDelete() {
             :fetch-function="fetchBrands"
             search-placeholder="Cari merk..."
         >
-            <template #actions>
-                <button
-                    @click="openCreate"
-                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    Tambah Merk
-                </button>
+            <template #filters>
+                <!-- No filters needed for brand -->
             </template>
+
+            <template #actions> </template>
             <template #rowActions="{ row }">
                 <div class="flex justify-center gap-1">
                     <button
@@ -163,40 +167,40 @@ async function doDelete() {
             >
                 <div class="fixed inset-0 bg-black/50"></div>
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 z-10"
+                    class="relative z-10 w-full max-w-sm p-6 bg-white shadow-2xl rounded-xl"
                 >
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 class="mb-4 text-lg font-semibold text-gray-900">
                         {{ editId ? "Edit" : "Tambah" }} Merk
                     </h3>
                     <form @submit.prevent="saveForm">
                         <div class="mb-4">
                             <label
-                                class="block text-sm font-medium text-gray-700 mb-1"
+                                class="block mb-1 text-sm font-medium text-gray-700"
                                 >Nama Merk</label
                             >
                             <input
                                 v-model="form.nama"
                                 type="text"
                                 required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Contoh: Samsung"
                             />
                         </div>
-                        <p v-if="error" class="text-red-500 text-sm mb-3">
+                        <p v-if="error" class="mb-3 text-sm text-red-500">
                             {{ error }}
                         </p>
                         <div class="flex gap-2">
                             <button
                                 type="button"
                                 @click="showForm = false"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 transition bg-gray-100 rounded-lg hover:bg-gray-200"
                             >
                                 Batal
                             </button>
                             <button
                                 type="submit"
                                 :disabled="saving"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {{ saving ? "Menyimpan..." : "Simpan" }}
                             </button>

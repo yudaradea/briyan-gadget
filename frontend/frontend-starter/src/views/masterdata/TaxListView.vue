@@ -85,13 +85,31 @@ async function doDelete() {
 
 <template>
     <div>
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Pajak</h1>
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="mt-1 text-sm text-gray-500">
                     Kelola data pajak untuk transaksi
                 </p>
             </div>
+            <button
+                @click="openCreate"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                    /></svg
+                >Tambah Pajak
+            </button>
         </div>
         <DataTable
             ref="dataTable"
@@ -99,26 +117,7 @@ async function doDelete() {
             :fetch-function="fetchData"
             search-placeholder="Cari pajak..."
         >
-            <template #actions
-                ><button
-                    @click="openCreate"
-                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        /></svg
-                    >Tambah Pajak
-                </button></template
-            >
+            <template #actions></template>
             <template #cell-persentase="{ value }">{{ value }}%</template>
             <template #cell-is_active="{ value }">
                 <span
@@ -180,28 +179,28 @@ async function doDelete() {
             >
                 <div class="fixed inset-0 bg-black/50"></div>
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-md p-6 z-10"
+                    class="relative z-10 w-full max-w-md p-6 bg-white shadow-2xl rounded-xl"
                 >
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 class="mb-4 text-lg font-semibold text-gray-900">
                         {{ editId ? "Edit" : "Tambah" }} Pajak
                     </h3>
                     <form @submit.prevent="saveForm">
                         <div class="space-y-3">
                             <div>
                                 <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    class="block mb-1 text-sm font-medium text-gray-700"
                                     >Nama Pajak *</label
                                 ><input
                                     v-model="form.nama"
                                     type="text"
                                     required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Contoh: PPN 11%"
                                 />
                             </div>
                             <div>
                                 <label
-                                    class="block text-sm font-medium text-gray-700 mb-1"
+                                    class="block mb-1 text-sm font-medium text-gray-700"
                                     >Persentase (%) *</label
                                 ><input
                                     v-model="form.persentase"
@@ -210,7 +209,7 @@ async function doDelete() {
                                     min="0"
                                     max="100"
                                     required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="11"
                                 />
                             </div>
@@ -220,7 +219,7 @@ async function doDelete() {
                                     ><input
                                         v-model="form.is_active"
                                         type="checkbox"
-                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        class="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                     /><span class="text-sm text-gray-700"
                                         >Aktif</span
                                     ></label
@@ -229,27 +228,27 @@ async function doDelete() {
                                     ><input
                                         v-model="form.is_default"
                                         type="checkbox"
-                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        class="text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                     /><span class="text-sm text-gray-700"
                                         >Default</span
                                     ></label
                                 >
                             </div>
                         </div>
-                        <p v-if="error" class="text-red-500 text-sm mt-2">
+                        <p v-if="error" class="mt-2 text-sm text-red-500">
                             {{ error }}
                         </p>
                         <div class="flex gap-2 mt-4">
                             <button
                                 type="button"
                                 @click="showForm = false"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 transition bg-gray-100 rounded-lg hover:bg-gray-200"
                             >
                                 Batal</button
                             ><button
                                 type="submit"
                                 :disabled="saving"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {{ saving ? "Menyimpan..." : "Simpan" }}
                             </button>

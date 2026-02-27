@@ -95,14 +95,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
             );
             filters.value.end_date = "";
             return;
         }
         fetchPurchases(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -140,20 +140,20 @@ async function doDelete() {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
-        <div class="flex justify-between items-center">
+    <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
+        <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Stok Barang (Masuk)
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">
+                <p class="mt-1 text-sm text-slate-400">
                     Kelola stok barang masuk dari supplier
                 </p>
             </div>
             <div class="flex gap-2">
                 <router-link
                     to="/dashboard/purchase-items"
-                    class="px-4 py-2 bg-white text-slate-600 text-sm font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-2"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
                 >
                     <svg
                         class="w-4 h-4"
@@ -193,15 +193,15 @@ async function doDelete() {
         </div>
 
         <div
-            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+            class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
         >
             <!-- Header Actions (Modified to match Sales List) -->
             <div
-                class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center"
+                class="flex flex-col items-start justify-between gap-4 px-6 py-4 border-b border-slate-200 bg-slate-50 md:flex-row md:items-center"
             >
                 <!-- Left Side: Advanced Filters -->
                 <div
-                    class="grid grid-cols-2 md:grid-cols-4 lg:flex gap-3 w-full md:w-auto"
+                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-4 lg:flex md:w-auto"
                 >
                     <div class="flex flex-col gap-1">
                         <label
@@ -249,7 +249,7 @@ async function doDelete() {
                                 class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
                             >
                                 <svg
-                                    class="h-4 w-4"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -273,7 +273,7 @@ async function doDelete() {
                                     supplier_id: '',
                                 }
                             "
-                            class="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
                             title="Reset Filter"
                         >
                             <svg
@@ -294,7 +294,7 @@ async function doDelete() {
                 </div>
 
                 <!-- Right Side: Per Page & Search Combined -->
-                <div class="flex flex-row items-end gap-2 w-full md:w-auto">
+                <div class="flex flex-row items-end w-full gap-2 md:w-auto">
                     <!-- Per Page -->
                     <div class="flex flex-col gap-1">
                         <label
@@ -314,7 +314,7 @@ async function doDelete() {
                                 class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400"
                             >
                                 <svg
-                                    class="h-4 w-4"
+                                    class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -344,10 +344,10 @@ async function doDelete() {
                                 class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
                             <div
-                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
                             >
                                 <svg
-                                    class="h-4 w-4 text-slate-400"
+                                    class="w-4 h-4 text-slate-400"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -366,45 +366,17 @@ async function doDelete() {
             </div>
 
             <!-- Table -->
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50">
+            <div class="border-0 rounded-none shadow-none table-container">
+                <table class="table-fixed-layout table-wide">
+                    <thead class="table-header">
                         <tr>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-16 text-center"
-                            >
-                                No
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                            >
-                                No. Invoice
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                            >
-                                Tanggal
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                            >
-                                Supplier
-                            </th>
-                            <th
-                                class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                            >
-                                Jumlah Item
-                            </th>
-                            <th
-                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider"
-                            >
-                                Total
-                            </th>
-                            <th
-                                class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-36"
-                            >
-                                Aksi
-                            </th>
+                            <th class="w-16 text-center">No</th>
+                            <th class="text-left">No. Invoice</th>
+                            <th class="text-left">Tanggal</th>
+                            <th class="text-left">Supplier</th>
+                            <th class="text-center">Jumlah Item</th>
+                            <th class="text-right">Total</th>
+                            <th class="w-40 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
@@ -427,11 +399,9 @@ async function doDelete() {
                         <tr
                             v-for="(p, index) in purchases"
                             :key="p.id"
-                            class="hover:bg-slate-50 transition"
+                            class="table-row transition hover:bg-slate-50 grou"
                         >
-                            <td
-                                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center"
-                            >
+                            <td class="table-cell text-center text-slate-500">
                                 {{
                                     (pagination.current_page - 1) *
                                         pagination.per_page +
@@ -439,24 +409,16 @@ async function doDelete() {
                                     1
                                 }}
                             </td>
-                            <td
-                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600"
-                            >
+                            <td class="table-cell font-medium text-blue-600">
                                 {{ p.no_invoice }}
                             </td>
-                            <td
-                                class="px-6 py-4 whitespace-nowrap text-sm text-slate-500"
-                            >
+                            <td class="table-cell text-slate-500">
                                 {{ formatDate(p.tanggal) }}
                             </td>
-                            <td
-                                class="px-6 py-4 whitespace-nowrap text-sm text-slate-800 font-medium"
-                            >
+                            <td class="table-cell font-medium text-slate-800">
                                 {{ p.supplier?.nama || "-" }}
                             </td>
-                            <td
-                                class="px-6 py-4 whitespace-nowrap text-sm text-center"
-                            >
+                            <td class="table-cell text-center">
                                 <span
                                     class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600"
                                 >
@@ -464,12 +426,12 @@ async function doDelete() {
                                 </span>
                             </td>
                             <td
-                                class="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 text-right"
+                                class="table-cell font-bold text-right text-emerald-600"
                             >
                                 {{ formatCurrency(p.total) }}
                             </td>
                             <td
-                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center space-x-1"
+                                class="px-4 py-4 text-sm font-medium text-center"
                             >
                                 <router-link
                                     :to="`/dashboard/purchases/${p.id}`"
@@ -562,7 +524,7 @@ async function doDelete() {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50"
+                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan
@@ -573,7 +535,7 @@ async function doDelete() {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari
@@ -584,7 +546,7 @@ async function doDelete() {
                     <button
                         @click="fetchPurchases(pagination.current_page - 1)"
                         :disabled="pagination.current_page === 1"
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Sebelumnya
                     </button>
@@ -593,7 +555,7 @@ async function doDelete() {
                         :disabled="
                             pagination.current_page === pagination.last_page
                         "
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Selanjutnya
                     </button>

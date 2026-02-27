@@ -1,7 +1,7 @@
 ﻿# App Kasir Task Tracker
 
-Last update: 2026-02-27 (WIB, malam)
-Current phase: Service workflow stabilization and reporting alignment
+Last update: 2026-02-27 (WIB, malam lanjut)
+Current phase: Reporting refinement and UI consistency hardening
 
 ## Completed
 
@@ -78,7 +78,20 @@ Current phase: Service workflow stabilization and reporting alignment
   - filter tanggal + search + pagination
   - Export PDF (print layout dari data terfilter)
   - Export Excel (CSV)
+- Revisi khusus `Laporan Penjualan & Service` (mengikuti contoh user):
+  - tambah filter `Sales` (`sales_rep_id`)
+  - kolom tabel diubah ke: `No`, `No.Invoice`, `Tanggal`, `Pelanggan`, `Kasir`, `Sales`, `Qty`, `Total Bayar`, `Modal`, `Laba`
+  - `Subtotal` dihapus dari list
+  - baris `TOTAL` ditambahkan di bawah tabel
+  - nilai `TOTAL` berubah dinamis sesuai filter tanggal/search/tipe/sales
+  - summary total juga ikut ke export Excel dan PDF
+
+## In Progress
+- Audit konsistensi alignment semua tabel halaman utama (header vs body, nominal, kolom aksi sticky)
+- Penyelarasan style list lama yang belum full pakai kelas table global
 
 ## Next
 - Add regression test checklist for service final payment and lock behavior
+- Revisi lanjutan tampilan laporan (visual parity 1:1 sesuai contoh: spacing, density, warna baris total)
+- Upgrade export PDF dari print layout browser ke generator PDF server-side (opsional, jika diperlukan produksi)
 - Optional UI polish: unify currency input component across POS, service, purchase

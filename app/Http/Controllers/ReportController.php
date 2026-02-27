@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Models\Purchase;
+use App\Models\SaleItem;
 use App\Models\SalesTransaction;
 use Illuminate\Http\Request;
 
@@ -13,19 +14,21 @@ class ReportController extends Controller
     {
         $validated = $this->validateReportRequest($request, true);
         $perPage = $this->resolvePerPage($request);
-        $tipe = $validated['tipe'] ?? 'all';
 
         $query = SalesTransaction::query()
             ->with(['user:id,name', 'salesRep:id,nama'])
             ->withSum('items as hpp_total', 'hpp_total')
-            ->search($validated['search'] ?? null)
-            ->dateRange($validated['start_date'] ?? null, $validated['end_date'] ?? null)
-            ->when($tipe !== 'all', fn($q) => $q->where('tipe', $tipe))
+            ->withSum('items as qty_total', 'qty');
+        $this->applySalesReportFilters($query, $validated);
+        $query
             ->latest('tanggal')
-            ->latest('created_at');
+            ->latest('created_at')
+            ->latest('id');
+
+        $summary = $this->buildSalesSummary($validated);
 
         if (($validated['export'] ?? null) === 'excel') {
-            return $this->exportSalesCsv($query->get());
+            return $this->exportSalesCsv($query->get(), $summary);
         }
 
         $data = $query->paginate($perPage);
@@ -40,9 +43,7 @@ class ReportController extends Controller
                 'pelanggan' => $item->pelanggan,
                 'kasir' => $item->user?->name,
                 'sales' => $item->salesRep?->nama,
-                'subtotal' => (float) $item->subtotal,
-                'diskon_nominal' => (float) $item->diskon_nominal,
-                'tax_nominal' => (float) $item->tax_nominal,
+                'qty_total' => (int) ($item->qty_total ?? 0),
                 'grand_total' => (float) $item->grand_total,
                 'metode_pembayaran' => $item->metode_pembayaran,
                 'hpp_total' => $hppTotal,
@@ -59,6 +60,7 @@ class ReportController extends Controller
             'total' => $data->total(),
             'from' => $data->firstItem(),
             'to' => $data->lastItem(),
+            'summary' => $summary,
         ], 'Sales report retrieved');
     }
 
@@ -72,6 +74,7 @@ class ReportController extends Controller
             ->withCount('items')
             ->search($validated['search'] ?? null)
             ->dateRange($validated['start_date'] ?? null, $validated['end_date'] ?? null)
+            ->when($validated['supplier_id'] ?? null, fn($q, $supplierId) => $q->where('supplier_id', $supplierId))
             ->latest('tanggal')
             ->latest('created_at');
 
@@ -80,6 +83,14 @@ class ReportController extends Controller
         }
 
         $data = $query->paginate($perPage);
+
+        // Get summary totals
+        $summaryQuery = Purchase::query()
+            ->withCount('items')
+            ->search($validated['search'] ?? null)
+            ->dateRange($validated['start_date'] ?? null, $validated['end_date'] ?? null)
+            ->when($validated['supplier_id'] ?? null, fn($q, $supplierId) => $q->where('supplier_id', $supplierId));
+
         $rows = $data->getCollection()->map(function ($item) {
             return [
                 'id' => $item->id,
@@ -102,6 +113,10 @@ class ReportController extends Controller
             'total' => $data->total(),
             'from' => $data->firstItem(),
             'to' => $data->lastItem(),
+            'summary' => [
+                'items_count' => (int) $summaryQuery->get()->sum('items_count'),
+                'total' => (float) $summaryQuery->sum('total'),
+            ],
         ], 'Purchase report retrieved');
     }
 
@@ -117,12 +132,21 @@ class ReportController extends Controller
             ->search($validated['search'] ?? null)
             ->dateRange($validated['start_date'] ?? null, $validated['end_date'] ?? null)
             ->when($tipe !== 'all', fn($q) => $q->where('tipe', $tipe))
+            ->when($validated['sales_rep_id'] ?? null, fn($q, $salesRepId) => $q->where('sales_rep_id', $salesRepId))
             ->latest('tanggal')
             ->latest('created_at');
 
         if (($validated['export'] ?? null) === 'excel') {
             return $this->exportProfitCsv($query->get());
         }
+
+        // Get summary for all data
+        $summaryQuery = SalesTransaction::query()
+            ->withSum('items as hpp_total', 'hpp_total')
+            ->search($validated['search'] ?? null)
+            ->dateRange($validated['start_date'] ?? null, $validated['end_date'] ?? null)
+            ->when($tipe !== 'all', fn($q) => $q->where('tipe', $tipe))
+            ->when($validated['sales_rep_id'] ?? null, fn($q, $salesRepId) => $q->where('sales_rep_id', $salesRepId));
 
         $data = $query->paginate($perPage);
         $rows = $data->getCollection()->map(function ($item) {
@@ -142,6 +166,10 @@ class ReportController extends Controller
         })->values();
         $data->setCollection($rows);
 
+        $allData = $summaryQuery->get();
+        $totalPendapatan = $allData->sum('grand_total');
+        $totalHpp = $allData->sum('hpp_total');
+
         return ResponseHelper::success([
             'data' => $data->items(),
             'current_page' => $data->currentPage(),
@@ -150,6 +178,11 @@ class ReportController extends Controller
             'total' => $data->total(),
             'from' => $data->firstItem(),
             'to' => $data->lastItem(),
+            'summary' => [
+                'pendapatan' => (float) $totalPendapatan,
+                'hpp_total' => (float) $totalHpp,
+                'laba_kotor' => (float) ($totalPendapatan - $totalHpp),
+            ],
         ], 'Profit report retrieved');
     }
 
@@ -159,7 +192,10 @@ class ReportController extends Controller
             'search' => ['nullable', 'string'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'export' => ['nullable', 'in:excel'],
+            'export' => ['nullable', 'in:excel,pdf'],
+            'sales_rep_id' => ['nullable', 'exists:sales_reps,id'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'per_page' => ['nullable', 'integer'],
         ];
 
         if ($withType) {
@@ -172,13 +208,51 @@ class ReportController extends Controller
     private function resolvePerPage(Request $request): int
     {
         $perPage = (int) $request->query('per_page', 10);
+        // Allow -1 for export (get all data)
+        if ($perPage === -1) {
+            return 100000;
+        }
         if (!in_array($perPage, [10, 50, 100], true)) {
             $perPage = 10;
         }
         return $perPage;
     }
 
-    private function exportSalesCsv($rows)
+    private function applySalesReportFilters($query, array $filters): void
+    {
+        $tipe = $filters['tipe'] ?? 'all';
+        $salesRepId = $filters['sales_rep_id'] ?? null;
+
+        $query
+            ->search($filters['search'] ?? null)
+            ->dateRange($filters['start_date'] ?? null, $filters['end_date'] ?? null)
+            ->when($tipe !== 'all', fn($q) => $q->where('tipe', $tipe))
+            ->when($salesRepId, fn($q) => $q->where('sales_rep_id', $salesRepId));
+    }
+
+    private function buildSalesSummary(array $filters): array
+    {
+        $base = SalesTransaction::query();
+        $this->applySalesReportFilters($base, $filters);
+        $grandTotal = (float) (clone $base)->sum('grand_total');
+
+        $qtyTotal = (int) SaleItem::query()
+            ->whereHas('salesTransaction', fn($q) => $this->applySalesReportFilters($q, $filters))
+            ->sum('qty');
+
+        $hppTotal = (float) SaleItem::query()
+            ->whereHas('salesTransaction', fn($q) => $this->applySalesReportFilters($q, $filters))
+            ->sum('hpp_total');
+
+        return [
+            'qty_total' => $qtyTotal,
+            'grand_total' => $grandTotal,
+            'hpp_total' => $hppTotal,
+            'laba_kotor' => $grandTotal - $hppTotal,
+        ];
+    }
+
+    private function exportSalesCsv($rows, array $summary)
     {
         $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv';
         $headers = [
@@ -186,10 +260,10 @@ class ReportController extends Controller
             'Content-Disposition' => "attachment; filename={$filename}",
         ];
 
-        return response()->stream(function () use ($rows) {
+        return response()->stream(function () use ($rows, $summary) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Tanggal', 'Tipe', 'Pelanggan', 'Kasir', 'Sales', 'Subtotal', 'Diskon', 'Pajak', 'Grand Total', 'Metode', 'HPP', 'Laba Kotor']);
+            fputcsv($out, ['No Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Sales', 'Qty', 'Total Bayar', 'Modal (HPP)', 'Laba']);
 
             foreach ($rows as $item) {
                 $hpp = (float) ($item->hpp_total ?? 0);
@@ -197,19 +271,18 @@ class ReportController extends Controller
                 fputcsv($out, [
                     $item->no_invoice,
                     optional($item->tanggal)->format('Y-m-d'),
-                    $item->tipe ?? 'penjualan',
                     $item->pelanggan,
                     $item->user?->name,
                     $item->salesRep?->nama,
-                    (float) $item->subtotal,
-                    (float) $item->diskon_nominal,
-                    (float) $item->tax_nominal,
+                    (int) ($item->qty_total ?? 0),
                     $grandTotal,
-                    $item->metode_pembayaran,
                     $hpp,
                     $grandTotal - $hpp,
                 ]);
             }
+
+            fputcsv($out, []);
+            fputcsv($out, ['TOTAL', '', '', '', '', (int) ($summary['qty_total'] ?? 0), (float) ($summary['grand_total'] ?? 0), (float) ($summary['hpp_total'] ?? 0), (float) ($summary['laba_kotor'] ?? 0)]);
             fclose($out);
         }, 200, $headers);
     }

@@ -11,7 +11,9 @@ const toast = useToast();
 const authStore = useAuthStore();
 const route = useRoute();
 const isServiceMode = computed(() => route.name === "service-transaction-list");
-const transactionType = computed(() => (isServiceMode.value ? "service" : "penjualan"));
+const transactionType = computed(() =>
+    isServiceMode.value ? "service" : "penjualan"
+);
 
 const sales = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
@@ -151,7 +153,7 @@ const deleteSale = async () => {
         toast.success(
             isServiceMode.value
                 ? "Transaksi service dihapus"
-                : "Transaksi dihapus dan stok dikembalikan",
+                : "Transaksi dihapus dan stok dikembalikan"
         );
         showDeleteDialog.value = false;
         fetchSales(pagination.value.current_page);
@@ -260,7 +262,11 @@ function servicePartsSummary(sale) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-rose-100"
                     >
-                        {{ isServiceMode ? "Service Hari Ini" : "Penjualan Hari Ini" }}
+                        {{
+                            isServiceMode
+                                ? "Service Hari Ini"
+                                : "Penjualan Hari Ini"
+                        }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.today) }}
@@ -283,7 +289,11 @@ function servicePartsSummary(sale) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider text-blue-100 uppercase"
                     >
-                        {{ isServiceMode ? "Service Bulan Ini" : "Penjualan Bulan Ini" }}
+                        {{
+                            isServiceMode
+                                ? "Service Bulan Ini"
+                                : "Penjualan Bulan Ini"
+                        }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.month) }}
@@ -306,7 +316,11 @@ function servicePartsSummary(sale) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-amber-100"
                     >
-                        {{ isServiceMode ? "Service Tahun Ini" : "Penjualan Tahun Ini" }}
+                        {{
+                            isServiceMode
+                                ? "Service Tahun Ini"
+                                : "Penjualan Tahun Ini"
+                        }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.year) }}
@@ -329,7 +343,11 @@ function servicePartsSummary(sale) {
                     <div
                         class="mb-1 text-sm font-medium tracking-wider uppercase text-slate-400"
                     >
-                        {{ isServiceMode ? "Total Seluruh Service" : "Total Seluruh Penjualan" }}
+                        {{
+                            isServiceMode
+                                ? "Total Seluruh Service"
+                                : "Total Seluruh Penjualan"
+                        }}
                     </div>
                     <div class="text-2xl font-black">
                         {{ formatCurrency(stats.total) }}
@@ -358,7 +376,9 @@ function servicePartsSummary(sale) {
                 <div
                     :class="[
                         'grid w-full gap-3 lg:flex md:w-auto',
-                        isServiceMode ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4',
+                        isServiceMode
+                            ? 'grid-cols-2 md:grid-cols-3'
+                            : 'grid-cols-2 md:grid-cols-4',
                     ]"
                 >
                     <div class="flex flex-col gap-1">
@@ -577,9 +597,7 @@ function servicePartsSummary(sale) {
                             <th class="w-40 text-right">Sub Total</th>
                             <th class="w-20 text-center">Qty</th>
                             <th class="w-40 text-right">Uang Masuk</th>
-                            <th class="table-col-action-h">
-                                AKSI
-                            </th>
+                            <th class="table-col-action-h">AKSI</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
@@ -670,7 +688,7 @@ function servicePartsSummary(sale) {
                                 <div class="table-actions">
                                     <button
                                         @click="viewDetails(s)"
-                                        class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                        class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
                                         title="Detail Info"
                                     >
                                         <svg
@@ -690,7 +708,7 @@ function servicePartsSummary(sale) {
                                     <router-link
                                         v-if="!isServiceMode"
                                         :to="`/dashboard/pos?edit_id=${s.id}`"
-                                        class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition"
+                                        class="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition"
                                         title="Edit Transaksi"
                                     >
                                         <svg
@@ -709,7 +727,7 @@ function servicePartsSummary(sale) {
                                     </router-link>
                                     <router-link
                                         :to="`/dashboard/pos/${s.id}/invoice`"
-                                        class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                                        class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg transition"
                                         title="Print Invoice"
                                     >
                                         <svg
@@ -732,7 +750,7 @@ function servicePartsSummary(sale) {
                                             authStore.isAdmin
                                         "
                                         @click="confirmDelete(s.id)"
-                                        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                        class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"
                                         title="Hapus"
                                     >
                                         <svg
@@ -893,11 +911,14 @@ function servicePartsSummary(sale) {
                         >
                             <span
                                 class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
-                                >{{ isServiceMode ? "No. Service" : "Pelanggan" }}</span
+                                >{{
+                                    isServiceMode ? "No. Service" : "Pelanggan"
+                                }}</span
                             >
                             <span class="block font-bold text-slate-800">{{
                                 isServiceMode
-                                    ? selectedSale.service_order?.no_service || "-"
+                                    ? selectedSale.service_order?.no_service ||
+                                      "-"
                                     : selectedSale.pelanggan || "Umum"
                             }}</span>
                         </div>
@@ -906,12 +927,16 @@ function servicePartsSummary(sale) {
                         >
                             <span
                                 class="block mb-1 text-xs font-medium tracking-wider uppercase text-slate-500"
-                                >{{ isServiceMode ? "Kasir" : "Kasir / Sales" }}</span
+                                >{{
+                                    isServiceMode ? "Kasir" : "Kasir / Sales"
+                                }}</span
                             >
                             <span class="block font-bold text-slate-800"
                                 >{{ selectedSale.user?.name }}
                                 <span
-                                    v-if="!isServiceMode && selectedSale.sales_rep"
+                                    v-if="
+                                        !isServiceMode && selectedSale.sales_rep
+                                    "
                                     >/ {{ selectedSale.sales_rep.nama }}</span
                                 ></span
                             >
@@ -920,7 +945,9 @@ function servicePartsSummary(sale) {
 
                     <!-- Item Table -->
                     <h4 class="mb-3 ml-1 text-sm font-bold text-slate-800">
-                        {{ isServiceMode ? "Daftar Sparepart" : "Daftar Produk" }}
+                        {{
+                            isServiceMode ? "Daftar Sparepart" : "Daftar Produk"
+                        }}
                     </h4>
                     <div
                         class="mb-8 overflow-hidden border border-slate-200 rounded-xl"
@@ -938,7 +965,11 @@ function servicePartsSummary(sale) {
                                     <th
                                         class="px-4 py-3 text-xs tracking-wider uppercase"
                                     >
-                                        {{ isServiceMode ? "Sparepart" : "Produk Info" }}
+                                        {{
+                                            isServiceMode
+                                                ? "Sparepart"
+                                                : "Produk Info"
+                                        }}
                                     </th>
                                     <th
                                         class="px-4 py-3 text-xs tracking-wider text-right uppercase"
@@ -981,8 +1012,8 @@ function servicePartsSummary(sale) {
                                 >
                                     <td
                                         colspan="5"
-                                    class="py-8 italic text-center text-slate-400"
-                                >
+                                        class="py-8 italic text-center text-slate-400"
+                                    >
                                         {{
                                             isServiceMode
                                                 ? "Tidak ada sparepart dalam transaksi service ini."
@@ -1006,12 +1037,18 @@ function servicePartsSummary(sale) {
                                         <div
                                             v-if="
                                                 !isServiceMode &&
-                                                getProductIdentifierLines(item.product).length > 0
+                                                getProductIdentifierLines(
+                                                    item.product
+                                                ).length > 0
                                             "
                                             class="mt-1 font-mono text-xs leading-relaxed text-slate-500"
                                         >
                                             <div
-                                                v-for="(line, lineIndex) in getProductIdentifierLines(item.product)"
+                                                v-for="(
+                                                    line, lineIndex
+                                                ) in getProductIdentifierLines(
+                                                    item.product
+                                                )"
                                                 :key="`identifier-${item.id}-${lineIndex}`"
                                             >
                                                 {{ line }}
@@ -1037,34 +1074,44 @@ function servicePartsSummary(sale) {
                                 <tr
                                     v-if="
                                         isServiceMode &&
-                                        (selectedSale.service_order?.biaya_jasa || 0) > 0
+                                        (selectedSale.service_order
+                                            ?.biaya_jasa || 0) > 0
                                     "
                                     class="hover:bg-slate-50/50"
                                 >
                                     <td class="px-4 py-3 align-top">
-                                        {{ (selectedSale.items?.length || 0) + 1 }}
+                                        {{
+                                            (selectedSale.items?.length || 0) +
+                                            1
+                                        }}
                                     </td>
                                     <td class="px-4 py-3 align-top">
                                         <div class="font-bold text-slate-800">
                                             Biaya Jasa Service
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3 text-right align-top whitespace-nowrap">
+                                    <td
+                                        class="px-4 py-3 text-right align-top whitespace-nowrap"
+                                    >
                                         {{
                                             formatCurrency(
                                                 selectedSale.service_order
-                                                    ?.biaya_jasa || 0,
+                                                    ?.biaya_jasa || 0
                                             )
                                         }}
                                     </td>
-                                    <td class="px-4 py-3 font-bold text-center align-top">
+                                    <td
+                                        class="px-4 py-3 font-bold text-center align-top"
+                                    >
                                         -
                                     </td>
-                                    <td class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap">
+                                    <td
+                                        class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap"
+                                    >
                                         {{
                                             formatCurrency(
                                                 selectedSale.service_order
-                                                    ?.biaya_jasa || 0,
+                                                    ?.biaya_jasa || 0
                                             )
                                         }}
                                     </td>
@@ -1090,11 +1137,15 @@ function servicePartsSummary(sale) {
                                 v-if="isServiceMode"
                                 class="flex justify-between py-2 text-sm border-b border-slate-100"
                             >
-                                <span class="font-semibold opacity-75 text-slate-600"
+                                <span
+                                    class="font-semibold opacity-75 text-slate-600"
                                     >Biaya Jasa</span
                                 >
                                 <span class="font-bold text-slate-700">{{
-                                    formatCurrency(selectedSale.service_order?.biaya_jasa || 0)
+                                    formatCurrency(
+                                        selectedSale.service_order
+                                            ?.biaya_jasa || 0
+                                    )
                                 }}</span>
                             </div>
                             <div

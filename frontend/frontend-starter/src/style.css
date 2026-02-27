@@ -39,7 +39,7 @@
     }
 
     .table-header th {
-        @apply px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap align-middle;
+        @apply px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap align-middle text-left;
     }
 
     .table-row {
@@ -47,11 +47,15 @@
     }
 
     .table-cell {
-        @apply px-4 py-3.5 text-sm align-middle;
+        @apply px-4 py-3 text-xs align-middle text-slate-700;
     }
 
     .table-header th.text-right {
         text-align: right;
+    }
+
+    .table-header th.text-center {
+        text-align: center;
     }
 
     .table-cell.text-right {
@@ -61,11 +65,11 @@
     }
 
     .table-col-action-h {
-        @apply sticky right-0 z-20 w-36 px-4 text-center border-l bg-slate-50 border-slate-200;
+        @apply sticky right-0 z-20 w-36 px-4 py-3 text-center border-l bg-slate-50 border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider;
     }
 
     .table-col-action {
-        @apply sticky right-0 z-10 table-cell px-4 text-center bg-white border-l border-slate-100 group-hover:bg-slate-50;
+        @apply sticky right-0 z-10 px-4 py-3 text-center bg-white border-l border-slate-100 group-hover:bg-slate-50;
     }
 
     .table-actions {

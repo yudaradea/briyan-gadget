@@ -80,7 +80,7 @@ watch(perPage, () => fetchItems(1));
 watch(
     () => filters.value,
     () => fetchItems(1),
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -99,20 +99,20 @@ function formatDate(dateStr) {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
-        <div class="flex justify-between items-center">
+    <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
+        <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Barang Terjual
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">
+                <p class="mt-1 text-sm text-slate-400">
                     Daftar semua unit yang sudah keluar/terjual
                 </p>
             </div>
             <div class="flex gap-2">
                 <router-link
                     to="/dashboard/purchase-items"
-                    class="px-4 py-2 bg-white text-slate-600 text-sm font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-2"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
                 >
                     Lihat Semua Barang
                 </router-link>
@@ -120,14 +120,14 @@ function formatDate(dateStr) {
         </div>
 
         <div
-            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
+            class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
         >
             <!-- Header Actions -->
             <div
-                class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row gap-4 justify-between items-end"
+                class="flex flex-col items-end justify-between gap-4 px-6 py-4 border-b border-slate-200 bg-slate-50 md:flex-row"
             >
                 <div
-                    class="grid grid-cols-2 md:grid-cols-4 lg:flex gap-3 w-full md:w-auto items-end"
+                    class="grid items-end w-full grid-cols-2 gap-3 md:grid-cols-4 lg:flex md:w-auto"
                 >
                     <div class="flex flex-col gap-1">
                         <label
@@ -181,7 +181,7 @@ function formatDate(dateStr) {
                                     no_invoice: '',
                                 }
                             "
-                            class="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
                             title="Reset Filter"
                         >
                             <svg
@@ -201,7 +201,7 @@ function formatDate(dateStr) {
                     </div>
                 </div>
 
-                <div class="flex flex-row items-end gap-2 w-full md:w-auto">
+                <div class="flex flex-row items-end w-full gap-2 md:w-auto">
                     <div class="flex flex-col gap-1 grow md:grow-0">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
@@ -215,10 +215,10 @@ function formatDate(dateStr) {
                                 class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
                             <div
-                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
                             >
                                 <svg
-                                    class="h-4 w-4 text-slate-400"
+                                    class="w-4 h-4 text-slate-400"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -241,18 +241,18 @@ function formatDate(dateStr) {
                 <table class="table-fixed-layout table-wide">
                     <thead class="table-header">
                         <tr>
-                            <th class="w-12 text-center">No</th>
-                            <th class="w-32">Kode</th>
-                            <th class="w-64">Nama Barang</th>
-                            <th class="w-32">Kategori</th>
-                            <th class="w-24">Grade</th>
-                            <th class="w-40">IMEI 1</th>
-                            <th class="w-32 text-right">Modal</th>
-                            <th class="w-32 text-right">Jual</th>
-                            <th class="w-40">No Transaksi Masuk</th>
-                            <th class="w-44">Supplier</th>
-                            <th class="w-40">No Transaksi Keluar</th>
-                            <th class="w-32">Tanggal Terjual</th>
+                            <th class="w-16 text-center">No</th>
+                            <th class="">Kode</th>
+                            <th class="">Nama Barang</th>
+                            <th class="">Kategori</th>
+                            <th class="">Grade</th>
+                            <th class="">IMEI 1</th>
+                            <th class="text-right">Modal</th>
+                            <th class="text-right">Jual</th>
+                            <th class="">No Transaksi Masuk</th>
+                            <th class="">Supplier</th>
+                            <th class="">No Transaksi Keluar</th>
+                            <th class="">Tanggal Terjual</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
@@ -263,7 +263,7 @@ function formatDate(dateStr) {
                             >
                                 <div class="flex flex-col items-center gap-2">
                                     <div
-                                        class="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin"
+                                        class="w-8 h-8 border-4 rounded-full border-slate-200 border-t-blue-500 animate-spin"
                                     ></div>
                                     <span class="text-sm font-medium"
                                         >Memuat data terjual...</span
@@ -274,7 +274,7 @@ function formatDate(dateStr) {
                         <tr v-else-if="items.length === 0">
                             <td
                                 colspan="12"
-                                class="px-6 py-12 text-center text-slate-500 italic"
+                                class="px-6 py-12 italic text-center text-slate-500"
                             >
                                 Tidak ada data unit yang terjual.
                             </td>
@@ -284,7 +284,7 @@ function formatDate(dateStr) {
                             :key="item.id"
                             class="table-row"
                         >
-                            <td class="table-cell text-slate-500 text-center">
+                            <td class="table-cell text-center text-slate-500">
                                 {{
                                     (pagination.current_page - 1) *
                                         pagination.per_page +
@@ -314,12 +314,12 @@ function formatDate(dateStr) {
                                 {{ item.product?.imei1 || "-" }}
                             </td>
                             <td
-                                class="table-cell text-right font-bold text-slate-500"
+                                class="table-cell font-bold text-right text-slate-500"
                             >
                                 {{ formatCurrency(item.harga_beli) }}
                             </td>
                             <td
-                                class="table-cell text-right font-bold text-emerald-600"
+                                class="table-cell font-bold text-right text-emerald-600"
                             >
                                 {{ formatCurrency(item.product?.harga_jual) }}
                             </td>
@@ -337,10 +337,10 @@ function formatDate(dateStr) {
                                     item.product?.sale?.tanggal
                                         ? formatDate(item.product.sale.tanggal)
                                         : item.updated_at
-                                          ? formatDate(
-                                                item.updated_at.split("T")[0],
-                                            )
-                                          : "-"
+                                        ? formatDate(
+                                              item.updated_at.split("T")[0]
+                                          )
+                                        : "-"
                                 }}
                             </td>
                         </tr>
@@ -351,7 +351,7 @@ function formatDate(dateStr) {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50"
+                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-[11px] text-slate-500">
                     Menampilkan
@@ -362,7 +362,7 @@ function formatDate(dateStr) {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari
@@ -373,7 +373,7 @@ function formatDate(dateStr) {
                     <button
                         @click="fetchItems(pagination.current_page - 1)"
                         :disabled="pagination.current_page === 1"
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Sebelumnya
                     </button>
@@ -382,7 +382,7 @@ function formatDate(dateStr) {
                         :disabled="
                             pagination.current_page === pagination.last_page
                         "
-                        class="px-3 py-1 border border-slate-300 rounded text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+                        class="px-3 py-1 text-sm font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Selanjutnya
                     </button>

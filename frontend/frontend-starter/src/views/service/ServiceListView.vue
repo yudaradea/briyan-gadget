@@ -182,91 +182,106 @@ const statusLabels = {
             >
                 <!-- Left: Advanced Filters -->
                 <div
-                    class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full md:w-auto"
+                    class="grid grid-cols-2 md:grid-cols-3 lg:flex gap-3 w-full md:w-auto"
                 >
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1">
                         <label
-                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Status</label
                         >
-                        <select
-                            v-model="filters.status"
-                            class="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition bg-white min-w-[140px] shadow-sm"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="dikerjakan">Proses</option>
-                            <option value="selesai">Selesai</option>
-                            <option value="batal">Batal</option>
-                        </select>
+                        <div class="relative">
+                            <select
+                                v-model="filters.status"
+                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[140px] pr-8"
+                            >
+                                <option value="">Semua Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="dikerjakan">Proses</option>
+                                <option value="selesai">Selesai</option>
+                                <option value="batal">Batal</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1">
                         <label
-                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Mulai</label
                         >
                         <input
                             type="date"
                             v-model="filters.start_date"
-                            class="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition bg-white shadow-sm"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
                     </div>
-                    <div class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1">
                         <label
-                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sampai</label
                         >
                         <input
                             type="date"
                             v-model="filters.end_date"
-                            :min="filters.start_date || undefined"
-                            class="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition bg-white shadow-sm"
+                            :min="filters.start_date"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
+                    </div>
+                    <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible">Reset</label>
+                        <button
+                            @click="filters = { status: '', start_date: '', end_date: '' }"
+                            class="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            title="Reset Filter"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
                 <!-- Right: Pagination & Search -->
-                <div class="flex flex-row items-end gap-3 w-full md:w-auto">
-                    <div class="flex flex-col gap-1.5">
+                <div class="flex flex-row items-end gap-2 w-full md:w-auto">
+                    <div class="flex flex-col gap-1">
                         <label
-                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Tampilkan</label
                         >
-                        <select
-                            v-model="perPage"
-                            class="block w-20 px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition bg-white shadow-sm"
-                        >
-                            <option :value="10">10</option>
-                            <option :value="50">50</option>
-                            <option :value="100">100</option>
-                        </select>
+                        <div class="relative">
+                            <select
+                                v-model="perPage"
+                                class="appearance-none block w-20 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm bg-white pr-8"
+                            >
+                                <option :value="10">10</option>
+                                <option :value="50">50</option>
+                                <option :value="100">100</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex flex-col gap-1.5 grow md:grow-0">
+                    <div class="flex flex-col gap-1 grow md:grow-0">
                         <label
-                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Search</label
                         >
                         <div class="relative">
                             <input
                                 type="text"
                                 v-model="searchQuery"
-                                placeholder="Cari no service / pelanggan / unit..."
-                                class="block w-full md:w-64 pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition shadow-sm"
+                                placeholder="Cari no service / pelanggan..."
+                                class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
-                            <div
-                                class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"
-                            >
-                                <svg
-                                    class="h-4 w-4 text-slate-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2.5"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                         </div>
