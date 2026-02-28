@@ -5,10 +5,44 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SaleStoreRequest;
 use App\Repositories\SaleRepository;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 
 class SaleController extends Controller
 {
-    public function __construct(private SaleRepository $repository) {}
+    public function __construct(private SaleRepository $repository)
+    {
+        $this->middleware(function ($request, $next) {
+            $action = $request->route()->getActionMethod();
+            
+            // View sales - allow if has 'view sales' permission
+            if (in_array($action, ['index', 'show', 'stats'])) {
+                if (!\Illuminate\Support\Facades\Auth::user()->can('view sales')) {
+                    return response()->json(['message' => 'Unauthorized - requires view sales permission'], 403);
+                }
+            }
+            // Create sales - allow if has 'create sales' permission
+            if (in_array($action, ['store'])) {
+                if (!\Illuminate\Support\Facades\Auth::user()->can('create sales')) {
+                    return response()->json(['message' => 'Unauthorized - requires create sales permission'], 403);
+                }
+            }
+            // Edit sales - allow if has 'edit sales' permission
+            if (in_array($action, ['update'])) {
+                if (!\Illuminate\Support\Facades\Auth::user()->can('edit sales')) {
+                    return response()->json(['message' => 'Unauthorized - requires edit sales permission'], 403);
+                }
+            }
+            // Delete sales - allow if has 'delete sales' permission
+            if (in_array($action, ['destroy'])) {
+                if (!\Illuminate\Support\Facades\Auth::user()->can('delete sales')) {
+                    return response()->json(['message' => 'Unauthorized - requires delete sales permission'], 403);
+                }
+            }
+            
+            return $next($request);
+        });
+    }
 
     /**
      * Display a listing of sales

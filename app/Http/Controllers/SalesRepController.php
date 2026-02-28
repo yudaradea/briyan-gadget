@@ -12,7 +12,7 @@ class SalesRepController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:view master-data', only: ['index', 'show', 'all']),
+            new Middleware('permission:view master-data', only: ['index', 'show']),
             new Middleware('permission:create master-data', only: ['store', 'quickStore']),
             new Middleware('permission:edit master-data', only: ['update']),
             new Middleware('permission:delete master-data', only: ['destroy']),

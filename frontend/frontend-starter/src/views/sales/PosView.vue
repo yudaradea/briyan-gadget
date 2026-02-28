@@ -153,8 +153,12 @@ async function fetchOptions() {
         users.value = resUsers.data.data;
 
         // Default set to current user if not editing
-        if (!isEditing.value && authStore.user) {
-            form.value.user_id = authStore.user.id;
+        if (!isEditing.value) {
+            if (authStore.isKasir && authStore.user) {
+                form.value.user_id = authStore.user.id;
+            } else if (authStore.user) {
+                form.value.user_id = authStore.user.id;
+            }
         }
     } catch (e) {
         console.error("Failed to fetch options", e);
@@ -842,7 +846,14 @@ async function processTransaction() {
                             class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                             >Kasir</label
                         >
+                        <div
+                            v-if="authStore.isKasir"
+                            class="px-3 py-2 text-sm font-medium border bg-slate-100 border-slate-200 rounded-xl text-slate-600"
+                        >
+                            {{ authStore.user?.name }}
+                        </div>
                         <select
+                            v-else
                             v-model="form.user_id"
                             :disabled="!authStore.isAdmin"
                             class="block w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-500"
@@ -970,8 +981,10 @@ async function processTransaction() {
                         <span
                             >Kasir:
                             {{
-                                users.find((u) => u.id === form.user_id)
-                                    ?.name || authStore.user?.name
+                                authStore.isKasir
+                                    ? authStore.user?.name
+                                    : users.find((u) => u.id === form.user_id)
+                                          ?.name || authStore.user?.name
                             }}</span
                         >
                     </div>

@@ -6,10 +6,12 @@ use App\Http\Requests\Service\ServiceAddPartRequest;
 use App\Http\Requests\Service\ServiceStatusUpdateRequest;
 use App\Http\Requests\Service\ServiceStoreRequest;
 use App\Http\Requests\Service\ServiceUpdateRequest;
+use App\Models\ServiceOrder;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller implements HasMiddleware
 {
@@ -48,6 +50,18 @@ class ServiceController extends Controller implements HasMiddleware
 
     public function update(ServiceUpdateRequest $request, $id)
     {
+        // Check if service is already completed (selesai) - only super admin can edit
+        $service = ServiceOrder::findOrFail($id);
+        if ($service->status === 'selesai') {
+            $user = Auth::user();
+            $isSuperAdmin = $user->roles()->whereIn('name', ['super-admin'])->exists();
+            if (!$isSuperAdmin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service yang sudah selesai tidak dapat diedit. Hubungi Super Admin.'
+                ], 403);
+            }
+        }
         return $this->repository->update($id, $request->validated());
     }
 
@@ -58,6 +72,18 @@ class ServiceController extends Controller implements HasMiddleware
 
     public function addPart(ServiceAddPartRequest $request, $id)
     {
+        // Check if service is already completed (selesai) - only super admin can add parts
+        $service = ServiceOrder::findOrFail($id);
+        if ($service->status === 'selesai') {
+            $user = Auth::user();
+            $isSuperAdmin = $user->roles()->whereIn('name', ['super-admin'])->exists();
+            if (!$isSuperAdmin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service yang sudah selesai tidak dapat ditambah sparepart. Hubungi Super Admin.'
+                ], 403);
+            }
+        }
         try {
             return $this->repository->addPart($id, $request->validated());
         } catch (\Exception $e) {
@@ -67,11 +93,35 @@ class ServiceController extends Controller implements HasMiddleware
 
     public function removePart($id, $partId)
     {
+        // Check if service is already completed (selesai) - only super admin can remove parts
+        $service = ServiceOrder::findOrFail($id);
+        if ($service->status === 'selesai') {
+            $user = Auth::user();
+            $isSuperAdmin = $user->roles()->whereIn('name', ['super-admin'])->exists();
+            if (!$isSuperAdmin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service yang sudah selesai tidak dapat dihapus sparepartnya. Hubungi Super Admin.'
+                ], 403);
+            }
+        }
         return $this->repository->removePart($id, $partId);
     }
 
     public function destroy($id)
     {
+        // Check if service is already completed (selesai) - only super admin can delete
+        $service = ServiceOrder::findOrFail($id);
+        if ($service->status === 'selesai') {
+            $user = Auth::user();
+            $isSuperAdmin = $user->roles()->whereIn('name', ['super-admin'])->exists();
+            if (!$isSuperAdmin) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service yang sudah selesai tidak dapat dihapus. Hubungi Super Admin.'
+                ], 403);
+            }
+        }
         try {
             return $this->repository->destroy($id);
         } catch (\Exception $e) {

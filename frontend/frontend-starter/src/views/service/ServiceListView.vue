@@ -3,11 +3,13 @@ import { ref, onMounted, watch } from "vue";
 import api from "../../api";
 import { useRouter } from "vue-router";
 import { useToast } from "../../composables/useToast";
+import { useAuthStore } from "../../stores/auth";
 import debounce from "lodash-es/debounce";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 
 const router = useRouter();
 const toast = useToast();
+const authStore = useAuthStore();
 
 const services = ref([]);
 const isLoading = ref(false);
@@ -474,6 +476,7 @@ const statusLabels = {
                                                 `/dashboard/services/${item.id}/edit`,
                                             )
                                         "
+                                        v-if="item.status !== 'selesai' || authStore.isSuperAdmin"
                                         class="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
                                         title="Edit Data"
                                     >
@@ -493,6 +496,7 @@ const statusLabels = {
                                     </button>
                                     <button
                                         @click="confirmDelete(item.id)"
+                                        v-if="item.status !== 'selesai' || authStore.isSuperAdmin"
                                         class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                                         title="Hapus Data"
                                     >

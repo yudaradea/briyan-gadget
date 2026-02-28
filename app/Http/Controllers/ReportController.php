@@ -7,9 +7,26 @@ use App\Models\Purchase;
 use App\Models\SaleItem;
 use App\Models\SalesTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ReportController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $action = $request->route()->getActionMethod();
+            
+            // View reports - allow if has 'view reports' or 'view all reports' permission
+            if (in_array($action, ['sales', 'purchases', 'profit'])) {
+                if (!Gate::allows('view reports') && !Gate::allows('view all reports')) {
+                    return response()->json(['message' => 'Unauthorized - requires view reports permission'], 403);
+                }
+            }
+            
+            return $next($request);
+        });
+    }
+
     public function sales(Request $request)
     {
         $validated = $this->validateReportRequest($request, true);

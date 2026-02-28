@@ -169,6 +169,7 @@ onMounted(fetchStoreProfile);
                     <span v-if="sidebarOpen">Profil Saya</span>
                 </router-link>
 
+                <!-- Gudang & Stok Section -->
                 <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
                     <div v-if="sidebarOpen" class="section-label">
                         Gudang & Stok
@@ -176,6 +177,7 @@ onMounted(fetchStoreProfile);
                     <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <router-link
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
                         to="/dashboard/purchases"
                         class="nav-item"
                         :class="
@@ -287,7 +289,7 @@ onMounted(fetchStoreProfile);
                     </router-link>
 
                     <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewSales || authStore.isKasir"
                         to="/dashboard/sales"
                         class="nav-item"
                         :class="
@@ -352,7 +354,7 @@ onMounted(fetchStoreProfile);
                     </router-link>
 
                     <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewServices || authStore.isKasir"
                         to="/dashboard/service-transactions"
                         class="mt-1 nav-item"
                         :class="
@@ -378,7 +380,7 @@ onMounted(fetchStoreProfile);
                     </router-link>
                 </div>
 
-                <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
+                <div v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewReports">
                     <div v-if="sidebarOpen" class="section-label">Laporan</div>
                     <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 

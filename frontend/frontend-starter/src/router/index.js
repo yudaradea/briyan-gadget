@@ -181,13 +181,13 @@ const router = createRouter({
                     path: "sales",
                     name: "sales-list",
                     component: () => import("../views/sales/SalesListView.vue"),
-                    meta: { requiresAdmin: true },
+                    meta: { requiresSalesView: true },
                 },
                 {
                     path: "service-transactions",
                     name: "service-transaction-list",
                     component: () => import("../views/sales/SalesListView.vue"),
-                    meta: { requiresAdmin: true },
+                    meta: { requiresServiceView: true },
                 },
                 {
                     path: "pos/:id/invoice",
@@ -279,6 +279,14 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (to.meta.requiresAdmin && !authStore.isAdmin) {
+        return next("/forbidden");
+    }
+
+    if (to.meta.requiresSalesView && !authStore.isAdmin && !authStore.canViewSales) {
+        return next("/forbidden");
+    }
+
+    if (to.meta.requiresServiceView && !authStore.isAdmin && !authStore.canViewServices) {
         return next("/forbidden");
     }
 

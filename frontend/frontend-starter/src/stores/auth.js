@@ -10,19 +10,72 @@ export const useAuthStore = defineStore("auth", {
     }),
     getters: {
         isAuthenticated: (state) => !!state.token,
-        isAdmin: (state) =>
-            state.user?.roles?.some(
+        isAdmin: (state) => {
+            if (!state.user?.roles) return false;
+            return state.user.roles.some(
                 (role) =>
                     role.name === "admin" ||
                     role.name === "super-admin" ||
                     role.name === "owner",
-            ),
-        isSuperAdmin: (state) =>
-            state.user?.roles?.some((role) => role.name === "super-admin"),
-        isOwner: (state) =>
-            state.user?.roles?.some((role) => role.name === "owner"),
-        isKasir: (state) =>
-            state.user?.roles?.some((role) => role.name === "kasir"),
+            );
+        },
+        isSuperAdmin: (state) => {
+            if (!state.user?.roles) return false;
+            return state.user.roles.some((role) => role.name === "super-admin");
+        },
+        isOwner: (state) => {
+            if (!state.user?.roles) return false;
+            return state.user.roles.some((role) => role.name === "owner");
+        },
+        isKasir: (state) => {
+            if (!state.user?.roles) return false;
+            return state.user.roles.some((role) => role.name === "kasir");
+        },
+        // Permission checks - simplified for now, show menu for kasir role
+        canViewSales: (state) => {
+            // If user has isKasir role, return true (show menu)
+            if (state.user?.roles?.some(role => role.name === 'kasir')) {
+                return true;
+            }
+            // Otherwise check for admin roles
+            if (state.user?.roles?.some(role => 
+                role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
+            )) {
+                return true;
+            }
+            return false;
+        },
+        canViewServices: (state) => {
+            // If user has isKasir role, return true (show menu)
+            if (state.user?.roles?.some(role => role.name === 'kasir')) {
+                return true;
+            }
+            // Otherwise check for admin roles
+            if (state.user?.roles?.some(role => 
+                role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
+            )) {
+                return true;
+            }
+            return false;
+        },
+        canViewReports: (state) => {
+            // If user has admin roles, return true
+            if (state.user?.roles?.some(role => 
+                role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
+            )) {
+                return true;
+            }
+            return false;
+        },
+        canViewPurchases: (state) => {
+            // If user has admin roles, return true
+            if (state.user?.roles?.some(role => 
+                role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
+            )) {
+                return true;
+            }
+            return false;
+        },
     },
     actions: {
         async login(credentials) {
