@@ -62,6 +62,7 @@ const displayJumlahBayar = ref("");
 const displayDiskonNominal = ref("");
 
 function formatInputCurrency(val) {
+    if (val === 0) return "0";
     if (!val) return "";
     let str = val.toString().replace(/\D/g, "");
     return new Intl.NumberFormat("id-ID").format(str);
@@ -83,7 +84,7 @@ watch(
         if (displayJumlahBayar.value !== formatted) {
             displayJumlahBayar.value = formatted;
         }
-    }
+    },
 );
 
 watch(
@@ -97,7 +98,7 @@ watch(
         if (displayDiskonNominal.value !== formatted) {
             displayDiskonNominal.value = formatted;
         }
-    }
+    },
 );
 
 const isProcessing = ref(false);
@@ -190,7 +191,7 @@ async function fetchSaleDetails() {
 
         if (sale.diskon_nominal > 0) {
             displayDiskonNominal.value = formatInputCurrency(
-                sale.diskon_nominal
+                sale.diskon_nominal,
             );
         }
 
@@ -329,7 +330,7 @@ function removeFromCart(itemIdx) {
 const subtotal = computed(() => {
     return cart.value.reduce(
         (acc, item) => acc + item.harga_jual * item.qty,
-        0
+        0,
     );
 });
 
@@ -552,7 +553,13 @@ async function processTransaction() {
                                         <p
                                             class="text-sm font-black tracking-tight text-blue-600"
                                         >
-                                            {{ formatCurrency(res.harga_jual) }}
+                                            {{
+                                                res.harga_jual > 0
+                                                    ? formatCurrency(
+                                                          res.harga_jual,
+                                                      )
+                                                    : "Input Manual"
+                                            }}
                                         </p>
                                         <div
                                             class="text-[9px] font-bold text-slate-400 uppercase mt-0.5"
@@ -655,9 +662,28 @@ async function processTransaction() {
                                         class="font-mono font-semibold text-blue-600"
                                         >{{ item.barcode }}</span
                                     >
-                                    <span>{{
-                                        formatCurrency(item.harga_jual)
-                                    }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5"
+                                            >@</span
+                                        >
+                                        <input
+                                            type="text"
+                                            :value="
+                                                formatInputCurrency(
+                                                    item.harga_jual,
+                                                )
+                                            "
+                                            @input="
+                                                item.harga_jual =
+                                                    parseInputCurrency(
+                                                        $event.target.value,
+                                                    )
+                                            "
+                                            class="w-28 px-1.5 py-0.5 text-xs font-black text-blue-600 bg-blue-50/30 border border-blue-100/50 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
+                                            placeholder="Masukan Harga"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -710,7 +736,7 @@ async function processTransaction() {
                                 <p class="text-sm font-bold text-slate-800">
                                     {{
                                         formatCurrency(
-                                            item.harga_jual * item.qty
+                                            item.harga_jual * item.qty,
                                         )
                                     }}
                                 </p>

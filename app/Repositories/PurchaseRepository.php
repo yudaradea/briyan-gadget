@@ -158,7 +158,7 @@ class PurchaseRepository
                     'imei1' => $data['imei1'] ?? null,
                     'imei2' => $data['imei2'] ?? null,
                     'harga_modal' => $data['harga_beli'],
-                    'harga_jual' => $data['harga_jual'] ?? $data['harga_beli'],
+                    'harga_jual' => $data['harga_jual'] ?? 0,
                     'stok' => $data['qty'] ?? 1,
                     'keterangan' => $data['keterangan'] ?? null,
                     'foto' => $data['foto'] ?? null,
