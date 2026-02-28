@@ -21,7 +21,7 @@ class AuthRepository implements AuthRepositoryInterface
 
             if (!Auth::attempt($credentials)) {
                 return ResponseHelper::error(
-                    'Username atau password salah',
+                    'Email atau Password salah',
                     'invalid_credentials',
                     401
                 );

@@ -20,6 +20,11 @@ const router = createRouter({
             meta: { guest: true },
         },
         {
+            path: "/forbidden",
+            name: "forbidden",
+            component: () => import("../views/errors/ForbiddenView.vue"),
+        },
+        {
             path: "/dashboard",
             component: DashboardView,
             meta: { requiresAuth: true },
@@ -274,14 +279,21 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (to.meta.requiresAdmin && !authStore.isAdmin) {
-        return next("/dashboard");
+        return next("/forbidden");
     }
 
     if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
-        return next("/dashboard");
+        return next("/forbidden");
     }
 
     next();
+});
+
+// Handle 404 - route not found
+router.addRoute({
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/errors/NotFoundView.vue'),
 });
 
 export default router;

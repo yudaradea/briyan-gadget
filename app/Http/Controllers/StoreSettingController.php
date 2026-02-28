@@ -38,6 +38,18 @@ class StoreSettingController extends Controller
         return ResponseHelper::success($setting, 'Store settings retrieved successfully');
     }
 
+    public function logo()
+    {
+        $setting = StoreSetting::first();
+        $name = $setting->name;
+        $logo_url = asset('storage/' . $setting->logo);
+
+        return ResponseHelper::success([
+            'name' => $name,
+            'logo_url' => $logo_url
+        ], 'Store logo retrieved successfully');
+    }
+
     public function update(Request $request)
     {
         $setting = StoreSetting::first();

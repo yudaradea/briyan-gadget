@@ -106,45 +106,45 @@ const submitForm = async () => {
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto py-6">
+    <div class="max-w-4xl py-6 mx-auto">
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Informasi Toko
                 </h1>
-                <p class="text-slate-500 mt-1">
+                <p class="mt-1 text-slate-500">
                     Kelola identitas toko yang akan tampil di invoice dan
                     laporan.
                 </p>
             </div>
         </div>
 
-        <div v-if="isLoading" class="flex justify-center items-center py-20">
+        <div v-if="isLoading" class="flex items-center justify-center py-20">
             <div
-                class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"
+                class="w-10 h-10 border-b-2 border-blue-600 rounded-full animate-spin"
             ></div>
         </div>
 
         <form v-else @submit.prevent="submitForm" class="space-y-6">
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+                class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
             >
-                <div class="p-6 md:p-8 space-y-6">
+                <div class="p-6 space-y-6 md:p-8">
                     <!-- Logo Upload -->
-                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                    <div class="flex flex-col items-start gap-8 md:flex-row">
                         <div class="shrink-0">
                             <label
-                                class="block text-sm font-semibold text-slate-700 mb-3"
+                                class="block mb-3 text-sm font-semibold text-slate-700"
                                 >Logo Toko</label
                             >
                             <div class="relative group">
                                 <div
-                                    class="w-32 h-32 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden transition group-hover:border-blue-400 group-hover:bg-blue-50/30"
+                                    class="flex items-center justify-center w-32 h-32 overflow-hidden transition border-2 border-dashed rounded-2xl border-slate-200 bg-slate-50 group-hover:border-blue-400 group-hover:bg-blue-50/30"
                                 >
                                     <img
                                         v-if="logoPreview"
                                         :src="logoPreview"
-                                        class="w-full h-full object-contain p-2"
+                                        class="object-contain w-full h-full p-2"
                                     />
                                     <svg
                                         v-else
@@ -176,7 +176,7 @@ const submitForm = async () => {
                         </div>
 
                         <div
-                            class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full"
+                            class="grid flex-1 w-full grid-cols-1 gap-6 md:grid-cols-2"
                         >
                             <div class="col-span-2 md:col-span-1">
                                 <label
@@ -254,12 +254,12 @@ const submitForm = async () => {
                                 class="col-span-2 pt-6 border-t border-slate-100"
                             >
                                 <h3
-                                    class="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4"
+                                    class="mb-4 text-sm font-bold tracking-widest uppercase text-slate-800"
                                 >
                                     Informasi Rekening & QRIS
                                 </h3>
                                 <div
-                                    class="grid grid-cols-1 md:grid-cols-3 gap-4"
+                                    class="grid grid-cols-1 gap-4 md:grid-cols-3"
                                 >
                                     <div>
                                         <label
@@ -297,7 +297,7 @@ const submitForm = async () => {
                                             class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition"
                                         />
                                     </div>
-                                    <div class="col-span-1 md:col-span-3 mt-2">
+                                    <div class="col-span-1 mt-2 md:col-span-3">
                                         <label
                                             class="block text-[11px] font-bold text-slate-500 uppercase mb-1.5"
                                             >Nama Untuk Tanda Tangan
@@ -317,7 +317,7 @@ const submitForm = async () => {
                                         </p>
                                     </div>
 
-                                    <div class="col-span-1 md:col-span-3 mt-4">
+                                    <!-- <div class="col-span-1 mt-4 md:col-span-3">
                                         <label
                                             class="block text-sm font-semibold text-slate-700 mb-1.5"
                                             >Syarat & Ketentuan Servis</label
@@ -334,7 +334,7 @@ const submitForm = async () => {
                                             Gunakan baris baru untuk setiap poin
                                             syarat dan ketentuan.
                                         </p>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
 
@@ -344,18 +344,18 @@ const submitForm = async () => {
                                     class="block text-[11px] font-bold text-slate-500 uppercase mb-3"
                                     >Barcode QRIS (Opsional)</label
                                 >
-                                <div class="relative group w-48">
+                                <div class="relative w-48 group">
                                     <div
-                                        class="w-48 h-48 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden transition group-hover:border-blue-400 group-hover:bg-blue-50/30"
+                                        class="flex items-center justify-center w-48 h-48 overflow-hidden transition border-2 border-dashed rounded-2xl border-slate-200 bg-slate-50 group-hover:border-blue-400 group-hover:bg-blue-50/30"
                                     >
                                         <img
                                             v-if="qrisPreview"
                                             :src="qrisPreview"
-                                            class="w-full h-full object-contain p-2"
+                                            class="object-contain w-full h-full p-2"
                                         />
-                                        <div v-else class="text-center p-4">
+                                        <div v-else class="p-4 text-center">
                                             <svg
-                                                class="w-10 h-10 text-slate-300 mx-auto mb-2"
+                                                class="w-10 h-10 mx-auto mb-2 text-slate-300"
                                                 fill="none"
                                                 stroke="currentColor"
                                                 viewBox="0 0 24 24"
@@ -386,7 +386,7 @@ const submitForm = async () => {
                 </div>
 
                 <div
-                    class="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end"
+                    class="flex justify-end px-8 py-4 border-t bg-slate-50 border-slate-200"
                 >
                     <button
                         type="submit"
@@ -395,7 +395,7 @@ const submitForm = async () => {
                     >
                         <svg
                             v-if="isSaving"
-                            class="animate-spin h-4 w-4 text-white"
+                            class="w-4 h-4 text-white animate-spin"
                             fill="none"
                             viewBox="0 0 24 24"
                         >

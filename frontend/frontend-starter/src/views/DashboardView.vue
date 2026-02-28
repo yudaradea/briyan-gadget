@@ -58,12 +58,12 @@ onMounted(fetchStoreProfile);
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 flex">
+    <div class="flex min-h-screen bg-slate-50">
         <!-- Mobile Overlay -->
         <div
             v-if="mobileSidebarOpen"
             @click="mobileSidebarOpen = false"
-            class="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm transition-opacity"
+            class="fixed inset-0 z-40 transition-opacity bg-black/40 md:hidden backdrop-blur-sm"
         ></div>
 
         <!-- Sidebar -->
@@ -81,13 +81,13 @@ onMounted(fetchStoreProfile);
                 class="flex items-center gap-3 px-4 py-5 border-b border-white/10"
             >
                 <div
-                    class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0"
+                    class="flex items-center justify-center shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/25 shrink-0"
                 >
                     <img
                         v-if="storeProfile.logo_url"
                         :src="storeProfile.logo_url"
                         alt="Logo Toko"
-                        class="w-full h-full object-cover rounded-xl"
+                        class="object-cover w-full h-full rounded-xl"
                     />
                     <svg
                         v-else
@@ -107,7 +107,7 @@ onMounted(fetchStoreProfile);
                 <transition name="fade">
                     <span
                         v-if="sidebarOpen"
-                        class="font-bold text-lg tracking-tight"
+                        class="text-lg font-bold tracking-tight"
                         >{{ storeProfile.name }}</span
                     >
                 </transition>
@@ -115,7 +115,7 @@ onMounted(fetchStoreProfile);
 
             <!-- Navigation -->
             <nav
-                class="flex-1 overflow-y-auto py-4 px-3 space-y-1"
+                class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"
                 :class="{ 'px-2': !sidebarOpen }"
             >
                 <!-- Dashboard -->
@@ -173,7 +173,7 @@ onMounted(fetchStoreProfile);
                     <div v-if="sidebarOpen" class="section-label">
                         Gudang & Stok
                     </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <router-link
                         to="/dashboard/purchases"
@@ -197,12 +197,14 @@ onMounted(fetchStoreProfile);
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
                             />
                         </svg>
-                        <span v-if="sidebarOpen">Pembelian (Input Invoice Supplier)</span>
+                        <span v-if="sidebarOpen"
+                            >Pembelian (Input Invoice Supplier)</span
+                        >
                     </router-link>
 
                     <router-link
                         to="/dashboard/stock-summary"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.path === '/dashboard/stock-summary'
                                 ? 'nav-active'
@@ -222,12 +224,14 @@ onMounted(fetchStoreProfile);
                                 d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                             />
                         </svg>
-                        <span v-if="sidebarOpen">Stok Barang (Ringkasan per SKU)</span>
+                        <span v-if="sidebarOpen"
+                            >Stok Barang (Ringkasan per SKU)</span
+                        >
                     </router-link>
 
                     <router-link
                         to="/dashboard/purchase-items"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.path === '/dashboard/purchase-items'
                                 ? 'nav-active'
@@ -255,7 +259,7 @@ onMounted(fetchStoreProfile);
                     <div v-if="sidebarOpen" class="section-label">
                         Penjualan
                     </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <router-link
                         to="/dashboard/pos"
@@ -314,7 +318,7 @@ onMounted(fetchStoreProfile);
                     <div v-if="sidebarOpen" class="section-label">
                         Servis HP
                     </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <router-link
                         to="/dashboard/services"
@@ -350,7 +354,7 @@ onMounted(fetchStoreProfile);
                     <router-link
                         v-if="authStore.isSuperAdmin || authStore.isAdmin"
                         to="/dashboard/service-transactions"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.path === '/dashboard/service-transactions'
                                 ? 'nav-active'
@@ -375,10 +379,8 @@ onMounted(fetchStoreProfile);
                 </div>
 
                 <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
-                    <div v-if="sidebarOpen" class="section-label">
-                        Laporan
-                    </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-if="sidebarOpen" class="section-label">Laporan</div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <router-link
                         to="/dashboard/report/sales"
@@ -402,12 +404,14 @@ onMounted(fetchStoreProfile);
                                 d="M11 5h6a2 2 0 012 2v12M5 7h4m0 0h6m-6 0v12m0-12H5a2 2 0 00-2 2v10a2 2 0 002 2h4"
                             ></path>
                         </svg>
-                        <span v-if="sidebarOpen">Laporan Penjualan & Service</span>
+                        <span v-if="sidebarOpen"
+                            >Laporan Penjualan & Service</span
+                        >
                     </router-link>
 
                     <router-link
                         to="/dashboard/report/purchases"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.name === 'report-purchases'
                                 ? 'nav-active'
@@ -432,7 +436,7 @@ onMounted(fetchStoreProfile);
 
                     <router-link
                         to="/dashboard/report/profit"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.name === 'report-profit'
                                 ? 'nav-active'
@@ -460,11 +464,11 @@ onMounted(fetchStoreProfile);
                     <div v-if="sidebarOpen" class="section-label">
                         Master Data
                     </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <button
                         @click="masterDataOpen = !masterDataOpen"
-                        class="nav-item nav-inactive w-full justify-between"
+                        class="justify-between w-full nav-item nav-inactive"
                     >
                         <span class="flex items-center gap-3">
                             <svg
@@ -575,11 +579,11 @@ onMounted(fetchStoreProfile);
                     <div v-if="sidebarOpen" class="section-label">
                         Pengaturan
                     </div>
-                    <div v-else class="w-8 h-px bg-white/20 mx-auto my-3"></div>
+                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
                     <button
                         @click="userMgmtOpen = !userMgmtOpen"
-                        class="nav-item nav-inactive w-full justify-between"
+                        class="justify-between w-full nav-item nav-inactive"
                     >
                         <span class="flex items-center gap-3">
                             <svg
@@ -661,7 +665,7 @@ onMounted(fetchStoreProfile);
 
                     <router-link
                         to="/dashboard/settings"
-                        class="nav-item mt-1"
+                        class="mt-1 nav-item"
                         :class="
                             $route.path === '/dashboard/settings'
                                 ? 'nav-active'
@@ -687,13 +691,13 @@ onMounted(fetchStoreProfile);
             </nav>
 
             <!-- User Card at Bottom -->
-            <div class="border-t border-white/10 p-3">
+            <div class="p-3 border-t border-white/10">
                 <div
                     class="flex items-center gap-3"
                     :class="{ 'justify-center': !sidebarOpen }"
                 >
                     <div
-                        class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-sm font-bold shrink-0 shadow-lg"
+                        class="flex items-center justify-center text-sm font-bold shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 shrink-0"
                     >
                         {{ userInitial }}
                     </div>
@@ -713,20 +717,20 @@ onMounted(fetchStoreProfile);
 
         <!-- Main Content -->
         <div
-            class="flex-1 flex flex-col min-h-screen transition-all duration-300 min-w-0"
+            class="flex flex-col flex-1 min-w-0 min-h-screen transition-all duration-300"
         >
             <!-- Top Bar -->
             <header
-                class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm"
+                class="sticky top-0 z-30 bg-white border-b shadow-sm border-slate-200"
             >
                 <div
-                    class="flex items-center justify-between px-4 md:px-6 h-16"
+                    class="flex items-center justify-between h-16 px-4 md:px-6"
                 >
                     <div class="flex items-center gap-3">
                         <!-- Sidebar Toggle -->
                         <button
                             @click="sidebarOpen = !sidebarOpen"
-                            class="hidden md:flex p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition"
+                            class="hidden p-2 transition md:flex rounded-xl hover:bg-slate-100 text-slate-500"
                         >
                             <svg
                                 class="w-5 h-5"
@@ -745,7 +749,7 @@ onMounted(fetchStoreProfile);
                         <!-- Mobile Menu -->
                         <button
                             @click="mobileSidebarOpen = true"
-                            class="md:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition"
+                            class="p-2 transition md:hidden rounded-xl hover:bg-slate-100 text-slate-500"
                         >
                             <svg
                                 class="w-5 h-5"
@@ -770,12 +774,12 @@ onMounted(fetchStoreProfile);
                             >{{ roleBadge.label }}</span
                         >
                         <span
-                            class="text-sm text-slate-600 font-medium hidden sm:inline-block"
+                            class="hidden text-sm font-medium text-slate-600 sm:inline-block"
                             >{{ authStore.user?.name }}</span
                         >
                         <button
                             @click="handleLogout"
-                            class="flex items-center gap-2 text-slate-500 hover:text-red-500 transition text-sm font-medium px-3 py-2 rounded-xl hover:bg-red-50"
+                            class="flex items-center gap-2 px-3 py-2 text-sm font-medium transition text-slate-500 hover:text-red-500 rounded-xl hover:bg-red-50"
                         >
                             <svg
                                 class="w-4 h-4"

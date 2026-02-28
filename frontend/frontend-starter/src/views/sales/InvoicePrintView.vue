@@ -88,9 +88,9 @@ function printInvoice() {
 <template>
     <div
         v-if="isLoading"
-        class="flex justify-center items-center h-screen bg-white"
+        class="flex items-center justify-center h-screen bg-white"
     >
-        <p class="text-slate-500 font-mono text-xs uppercase">
+        <p class="font-mono text-xs uppercase text-slate-500">
             MEMUAT INVOICE...
         </p>
     </div>
@@ -103,11 +103,11 @@ function printInvoice() {
         <!-- Print Button (Hidden in Print) -->
         <div class="max-w-[800px] mx-auto pt-6 px-4 print:hidden">
             <div
-                class="flex justify-between items-center mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200"
+                class="flex items-center justify-between p-4 mb-6 border bg-slate-50 rounded-xl border-slate-200"
             >
                 <button
                     @click="router.back()"
-                    class="text-slate-600 text-sm font-medium flex items-center gap-2"
+                    class="flex items-center gap-2 text-sm font-medium text-slate-600"
                 >
                     <svg
                         class="w-4 h-4"
@@ -126,7 +126,7 @@ function printInvoice() {
                 </button>
                 <button
                     @click="printInvoice"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-lg hover:bg-blue-700 transition flex items-center gap-2"
+                    class="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white transition bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700"
                 >
                     <svg
                         class="w-4 h-4"
@@ -152,9 +152,9 @@ function printInvoice() {
             class="bg-white w-full max-w-[800px] mx-auto p-8 mb-20 print:mb-0 print:p-0 font-mono text-[11px] text-black"
         >
             <!-- Header Section -->
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center justify-between mb-4">
                 <h1
-                    class="text-5xl font-serif font-black tracking-tighter text-black"
+                    class="font-serif text-5xl font-black tracking-tighter text-black"
                 >
                     INVOICE
                 </h1>
@@ -162,11 +162,11 @@ function printInvoice() {
                     <img
                         v-if="store?.logo_url"
                         :src="store.logo_url"
-                        class="h-14 object-contain ml-auto"
+                        class="object-contain ml-auto h-14"
                     />
                     <div
                         v-else
-                        class="text-2xl font-black uppercase text-black leading-none"
+                        class="text-2xl font-black leading-none text-black uppercase"
                     >
                         {{ store?.name }}
                     </div>
@@ -174,14 +174,14 @@ function printInvoice() {
             </div>
 
             <!-- Divider Line -->
-            <div class="border-b-2 border-slate-800 mb-8"></div>
+            <div class="mb-8 border-b-2 border-slate-800"></div>
 
             <!-- Store & Customer Details -->
             <table class="w-full mb-10 border-collapse table-fixed">
                 <tr>
                     <!-- Store Info -->
-                    <td class="w-1/2 align-top pr-10">
-                        <div class="uppercase leading-relaxed">
+                    <td class="w-1/2 pr-10 align-top">
+                        <div class="leading-relaxed uppercase">
                             <p class="font-black text-[12px] mb-2">
                                 {{ store?.name }}
                             </p>
@@ -204,11 +204,11 @@ function printInvoice() {
                     <td class="w-1/2 align-top">
                         <table class="w-full border-collapse">
                             <tr>
-                                <td class="py-1 w-32 font-bold uppercase">
+                                <td class="w-32 py-1 font-bold uppercase">
                                     No. Invoice
                                 </td>
-                                <td class="py-1 w-4 text-center">:</td>
-                                <td class="py-1 text-right font-bold">
+                                <td class="w-4 py-1 text-center">:</td>
+                                <td class="py-1 font-bold text-right">
                                     {{ sale.no_invoice }}
                                 </td>
                             </tr>
@@ -217,7 +217,7 @@ function printInvoice() {
                                     No. Service
                                 </td>
                                 <td class="py-1 text-center">:</td>
-                                <td class="py-1 text-right uppercase font-bold">
+                                <td class="py-1 font-bold text-right uppercase">
                                     {{ sale.service_order?.no_service || "-" }}
                                 </td>
                             </tr>
@@ -235,7 +235,7 @@ function printInvoice() {
                                     Pelanggan
                                 </td>
                                 <td class="py-1 text-center">:</td>
-                                <td class="py-1 text-right uppercase font-bold">
+                                <td class="py-1 font-bold text-right uppercase">
                                     {{ sale.pelanggan || "Umum" }}
                                 </td>
                             </tr>
@@ -248,13 +248,17 @@ function printInvoice() {
             <div
                 class="text-[10px] font-black mb-4 uppercase tracking-widest border-l-4 border-black pl-3 py-0.5"
             >
-                {{ sale.tipe === "service" ? "Rincian Service" : "Daftar Pembelian" }}
+                {{
+                    sale.tipe === "service"
+                        ? "Rincian Service"
+                        : "Daftar Pembelian"
+                }}
             </div>
 
             <!-- Items Table -->
-            <table class="w-full border-collapse border border-slate-300 mb-6">
+            <table class="w-full mb-6 border border-collapse border-slate-300">
                 <thead>
-                    <tr class="bg-slate-50 border-b border-slate-300">
+                    <tr class="border-b bg-slate-50 border-slate-300">
                         <th
                             class="border-r border-slate-300 p-2 text-center w-[40px] font-bold"
                         >
@@ -289,16 +293,16 @@ function printInvoice() {
                     <tr
                         v-for="(item, idx) in sale.items"
                         :key="idx"
-                        class="border-b border-slate-200 align-top"
+                        class="align-top border-b border-slate-200"
                     >
                         <td
-                            class="border-r border-slate-200 p-3 text-center text-slate-500"
+                            class="p-3 text-center border-r border-slate-200 text-slate-500"
                         >
                             {{ idx + 1 }}
                         </td>
-                        <td class="border-r border-slate-200 p-3">
+                        <td class="p-3 border-r border-slate-200">
                             <div
-                                class="font-bold text-black uppercase mb-1 leading-tight"
+                                class="mb-1 font-bold leading-tight text-black uppercase"
                             >
                                 {{ item.product?.nama }}
                             </div>
@@ -314,7 +318,11 @@ function printInvoice() {
                                 class="text-[8px] text-blue-800 font-mono mt-2 pt-1 border-t border-slate-100 border-dashed"
                             >
                                 <div
-                                    v-for="(line, lineIndex) in getProductIdentifierLines(item.product)"
+                                    v-for="(
+                                        line, lineIndex
+                                    ) in getProductIdentifierLines(
+                                        item.product
+                                    )"
                                     :key="`identifier-${idx}-${lineIndex}`"
                                 >
                                     {{ line }}
@@ -322,34 +330,37 @@ function printInvoice() {
                             </div>
                         </td>
                         <td
-                            class="border-r border-slate-200 p-3 text-center uppercase text-slate-500 italic"
+                            class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500"
                         >
                             {{ item.product?.unit || "Unit" }}
                         </td>
-                        <td class="border-r border-slate-200 p-3 text-right">
+                        <td class="p-3 text-right border-r border-slate-200">
                             Rp.{{ formatCurrency(item.harga_satuan) }},-
                         </td>
                         <td
-                            class="border-r border-slate-200 p-3 text-center font-bold"
+                            class="p-3 font-bold text-center border-r border-slate-200"
                         >
                             {{ item.qty }}
                         </td>
-                        <td class="p-3 text-right font-bold text-black">
+                        <td class="p-3 font-bold text-right text-black">
                             Rp.{{ formatCurrency(item.subtotal) }},-
                         </td>
                     </tr>
                     <tr
-                        v-if="sale.tipe === 'service' && (sale.service_order?.biaya_jasa || 0) > 0"
-                        class="border-b border-slate-200 align-top"
+                        v-if="
+                            sale.tipe === 'service' &&
+                            (sale.service_order?.biaya_jasa || 0) > 0
+                        "
+                        class="align-top border-b border-slate-200"
                     >
                         <td
-                            class="border-r border-slate-200 p-3 text-center text-slate-500"
+                            class="p-3 text-center border-r border-slate-200 text-slate-500"
                         >
                             {{ (sale.items?.length || 0) + 1 }}
                         </td>
-                        <td class="border-r border-slate-200 p-3">
+                        <td class="p-3 border-r border-slate-200">
                             <div
-                                class="font-bold text-black uppercase mb-1 leading-tight"
+                                class="mb-1 font-bold leading-tight text-black uppercase"
                             >
                                 Biaya Jasa Service
                             </div>
@@ -358,20 +369,28 @@ function printInvoice() {
                             </div>
                         </td>
                         <td
-                            class="border-r border-slate-200 p-3 text-center uppercase text-slate-500 italic"
+                            class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500"
                         >
                             Jasa
                         </td>
-                        <td class="border-r border-slate-200 p-3 text-right">
-                            Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-
+                        <td class="p-3 text-right border-r border-slate-200">
+                            Rp.{{
+                                formatCurrency(
+                                    sale.service_order?.biaya_jasa || 0
+                                )
+                            }},-
                         </td>
                         <td
-                            class="border-r border-slate-200 p-3 text-center font-bold"
+                            class="p-3 font-bold text-center border-r border-slate-200"
                         >
                             -
                         </td>
-                        <td class="p-3 text-right font-bold text-black">
-                            Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-
+                        <td class="p-3 font-bold text-right text-black">
+                            Rp.{{
+                                formatCurrency(
+                                    sale.service_order?.biaya_jasa || 0
+                                )
+                            }},-
                         </td>
                     </tr>
                 </tbody>
@@ -387,11 +406,11 @@ function printInvoice() {
                             {{
                                 sale.items.reduce(
                                     (acc, item) => acc + item.qty,
-                                    0,
+                                    0
                                 )
                             }}
                         </td>
-                        <td class="p-3 text-right font-black">
+                        <td class="p-3 font-black text-right">
                             Rp.{{ formatCurrency(sale.subtotal) }},-
                         </td>
                     </tr>
@@ -402,9 +421,9 @@ function printInvoice() {
             <table class="w-full table-fixed">
                 <tr>
                     <!-- Payment Info -->
-                    <td class="w-1/2 align-top pr-8">
+                    <td class="w-1/2 pr-8 align-top">
                         <div
-                            class="p-4 border border-slate-200 bg-slate-50 rounded uppercase"
+                            class="p-4 uppercase border rounded border-slate-200 bg-slate-50"
                         >
                             <p
                                 class="font-bold text-slate-400 mb-2 text-[9px] tracking-widest"
@@ -414,7 +433,7 @@ function printInvoice() {
 
                             <!-- CASH -->
                             <div v-if="sale.metode_pembayaran === 'cash'">
-                                <p class="font-black text-black text-sm">
+                                <p class="text-sm font-black text-black">
                                     TUNAI / CASH
                                 </p>
                             </div>
@@ -425,7 +444,7 @@ function printInvoice() {
                                     sale.metode_pembayaran === 'transfer'
                                 "
                             >
-                                <p class="font-bold mb-1 text-blue-800 text-xs">
+                                <p class="mb-1 text-xs font-bold text-blue-800">
                                     {{ store?.bank_name || "BANK" }}
                                     {{ store?.bank_account }}
                                 </p>
@@ -449,13 +468,13 @@ function printInvoice() {
                                 v-else-if="sale.metode_pembayaran === 'qris'"
                                 class="flex flex-col items-center"
                             >
-                                <p class="font-bold mb-2 text-xs self-start">
+                                <p class="self-start mb-1 text-xs font-bold">
                                     QRIS
                                 </p>
                                 <img
                                     v-if="store?.qris_image_url"
                                     :src="store.qris_image_url"
-                                    class="h-32 w-32 object-contain bg-white p-1 border border-slate-200"
+                                    class="object-contain w-20 h-20"
                                 />
                                 <div
                                     v-else
@@ -467,7 +486,7 @@ function printInvoice() {
 
                             <!-- OTHER -->
                             <div v-else>
-                                <p class="font-bold mb-1">
+                                <p class="mb-1 font-bold">
                                     {{ sale.metode_pembayaran }}
                                 </p>
                                 <p
@@ -488,7 +507,7 @@ function printInvoice() {
                                 >
                                     Sub Total
                                 </td>
-                                <td class="py-2 text-right font-bold">
+                                <td class="py-2 font-bold text-right">
                                     Rp.{{ formatCurrency(sale.subtotal) }},-
                                 </td>
                             </tr>
@@ -499,7 +518,7 @@ function printInvoice() {
                                     Diskon
                                 </td>
                                 <td
-                                    class="py-2 text-right font-bold text-red-600"
+                                    class="py-2 font-bold text-right text-red-600"
                                 >
                                     <span v-if="sale.diskon_persen > 0"
                                         >({{ sale.diskon_persen }}%)</span
@@ -538,7 +557,7 @@ function printInvoice() {
                             </p>
                         </div>
                     </td>
-                    <td class="pt-10 align-bottom text-right">
+                    <td class="pt-10 text-right align-bottom">
                         <div class="mb-0">
                             <p
                                 class="font-signature text-[18pt] text-slate-800 leading-none whitespace-nowrap"

@@ -23,11 +23,14 @@ use Illuminate\Support\Facades\Route;
  */
 Route::middleware('throttle:login')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::get('/logo', [StoreSettingController::class, 'logo']);
 });
 
 Route::middleware('throttle:register')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
 });
+
+
 
 /**
  * Protected Routes (Require Authentication)
