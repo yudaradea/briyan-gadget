@@ -74,6 +74,13 @@ const router = createRouter({
                     meta: { requiresAdmin: true },
                 },
                 {
+                    path: "master/service-brands",
+                    name: "service-brand-list",
+                    component: () =>
+                        import("../views/masterdata/ServiceBrandListView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
                     path: "master/categories",
                     name: "category-list",
                     component: () =>
@@ -99,6 +106,13 @@ const router = createRouter({
                     name: "sales-rep-list",
                     component: () =>
                         import("../views/masterdata/SalesRepListView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
+                    path: "master/technicians",
+                    name: "technician-list",
+                    component: () =>
+                        import("../views/masterdata/TechnicianListView.vue"),
                     meta: { requiresAdmin: true },
                 },
                 {
@@ -282,11 +296,19 @@ router.beforeEach(async (to, from, next) => {
         return next("/forbidden");
     }
 
-    if (to.meta.requiresSalesView && !authStore.isAdmin && !authStore.canViewSales) {
+    if (
+        to.meta.requiresSalesView &&
+        !authStore.isAdmin &&
+        !authStore.canViewSales
+    ) {
         return next("/forbidden");
     }
 
-    if (to.meta.requiresServiceView && !authStore.isAdmin && !authStore.canViewServices) {
+    if (
+        to.meta.requiresServiceView &&
+        !authStore.isAdmin &&
+        !authStore.canViewServices
+    ) {
         return next("/forbidden");
     }
 
@@ -299,9 +321,9 @@ router.beforeEach(async (to, from, next) => {
 
 // Handle 404 - route not found
 router.addRoute({
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: () => import('../views/errors/NotFoundView.vue'),
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: () => import("../views/errors/NotFoundView.vue"),
 });
 
 export default router;

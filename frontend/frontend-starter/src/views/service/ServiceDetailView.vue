@@ -56,21 +56,29 @@ async function fetchService(quiet = false) {
     try {
         const { data } = await api.get(`/services/${serviceId}`);
         service.value = data.data;
-        const diskonPersen = Number(service.value.transaction?.diskon_persen || 0);
-        const diskonNominal = Number(service.value.transaction?.diskon_nominal || 0);
-        paymentForm.value.discount_type = diskonPersen > 0 ? "percent" : "nominal";
+        const diskonPersen = Number(
+            service.value.transaction?.diskon_persen || 0,
+        );
+        const diskonNominal = Number(
+            service.value.transaction?.diskon_nominal || 0,
+        );
+        paymentForm.value.discount_type =
+            diskonPersen > 0 ? "percent" : "nominal";
         paymentForm.value.discount_value =
-            paymentForm.value.discount_type === "percent" ? diskonPersen : diskonNominal;
+            paymentForm.value.discount_type === "percent"
+                ? diskonPersen
+                : diskonNominal;
         paymentForm.value.metode_pembayaran =
             service.value.transaction?.metode_pembayaran || "cash";
-        paymentForm.value.jumlah_bayar =
-            Number(
-                service.value.transaction?.jumlah_bayar ||
-                    service.value.grand_total ||
-                    0,
-            );
+        paymentForm.value.jumlah_bayar = Number(
+            service.value.transaction?.jumlah_bayar ||
+                service.value.grand_total ||
+                0,
+        );
         discountNominalDisplay.value = formatNumberInput(diskonNominal);
-        amountPaidDisplay.value = formatNumberInput(paymentForm.value.jumlah_bayar);
+        amountPaidDisplay.value = formatNumberInput(
+            paymentForm.value.jumlah_bayar,
+        );
     } catch (err) {
         toast.error("Gagal memuat detail service");
     } finally {
@@ -302,7 +310,9 @@ async function savePayment() {
             );
         }
     } catch (err) {
-        toast.error(err.response?.data?.message || "Gagal menyimpan pembayaran");
+        toast.error(
+            err.response?.data?.message || "Gagal menyimpan pembayaran",
+        );
     } finally {
         savingPayment.value = false;
     }
@@ -414,13 +424,15 @@ function formatDate(dateStr) {
                         />
                     </svg>
                 </button>
-                <div v-if="service">
+                <div v-if="service" class="flex-1">
                     <h1
                         class="text-2xl font-bold tracking-tight text-slate-800"
                     >
-                        Detail Service #{{ service.no_service || service.id.substring(0, 8) }}
+                        Detail Service #{{
+                            service.no_service || service.id.substring(0, 8)
+                        }}
                     </h1>
-                    <div class="flex items-center gap-2 mt-1">
+                    <div class="flex flex-wrap items-center gap-2 mt-1.5">
                         <span
                             :class="statusBadges[service.status]"
                             class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-current/10"
@@ -456,8 +468,29 @@ function formatDate(dateStr) {
                             BELUM DIAMBIL
                         </div>
 
+                        <!-- Technician Header Badge -->
+                        <div
+                            v-if="service.technician"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20"
+                        >
+                            <svg
+                                class="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                />
+                            </svg>
+                            TEKNISI: {{ service.technician.nama }}
+                        </div>
+
                         <span
-                            class="text-slate-400 text-[11px] font-bold uppercase tracking-wider ml-2"
+                            class="text-slate-400 text-[11px] font-bold uppercase tracking-wider ml-1"
                         >
                             - Tgl Masuk: {{ formatDate(service.tanggal_masuk) }}
                         </span>
@@ -479,7 +512,8 @@ function formatDate(dateStr) {
                         :disabled="
                             isUpdatingStatus ||
                             service.status === key ||
-                            (service.status === 'selesai' && key === 'dikerjakan')
+                            (service.status === 'selesai' &&
+                                key === 'dikerjakan')
                         "
                         :class="[
                             service.status === key
@@ -756,7 +790,7 @@ function formatDate(dateStr) {
                         <button
                             v-if="
                                 ['dikerjakan', 'selesai'].includes(
-                                    service.status
+                                    service.status,
                                 ) &&
                                 service.status_pengambilan !== 'sudah_diambil'
                             "
@@ -939,7 +973,9 @@ function formatDate(dateStr) {
                                 formatCurrency(service.total_biaya_parts)
                             }}</span>
                         </div>
-                        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                        <div
+                            class="flex items-center justify-between pt-3 border-t border-slate-100"
+                        >
                             <span
                                 class="text-base font-black tracking-widest uppercase text-slate-800"
                                 >Subtotal Tagihan</span
@@ -959,13 +995,19 @@ function formatDate(dateStr) {
                         </div>
 
                         <template v-if="service.status === 'selesai'">
-                            <div class="pt-4 space-y-4 border-t border-slate-100">
-                                <h4 class="text-xs font-black uppercase tracking-widest text-slate-600">
+                            <div
+                                class="pt-4 space-y-4 border-t border-slate-100"
+                            >
+                                <h4
+                                    class="text-xs font-black uppercase tracking-widest text-slate-600"
+                                >
                                     Pembayaran Service
                                 </h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                        <label
+                                            class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1"
+                                        >
                                             Jenis Diskon
                                         </label>
                                         <select
@@ -974,21 +1016,33 @@ function formatDate(dateStr) {
                                             :disabled="paymentLocked"
                                             class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
                                         >
-                                            <option value="percent">Persentase (%)</option>
-                                            <option value="nominal">Nominal (Rp)</option>
+                                            <option value="percent">
+                                                Persentase (%)
+                                            </option>
+                                            <option value="nominal">
+                                                Nominal (Rp)
+                                            </option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                        <label
+                                            class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1"
+                                        >
                                             {{
-                                                paymentForm.discount_type === "percent"
+                                                paymentForm.discount_type ===
+                                                "percent"
                                                     ? "Nilai Diskon (%)"
                                                     : "Nilai Diskon (Rp)"
                                             }}
                                         </label>
                                         <input
-                                            v-if="paymentForm.discount_type === 'percent'"
-                                            v-model.number="paymentForm.discount_value"
+                                            v-if="
+                                                paymentForm.discount_type ===
+                                                'percent'
+                                            "
+                                            v-model.number="
+                                                paymentForm.discount_value
+                                            "
                                             :disabled="paymentLocked"
                                             type="number"
                                             min="0"
@@ -996,7 +1050,10 @@ function formatDate(dateStr) {
                                             class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
                                         />
                                         <div v-else class="relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
+                                            <span
+                                                class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500"
+                                                >Rp</span
+                                            >
                                             <input
                                                 :value="discountNominalDisplay"
                                                 @input="onDiscountNominalInput"
@@ -1008,25 +1065,41 @@ function formatDate(dateStr) {
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                        <label
+                                            class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1"
+                                        >
                                             Metode Pembayaran
                                         </label>
                                         <select
-                                            v-model="paymentForm.metode_pembayaran"
+                                            v-model="
+                                                paymentForm.metode_pembayaran
+                                            "
                                             :disabled="paymentLocked"
                                             class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-0 focus:border-blue-500"
                                         >
                                             <option value="cash">Cash</option>
-                                            <option value="transfer">Transfer</option>
+                                            <option value="transfer">
+                                                Transfer
+                                            </option>
                                             <option value="qris">QRIS</option>
                                         </select>
                                     </div>
-                                    <div v-if="paymentForm.metode_pembayaran === 'cash'">
-                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                                    <div
+                                        v-if="
+                                            paymentForm.metode_pembayaran ===
+                                            'cash'
+                                        "
+                                    >
+                                        <label
+                                            class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1"
+                                        >
                                             Uang Dibayar
                                         </label>
                                         <div class="relative">
-                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Rp</span>
+                                            <span
+                                                class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500"
+                                                >Rp</span
+                                            >
                                             <input
                                                 :value="amountPaidDisplay"
                                                 @input="onAmountPaidInput"
@@ -1038,26 +1111,91 @@ function formatDate(dateStr) {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-slate-500">Subtotal</span>
-                                        <span class="font-black text-slate-800">{{ formatCurrency(paymentSummary.subtotal) }}</span>
+                                <div
+                                    class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-2"
+                                >
+                                    <div
+                                        class="flex items-center justify-between text-sm"
+                                    >
+                                        <span class="text-slate-500"
+                                            >Subtotal</span
+                                        >
+                                        <span
+                                            class="font-black text-slate-800"
+                                            >{{
+                                                formatCurrency(
+                                                    paymentSummary.subtotal,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="text-slate-500">Diskon</span>
-                                        <span class="font-black text-rose-600">- {{ formatCurrency(paymentSummary.diskonNominal) }}</span>
+                                    <div
+                                        class="flex items-center justify-between text-sm"
+                                    >
+                                        <span class="text-slate-500"
+                                            >Diskon</span
+                                        >
+                                        <span class="font-black text-rose-600"
+                                            >-
+                                            {{
+                                                formatCurrency(
+                                                    paymentSummary.diskonNominal,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
-                                    <div class="flex items-center justify-between text-sm border-t border-slate-200 pt-2">
-                                        <span class="text-slate-500">Total Tagihan</span>
-                                        <span class="font-black text-slate-800">{{ formatCurrency(paymentSummary.grandTotal) }}</span>
+                                    <div
+                                        class="flex items-center justify-between text-sm border-t border-slate-200 pt-2"
+                                    >
+                                        <span class="text-slate-500"
+                                            >Total Tagihan</span
+                                        >
+                                        <span
+                                            class="font-black text-slate-800"
+                                            >{{
+                                                formatCurrency(
+                                                    paymentSummary.grandTotal,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
-                                    <div class="flex items-center justify-between text-sm" v-if="paymentForm.metode_pembayaran === 'cash'">
-                                        <span class="text-slate-500">Uang Dibayar</span>
-                                        <span class="font-black text-blue-600">{{ formatCurrency(paymentSummary.jumlahBayar) }}</span>
+                                    <div
+                                        class="flex items-center justify-between text-sm"
+                                        v-if="
+                                            paymentForm.metode_pembayaran ===
+                                            'cash'
+                                        "
+                                    >
+                                        <span class="text-slate-500"
+                                            >Uang Dibayar</span
+                                        >
+                                        <span
+                                            class="font-black text-blue-600"
+                                            >{{
+                                                formatCurrency(
+                                                    paymentSummary.jumlahBayar,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
-                                    <div class="flex items-center justify-between text-sm" v-if="paymentForm.metode_pembayaran === 'cash'">
-                                        <span class="text-slate-500">Kembalian</span>
-                                        <span class="font-black text-emerald-600">{{ formatCurrency(paymentSummary.kembalian) }}</span>
+                                    <div
+                                        class="flex items-center justify-between text-sm"
+                                        v-if="
+                                            paymentForm.metode_pembayaran ===
+                                            'cash'
+                                        "
+                                    >
+                                        <span class="text-slate-500"
+                                            >Kembalian</span
+                                        >
+                                        <span
+                                            class="font-black text-emerald-600"
+                                            >{{
+                                                formatCurrency(
+                                                    paymentSummary.kembalian,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
                                 </div>
                                 <button
@@ -1077,7 +1215,8 @@ function formatDate(dateStr) {
                                     v-if="paymentLocked"
                                     class="text-[11px] text-emerald-700 font-semibold text-center"
                                 >
-                                    Transaksi service sudah selesai, unit sudah diserahkan, dan data terkunci.
+                                    Transaksi service sudah selesai, unit sudah
+                                    diserahkan, dan data terkunci.
                                 </p>
                             </div>
                         </template>
@@ -1238,8 +1377,7 @@ function formatDate(dateStr) {
                             </div>
                             <div
                                 v-if="
-                                    !isSearchingPart &&
-                                    partResults.length === 0
+                                    !isSearchingPart && partResults.length === 0
                                 "
                                 class="p-3 text-xs text-slate-500"
                             >
@@ -1334,8 +1472,12 @@ function formatDate(dateStr) {
             v-if="cancelModalOpen"
             class="fixed inset-0 z-[90] bg-black/45 backdrop-blur-sm flex items-center justify-center p-4"
         >
-            <div class="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-xl p-6">
-                <h3 class="text-lg font-black text-slate-800">Batalkan Service</h3>
+            <div
+                class="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-xl p-6"
+            >
+                <h3 class="text-lg font-black text-slate-800">
+                    Batalkan Service
+                </h3>
                 <p class="mt-2 text-sm text-slate-500">
                     Pilih perlakuan sparepart saat service dibatalkan.
                 </p>

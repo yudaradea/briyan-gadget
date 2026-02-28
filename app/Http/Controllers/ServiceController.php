@@ -34,7 +34,8 @@ class ServiceController extends Controller implements HasMiddleware
             $request->query('search', ''),
             $request->query('status'),
             $request->query('start_date'),
-            $request->query('end_date')
+            $request->query('end_date'),
+            $request->query('exclude_sudah_diambil', true)
         );
     }
 

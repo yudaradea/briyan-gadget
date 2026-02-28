@@ -14,7 +14,23 @@ async function loadPurchase() {
     loading.value = true;
     try {
         const { data } = await api.get(`/purchases/${route.params.id}`);
-        purchase.value = data.data;
+        let loadedPurchase = data.data;
+
+        // Filter by item_id or product_id if provided in query
+        const itemId = route.query.item_id;
+        const productId = route.query.product_id;
+
+        if (itemId && loadedPurchase.items) {
+            loadedPurchase.items = loadedPurchase.items.filter(
+                (item) => String(item.id) === String(itemId),
+            );
+        } else if (productId && loadedPurchase.items) {
+            loadedPurchase.items = loadedPurchase.items.filter(
+                (item) => String(item.product_id) === String(productId),
+            );
+        }
+
+        purchase.value = loadedPurchase;
         await nextTick();
         setTimeout(() => {
             renderAllBarcodes();
@@ -202,6 +218,7 @@ onMounted(loadPurchase);
         padding: 0 !important;
         background: white !important;
         -webkit-print-color-adjust: exact;
+        color-adjust: exact;
         print-color-adjust: exact;
     }
 

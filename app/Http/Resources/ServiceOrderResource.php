@@ -13,9 +13,11 @@ class ServiceOrderResource extends JsonResource
             'id' => $this->id,
             'no_service' => strtoupper(substr((string) $this->id, 0, 8)),
             'sales_transaction_id' => $this->sales_transaction_id,
+            'technician_id' => $this->technician_id,
+            'service_brand_id' => $this->service_brand_id,
             'nama_pelanggan' => $this->nama_pelanggan,
             'no_hp_pelanggan' => $this->no_hp_pelanggan,
-            'merk_hp' => $this->merk_hp,
+            'merk_hp' => $this->serviceBrand ? $this->serviceBrand->nama : $this->merk_hp,
             'tipe_hp' => $this->tipe_hp,
             'kerusakan' => $this->kerusakan,
             'imei_hp' => $this->imei_hp,
@@ -61,6 +63,15 @@ class ServiceOrderResource extends JsonResource
                 'jumlah_bayar' => (float) $this->salesTransaction->jumlah_bayar,
                 'kembalian' => (float) $this->salesTransaction->kembalian,
             ]),
+
+            'technician' => $this->whenLoaded('technician', fn() => $this->technician ? [
+                'id' => $this->technician->id,
+                'nama' => $this->technician->nama,
+            ] : null),
+            'service_brand' => $this->whenLoaded('serviceBrand', fn() => $this->serviceBrand ? [
+                'id' => $this->serviceBrand->id,
+                'nama' => $this->serviceBrand->nama,
+            ] : null),
         ];
     }
 }

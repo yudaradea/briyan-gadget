@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ProfileSeeder::class,
             MasterDataSeeder::class,
-            PurchaseSeeder::class,
+            // PurchaseSeeder::class,
         ]);
     }
 }

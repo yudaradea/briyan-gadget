@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
+import QuickAddModal from "../../components/QuickAddModal.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -10,20 +11,77 @@ const toast = useToast();
 
 const isLoading = ref(false);
 const isFetching = ref(true);
+const technicians = ref([]);
+const serviceBrands = ref([]);
 
 const form = ref({
     nama_pelanggan: "",
     no_hp_pelanggan: "",
+    service_brand_id: "",
     merk_hp: "",
     tipe_hp: "",
     kerusakan: "",
     imei_hp: "",
     kelengkapan: "",
     biaya_jasa: 0,
+    technician_id: "",
     tanggal_masuk: "",
 });
 
 const displayBiayaJasa = ref("0");
+const showQuickAddTechnician = ref(false);
+const showQuickAddBrand = ref(false);
+
+async function fetchTechnicians() {
+    try {
+        const { data } = await api.get("/technicians/all");
+        technicians.value = data.data || [];
+    } catch (e) {
+        console.error("Failed to fetch technicians", e);
+    }
+}
+
+async function fetchServiceBrands() {
+    try {
+        const { data } = await api.get("/service-brands/all");
+        serviceBrands.value = data.data || [];
+    } catch (e) {
+        console.error("Failed to fetch service brands", e);
+    }
+}
+
+async function handleQuickAddBrand({ nama }) {
+    try {
+        const { data } = await api.post("/service-brands/quick", { nama });
+        serviceBrands.value.push(data.data);
+        form.value.service_brand_id = data.data.id;
+        showQuickAddBrand.value = false;
+        toast.success("Merk HP berhasil ditambahkan");
+        return data.data;
+    } catch (e) {
+        throw e;
+    }
+}
+
+async function handleQuickAddTechnician({ nama, no_hp, specialist }) {
+    try {
+        const { data } = await api.post("/technicians/quick", {
+            nama,
+            no_hp,
+            specialist,
+        });
+        technicians.value.push(data.data);
+        form.value.technician_id = data.data.id;
+        showQuickAddTechnician.value = false;
+        return data.data;
+    } catch (e) {
+        throw e;
+    }
+}
+
+function onTechnicianCreated() {
+    toast.success("Teknisi berhasil ditambahkan");
+}
 
 function formatInputCurrency(val) {
     if (!val && val !== 0) return "";
@@ -58,12 +116,14 @@ async function fetchService() {
         form.value = {
             nama_pelanggan: service.nama_pelanggan,
             no_hp_pelanggan: service.no_hp_pelanggan || "",
+            service_brand_id: service.service_brand_id || "",
             merk_hp: service.merk_hp,
             tipe_hp: service.tipe_hp,
             kerusakan: service.kerusakan,
             imei_hp: service.imei_hp || "",
             kelengkapan: service.kelengkapan || "",
             biaya_jasa: service.biaya_jasa,
+            technician_id: service.technician_id || "",
             tanggal_masuk: service.tanggal_masuk,
         };
         displayBiayaJasa.value = formatInputCurrency(service.biaya_jasa);
@@ -77,6 +137,8 @@ async function fetchService() {
 
 onMounted(() => {
     fetchService();
+    fetchTechnicians();
+    fetchServiceBrands();
 });
 
 async function handleSubmit() {
@@ -190,6 +252,49 @@ async function handleSubmit() {
                                 class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
                             />
                         </div>
+                        <div>
+                            <label
+                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                >Teknisi</label
+                            >
+                            <div class="flex gap-2">
+                                <select
+                                    v-model="form.technician_id"
+                                    class="block flex-1 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
+                                >
+                                    <option value="">
+                                        -- Pilih Teknisi --
+                                    </option>
+                                    <option
+                                        v-for="tech in technicians"
+                                        :key="tech.id"
+                                        :value="tech.id"
+                                    >
+                                        {{ tech.nama }}
+                                    </option>
+                                </select>
+                                <button
+                                    type="button"
+                                    @click="showQuickAddTechnician = true"
+                                    class="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors"
+                                    title="Tambah Teknisi"
+                                >
+                                    <svg
+                                        class="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 4v16m8-8H4"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -226,12 +331,44 @@ async function handleSubmit() {
                                     class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
                                     >Merk HP *</label
                                 >
-                                <input
-                                    v-model="form.merk_hp"
-                                    type="text"
-                                    required
-                                    class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
-                                />
+                                <div class="flex gap-2">
+                                    <select
+                                        v-model="form.service_brand_id"
+                                        required
+                                        class="block flex-1 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
+                                    >
+                                        <option value="">
+                                            -- Pilih Merk --
+                                        </option>
+                                        <option
+                                            v-for="brand in serviceBrands"
+                                            :key="brand.id"
+                                            :value="brand.id"
+                                        >
+                                            {{ brand.nama }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showQuickAddBrand = true"
+                                        class="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors"
+                                        title="Tambah Merk"
+                                    >
+                                        <svg
+                                            class="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label
@@ -374,5 +511,29 @@ async function handleSubmit() {
                 </div>
             </div>
         </form>
+
+        <QuickAddModal
+            v-if="showQuickAddTechnician"
+            title="Tambah Teknisi"
+            :show="showQuickAddTechnician"
+            :fields="[
+                { key: 'nama', label: 'Nama Teknisi *', required: true },
+                { key: 'no_hp', label: 'No. HP' },
+                { key: 'specialist', label: 'Spesialis' },
+            ]"
+            :submitFunction="handleQuickAddTechnician"
+            @close="showQuickAddTechnician = false"
+            @created="onTechnicianCreated"
+        />
+
+        <QuickAddModal
+            v-if="showQuickAddBrand"
+            title="Tambah Merk HP"
+            :show="showQuickAddBrand"
+            :fields="[{ key: 'nama', label: 'Nama Merk *', required: true }]"
+            :submitFunction="handleQuickAddBrand"
+            @close="showQuickAddBrand = false"
+            @created="() => toast.success('Merk HP berhasil ditambahkan')"
+        />
     </div>
 </template>

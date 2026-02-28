@@ -46,7 +46,7 @@ const salesReps = ref([]);
 const users = ref([]);
 
 const form = ref({
-    pelanggan: "Umum",
+    pelanggan: "",
     user_id: authStore.user?.id || "",
     sales_rep_id: "",
     tax_id: "",
@@ -756,7 +756,8 @@ async function processTransaction() {
                             type="text"
                             v-model="form.pelanggan"
                             class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium"
-                            placeholder="Nama Pelanggan / Umum"
+                            placeholder="Masukan Nama Pelanggan "
+                            required="required"
                         />
                     </div>
 

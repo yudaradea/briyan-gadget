@@ -75,14 +75,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai",
+                "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai"
             );
             filters.value.end_date = "";
             return;
         }
         fetchServices(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -115,7 +115,7 @@ async function doDelete() {
         fetchServices(pagination.value.current_page);
     } catch (err) {
         toast.error(
-            err.response?.data?.message || "Gagal menghapus data servis",
+            err.response?.data?.message || "Gagal menghapus data servis"
         );
     } finally {
         deleting.value = false;
@@ -141,16 +141,16 @@ const statusLabels = {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6">
+    <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
         <!-- Header Section -->
         <div
-            class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+            class="flex flex-col justify-between gap-4 md:flex-row md:items-center"
         >
             <div>
-                <h1 class="text-2xl font-black text-slate-800 tracking-tight">
+                <h1 class="text-2xl font-black tracking-tight text-slate-800">
                     Data Servis HP
                 </h1>
-                <p class="text-slate-500 text-sm font-medium">
+                <p class="text-sm font-medium text-slate-500">
                     Kelola antrian dan progres perbaikan unit
                 </p>
             </div>
@@ -176,15 +176,15 @@ const statusLabels = {
         </div>
 
         <div
-            class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+            class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
         >
             <!-- Filter Bar -->
             <div
-                class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center"
+                class="flex flex-col items-start justify-between gap-6 px-6 py-5 border-b border-slate-100 bg-slate-50/50 md:flex-row md:items-center"
             >
                 <!-- Left: Advanced Filters -->
                 <div
-                    class="grid grid-cols-2 md:grid-cols-3 lg:flex gap-3 w-full md:w-auto"
+                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-3 lg:flex md:w-auto"
                 >
                     <div class="flex flex-col gap-1">
                         <label
@@ -202,9 +202,21 @@ const statusLabels = {
                                 <option value="selesai">Selesai</option>
                                 <option value="batal">Batal</option>
                             </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            <div
+                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
                                 </svg>
                             </div>
                         </div>
@@ -233,21 +245,40 @@ const statusLabels = {
                         />
                     </div>
                     <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible">Reset</label>
+                        <label
+                            class="text-[10px] font-bold text-slate-400 uppercase invisible"
+                            >Reset</label
+                        >
                         <button
-                            @click="filters = { status: '', start_date: '', end_date: '' }"
-                            class="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                            @click="
+                                filters = {
+                                    status: '',
+                                    start_date: '',
+                                    end_date: '',
+                                }
+                            "
+                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
                             title="Reset Filter"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
                             </svg>
                         </button>
                     </div>
                 </div>
 
                 <!-- Right: Pagination & Search -->
-                <div class="flex flex-row items-end gap-2 w-full md:w-auto">
+                <div class="flex flex-row items-end w-full gap-2 md:w-auto">
                     <div class="flex flex-col gap-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
@@ -262,9 +293,21 @@ const statusLabels = {
                                 <option :value="50">50</option>
                                 <option :value="100">100</option>
                             </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            <div
+                                class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400"
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
                                 </svg>
                             </div>
                         </div>
@@ -281,9 +324,21 @@ const statusLabels = {
                                 placeholder="Cari no service / pelanggan..."
                                 class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            <div
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"
+                            >
+                                <svg
+                                    class="w-4 h-4 text-slate-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
                                 </svg>
                             </div>
                         </div>
@@ -296,50 +351,32 @@ const statusLabels = {
                 <table class="table-fixed-layout table-wide">
                     <thead class="table-header">
                         <tr>
-                            <th class="w-16 text-center">
-                                No
-                            </th>
-                            <th class="w-32">
-                                No Service
-                            </th>
-                            <th class="w-44">
-                                Pelanggan
-                            </th>
-                            <th class="w-40">
-                                Unit / IMEI
-                            </th>
-                            <th class="w-52">
-                                Kerusakan
-                            </th>
-                            <th class="w-28 text-center">
-                                Perbaikan
-                            </th>
-                            <th class="w-32 text-center">
-                                Pengambilan
-                            </th>
-                            <th class="w-32 text-center">
-                                Tgl Masuk
-                            </th>
-                            <th class="w-40 text-right">
-                                Estimasi
-                            </th>
-                            <th class="table-col-action-h">
-                                Aksi
-                            </th>
+                            <th class="w-16 text-center">No</th>
+                            <th class="w-32">No Service</th>
+                            <th class="w-44">Pelanggan</th>
+                            <th class="w-32">Teknisi</th>
+                            <th class="w-40">Unit / IMEI</th>
+                            <th class="w-52">Kerusakan</th>
+                            <th class="text-center w-28">Perbaikan</th>
+                            <th class="w-32 text-center">Pengambilan</th>
+
+                            <th class="w-32 text-center">Tgl Masuk</th>
+                            <th class="w-40 text-right">Estimasi</th>
+                            <th class="table-col-action-h">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr v-if="isLoading">
                             <td
-                                colspan="10"
+                                colspan="11"
                                 class="px-6 py-20 text-center text-slate-500"
                             >
                                 <div class="flex flex-col items-center gap-3">
                                     <div
-                                        class="w-10 h-10 border-4 border-blue-50 border-t-blue-500 rounded-full animate-spin"
+                                        class="w-10 h-10 border-4 rounded-full border-blue-50 border-t-blue-500 animate-spin"
                                     ></div>
                                     <span
-                                        class="text-xs font-black uppercase tracking-widest text-slate-400"
+                                        class="text-xs font-black tracking-widest uppercase text-slate-400"
                                         >Memuat Data...</span
                                     >
                                 </div>
@@ -347,8 +384,8 @@ const statusLabels = {
                         </tr>
                         <tr v-else-if="services.length === 0">
                             <td
-                                colspan="10"
-                                class="px-6 py-20 text-center text-slate-400 italic font-medium"
+                                colspan="11"
+                                class="px-6 py-20 italic font-medium text-center text-slate-400"
                             >
                                 Tidak ada data servis ditemukan.
                             </td>
@@ -358,7 +395,9 @@ const statusLabels = {
                             :key="item.id"
                             class="table-row group"
                         >
-                            <td class="table-cell text-center text-xs font-black text-slate-400 group-hover:text-blue-500">
+                            <td
+                                class="table-cell text-xs font-black text-center text-slate-400 group-hover:text-blue-500"
+                            >
                                 {{
                                     (pagination.current_page - 1) *
                                         pagination.per_page +
@@ -367,12 +406,12 @@ const statusLabels = {
                                 }}
                             </td>
                             <td class="table-cell">
-                                <div class="font-bold text-slate-700 text-xs">
+                                <div class="text-xs font-bold text-slate-700">
                                     {{ item.no_service || "-" }}
                                 </div>
                             </td>
                             <td class="table-cell">
-                                <div class="font-bold text-slate-800 text-sm">
+                                <div class="text-sm font-bold text-slate-800">
                                     {{ item.nama_pelanggan }}
                                 </div>
                                 <div
@@ -382,7 +421,21 @@ const statusLabels = {
                                 </div>
                             </td>
                             <td class="table-cell">
-                                <div class="font-bold text-slate-700 text-sm">
+                                <span
+                                    v-if="item.technician"
+                                    class="text-sm font-bold text-slate-800"
+                                >
+                                    {{ item.technician.nama }}
+                                </span>
+                                <span
+                                    v-else
+                                    class="text-xs font-medium text-slate-400"
+                                >
+                                    -
+                                </span>
+                            </td>
+                            <td class="table-cell">
+                                <div class="text-sm font-bold text-slate-700">
                                     {{ item.merk_hp }} {{ item.tipe_hp }}
                                 </div>
                                 <div
@@ -393,7 +446,7 @@ const statusLabels = {
                             </td>
                             <td class="table-cell">
                                 <p
-                                    class="text-slate-500 line-clamp-1 italic text-xs font-medium"
+                                    class="text-xs italic font-medium text-slate-500 line-clamp-1"
                                 >
                                     "{{ item.kerusakan }}"
                                 </p>
@@ -423,7 +476,10 @@ const statusLabels = {
                                     BELUM DIAMBIL
                                 </span>
                             </td>
-                            <td class="table-cell text-center text-slate-500 text-[11px] font-bold">
+
+                            <td
+                                class="table-cell text-center text-slate-500 text-[11px] font-bold"
+                            >
                                 {{ formatDate(item.tanggal_masuk) }}
                             </td>
                             <td class="table-cell text-right">
@@ -432,22 +488,20 @@ const statusLabels = {
                                     >Rp</span
                                 >
                                 <span
-                                    class="text-sm font-black text-slate-800 tracking-tight"
+                                    class="text-sm font-black tracking-tight text-slate-800"
                                 >
                                     {{ formatCurrency(item.grand_total) }}
                                 </span>
                             </td>
                             <td class="table-col-action">
-                                <div
-                                    class="table-actions"
-                                >
+                                <div class="table-actions">
                                     <button
                                         @click="
                                             router.push(
-                                                `/dashboard/services/${item.id}`,
+                                                `/dashboard/services/${item.id}`
                                             )
                                         "
-                                        class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                        class="p-2 text-blue-500 transition-all rounded-lg hover:bg-blue-50"
                                         title="Detail Service"
                                     >
                                         <svg
@@ -473,11 +527,14 @@ const statusLabels = {
                                     <button
                                         @click="
                                             router.push(
-                                                `/dashboard/services/${item.id}/edit`,
+                                                `/dashboard/services/${item.id}/edit`
                                             )
                                         "
-                                        v-if="item.status !== 'selesai' || authStore.isSuperAdmin"
-                                        class="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-all"
+                                        v-if="
+                                            item.status !== 'selesai' ||
+                                            authStore.isSuperAdmin
+                                        "
+                                        class="p-2 transition-all rounded-lg text-amber-500 hover:bg-amber-50"
                                         title="Edit Data"
                                     >
                                         <svg
@@ -496,8 +553,11 @@ const statusLabels = {
                                     </button>
                                     <button
                                         @click="confirmDelete(item.id)"
-                                        v-if="item.status !== 'selesai' || authStore.isSuperAdmin"
-                                        class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                        v-if="
+                                            item.status !== 'selesai' ||
+                                            authStore.isSuperAdmin
+                                        "
+                                        class="p-2 transition-all rounded-lg text-rose-500 hover:bg-rose-50"
                                         title="Hapus Data"
                                     >
                                         <svg
@@ -524,10 +584,10 @@ const statusLabels = {
             <!-- Pagination Section -->
             <div
                 v-if="pagination.last_page > 1"
-                class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30"
+                class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30"
             >
                 <div
-                    class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+                    class="text-xs font-bold tracking-widest uppercase text-slate-400"
                 >
                     Halaman
                     <span class="text-slate-800">{{

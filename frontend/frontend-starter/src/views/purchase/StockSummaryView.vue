@@ -1,12 +1,23 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 import debounce from "lodash-es/debounce";
 
+const router = useRouter();
 const toast = useToast();
 
 const items = ref([]);
+
+async function printBarcode(purchaseId, productId) {
+    if (!purchaseId) return toast.error("ID Pembelian tidak tersedia");
+    router.push({
+        name: "purchase-barcode",
+        params: { id: purchaseId },
+        query: { product_id: productId },
+    });
+}
 const categories = ref([]);
 const brands = ref([]);
 const isLoading = ref(false);
@@ -92,7 +103,7 @@ watch(
     () => {
         fetchItems(1);
     },
-    { deep: true }
+    { deep: true },
 );
 
 function resetFilters() {
@@ -508,7 +519,7 @@ function productIdentifier(item) {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total
+                            pagination.total,
                         )
                     }}</span>
                     dari
@@ -617,12 +628,17 @@ function productIdentifier(item) {
                                 >
                                     Stok
                                 </th>
+                                <th
+                                    class="px-4 py-3 text-xs font-bold text-center uppercase text-slate-500"
+                                >
+                                    Aksi
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             <tr v-if="detailLoading">
                                 <td
-                                    colspan="7"
+                                    colspan="8"
                                     class="px-4 py-8 text-center text-slate-500"
                                 >
                                     Memuat detail...
@@ -630,7 +646,7 @@ function productIdentifier(item) {
                             </tr>
                             <tr v-else-if="detailItems.length === 0">
                                 <td
-                                    colspan="7"
+                                    colspan="8"
                                     class="px-4 py-8 text-center text-slate-400"
                                 >
                                     Tidak ada data detail SKU.
@@ -675,6 +691,33 @@ function productIdentifier(item) {
                                     class="px-4 py-3 font-bold text-center text-slate-800"
                                 >
                                     {{ row.stok }}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button
+                                        v-if="row.purchase_id"
+                                        @click="
+                                            printBarcode(
+                                                row.purchase_id,
+                                                row.id,
+                                            )
+                                        "
+                                        class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg transition"
+                                        title="Cetak Barcode"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                            />
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>

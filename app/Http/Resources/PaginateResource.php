@@ -30,7 +30,7 @@ class PaginateResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->resourceClass::collection($this->items()),
+            'data' => $this->resourceClass::collection(collect($this->items())),
             'current_page' => $this->currentPage(),
             'last_page' => $this->lastPage(),
             'per_page' => $this->perPage(),

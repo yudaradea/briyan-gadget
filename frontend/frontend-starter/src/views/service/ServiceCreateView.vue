@@ -3,6 +3,7 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
+import QuickAddModal from "../../components/QuickAddModal.vue";
 
 function formatCurrency(val) {
     return new Intl.NumberFormat("id-ID", {
@@ -26,20 +27,79 @@ function getLocalDateString() {
 
 const today = getLocalDateString();
 
+const technicians = ref([]);
+const serviceBrands = ref([]);
+
 const form = ref({
     nama_pelanggan: "",
     no_hp_pelanggan: "",
+    service_brand_id: "",
     merk_hp: "",
     tipe_hp: "",
     kerusakan: "",
     imei_hp: "",
     kelengkapan: "",
     biaya_jasa: 0,
+    technician_id: "",
     tanggal_masuk: today,
     parts: [],
 });
 
 const displayBiayaJasa = ref("0");
+
+const showQuickAddTechnician = ref(false);
+const showQuickAddBrand = ref(false);
+
+async function fetchTechnicians() {
+    try {
+        const { data } = await api.get("/technicians/all");
+        technicians.value = data.data || [];
+    } catch (e) {
+        console.error("Failed to fetch technicians", e);
+    }
+}
+
+async function fetchServiceBrands() {
+    try {
+        const { data } = await api.get("/service-brands/all");
+        serviceBrands.value = data.data || [];
+    } catch (e) {
+        console.error("Failed to fetch service brands", e);
+    }
+}
+
+async function handleQuickAddBrand({ nama }) {
+    try {
+        const { data } = await api.post("/service-brands/quick", { nama });
+        serviceBrands.value.push(data.data);
+        form.value.service_brand_id = data.data.id;
+        showQuickAddBrand.value = false;
+        toast.success("Merk HP berhasil ditambahkan");
+        return data.data;
+    } catch (e) {
+        throw e;
+    }
+}
+
+async function handleQuickAddTechnician({ nama, no_hp, specialist }) {
+    try {
+        const { data } = await api.post("/technicians/quick", {
+            nama,
+            no_hp,
+            specialist,
+        });
+        technicians.value.push(data.data);
+        form.value.technician_id = data.data.id;
+        showQuickAddTechnician.value = false;
+        return data.data;
+    } catch (e) {
+        throw e;
+    }
+}
+
+function onTechnicianCreated(technician) {
+    toast.success("Teknisi berhasil ditambahkan");
+}
 
 // Sparepart state
 const isSearchingPart = ref(false);
@@ -114,6 +174,8 @@ function handleDocumentClick(event) {
 
 onMounted(() => {
     document.addEventListener("click", handleDocumentClick);
+    fetchTechnicians();
+    fetchServiceBrands();
 });
 
 onBeforeUnmount(() => {
@@ -197,7 +259,7 @@ async function handleSubmit() {
                 <h1 class="text-2xl font-bold text-slate-800">
                     Service Masuk Baru
                 </h1>
-                <p class="text-slate-500 text-sm">
+                <p class="text-sm text-slate-500">
                     Input detail barang dan keluhan pelanggan
                 </p>
             </div>
@@ -205,19 +267,19 @@ async function handleSubmit() {
 
         <form
             @submit.prevent="handleSubmit"
-            class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            class="grid grid-cols-1 gap-6 lg:grid-cols-3"
         >
             <!-- Left Side: Basic Info -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="space-y-6 lg:col-span-2">
                 <!-- Data Pelanggan Card -->
                 <div
-                    class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+                    class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
                 >
                     <div
                         class="px-6 py-4 border-b border-slate-100 bg-slate-50"
                     >
                         <h3
-                            class="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2"
+                            class="flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-slate-800"
                         >
                             <svg
                                 class="w-4 h-4 text-blue-500"
@@ -235,10 +297,10 @@ async function handleSubmit() {
                             Informasi Pelanggan
                         </h3>
                     </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Nama Pelanggan *</label
                             >
                             <input
@@ -251,7 +313,7 @@ async function handleSubmit() {
                         </div>
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >No. HP / WhatsApp</label
                             >
                             <input
@@ -261,18 +323,61 @@ async function handleSubmit() {
                                 class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
                             />
                         </div>
+                        <div>
+                            <label
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
+                                >Teknisi</label
+                            >
+                            <div class="flex gap-2">
+                                <select
+                                    v-model="form.technician_id"
+                                    class="block flex-1 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
+                                >
+                                    <option value="">
+                                        -- Pilih Teknisi --
+                                    </option>
+                                    <option
+                                        v-for="tech in technicians"
+                                        :key="tech.id"
+                                        :value="tech.id"
+                                    >
+                                        {{ tech.nama }}
+                                    </option>
+                                </select>
+                                <button
+                                    type="button"
+                                    @click="showQuickAddTechnician = true"
+                                    class="px-3 py-2 text-indigo-600 transition-colors bg-indigo-50 rounded-xl hover:bg-indigo-100"
+                                    title="Tambah Teknisi"
+                                >
+                                    <svg
+                                        class="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 4v16m8-8H4"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Data Unit Card -->
                 <div
-                    class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+                    class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
                 >
                     <div
                         class="px-6 py-4 border-b border-slate-100 bg-slate-50"
                     >
                         <h3
-                            class="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2"
+                            class="flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-slate-800"
                         >
                             <svg
                                 class="w-4 h-4 text-indigo-500"
@@ -291,23 +396,54 @@ async function handleSubmit() {
                         </h3>
                     </div>
                     <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                    class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                     >Merk HP *</label
                                 >
-                                <input
-                                    v-model="form.merk_hp"
-                                    type="text"
-                                    required
-                                    placeholder="Contoh: Samsung, iPhone"
-                                    class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
-                                />
+                                <div class="flex gap-2">
+                                    <select
+                                        v-model="form.service_brand_id"
+                                        required
+                                        class="block flex-1 px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all"
+                                    >
+                                        <option value="">
+                                            -- Pilih Merk --
+                                        </option>
+                                        <option
+                                            v-for="brand in serviceBrands"
+                                            :key="brand.id"
+                                            :value="brand.id"
+                                        >
+                                            {{ brand.nama }}
+                                        </option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        @click="showQuickAddBrand = true"
+                                        class="px-3 py-2 text-indigo-600 transition-colors bg-indigo-50 rounded-xl hover:bg-indigo-100"
+                                        title="Tambah Merk"
+                                    >
+                                        <svg
+                                            class="w-5 h-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                    class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                     >Tipe HP *</label
                                 >
                                 <input
@@ -320,7 +456,7 @@ async function handleSubmit() {
                             </div>
                             <div>
                                 <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                    class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                     >IMEI / SN</label
                                 >
                                 <input
@@ -332,7 +468,7 @@ async function handleSubmit() {
                             </div>
                             <div>
                                 <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                    class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                     >Kelengkapan</label
                                 >
                                 <input
@@ -346,7 +482,7 @@ async function handleSubmit() {
 
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Kerusakan / Keluhan *</label
                             >
                             <textarea
@@ -362,21 +498,21 @@ async function handleSubmit() {
             </div>
 
             <!-- Right Side: Action Panel -->
-            <div class="lg:col-span-1 space-y-6">
+            <div class="space-y-6 lg:col-span-1">
                 <!-- Biaya Card -->
                 <div
-                    class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden"
+                    class="overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-200"
                 >
                     <div
-                        class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between"
+                        class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50"
                     >
                         <h3
-                            class="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2"
+                            class="flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-slate-800"
                         >
                             Spareparts & Biaya
                         </h3>
                         <span
-                            class="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md"
+                            class="px-2 py-1 text-xs font-bold rounded-md text-emerald-600 bg-emerald-100"
                             >{{ form.parts.length }} Part</span
                         >
                     </div>
@@ -384,7 +520,7 @@ async function handleSubmit() {
                         <!-- Sparepart Search -->
                         <div ref="partSearchWrapper" class="relative">
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Tambah Sparepart (Opsional)</label
                             >
                             <div class="relative group">
@@ -393,10 +529,10 @@ async function handleSubmit() {
                                     @focus="handlePartFocus"
                                     type="text"
                                     placeholder="Cari sprepart disini..."
-                                    class="w-full rounded-xl border border-slate-300 focus:border-blue-500 py-3 pl-10 pr-4 text-sm font-medium transition-all"
+                                    class="w-full py-3 pl-10 pr-4 text-sm font-medium transition-all border rounded-xl border-slate-300 focus:border-blue-500"
                                 />
                                 <svg
-                                    class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                                    class="absolute w-4 h-4 transition-colors -translate-y-1/2 left-4 top-1/2 text-slate-400 group-focus-within:text-blue-500"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -425,15 +561,15 @@ async function handleSubmit() {
                                     v-for="res in partResults"
                                     :key="res.id"
                                     @click="selectPart(res)"
-                                    class="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0"
+                                    class="p-3 border-b cursor-pointer hover:bg-slate-50 border-slate-50 last:border-0"
                                 >
                                     <div
-                                        class="font-bold text-sm text-slate-800"
+                                        class="text-sm font-bold text-slate-800"
                                     >
                                         {{ res.nama }}
                                     </div>
                                     <div
-                                        class="text-xs text-blue-600 mt-1 flex justify-between"
+                                        class="flex justify-between mt-1 text-xs text-blue-600"
                                     >
                                         <span>{{
                                             formatCurrency(res.harga_jual)
@@ -449,7 +585,10 @@ async function handleSubmit() {
                                     </div>
                                 </div>
                                 <div
-                                    v-if="!isSearchingPart && partResults.length === 0"
+                                    v-if="
+                                        !isSearchingPart &&
+                                        partResults.length === 0
+                                    "
                                     class="p-3 text-xs text-slate-500"
                                 >
                                     Sparepart tidak ditemukan
@@ -459,10 +598,10 @@ async function handleSubmit() {
                             <!-- Selected Part Config -->
                             <div
                                 v-if="selectedPart"
-                                class="mt-3 p-4 bg-blue-50 border border-blue-100 rounded-xl"
+                                class="p-4 mt-3 border border-blue-100 bg-blue-50 rounded-xl"
                             >
                                 <p
-                                    class="text-sm font-bold text-slate-800 mb-2"
+                                    class="mb-2 text-sm font-bold text-slate-800"
                                 >
                                     {{ selectedPart.nama }}
                                 </p>
@@ -471,13 +610,13 @@ async function handleSubmit() {
                                         v-model.number="tempQty"
                                         type="number"
                                         min="1"
-                                        class="w-20 px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                                        class="w-20 px-3 py-2 text-sm bg-white border rounded-lg border-slate-300"
                                         placeholder="Qty"
                                     />
                                     <button
                                         type="button"
                                         @click="confirmAddPart"
-                                        class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition"
+                                        class="px-4 py-2 text-xs font-bold text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
                                     >
                                         Tambahkan
                                     </button>
@@ -492,13 +631,13 @@ async function handleSubmit() {
                                 <div
                                     v-for="(p, idx) in form.parts"
                                     :key="idx"
-                                    class="flex justify-between items-center p-3 border border-slate-200 rounded-xl bg-slate-50/50"
+                                    class="flex items-center justify-between p-3 border border-slate-200 rounded-xl bg-slate-50/50"
                                 >
                                     <div class="text-xs">
                                         <p class="font-bold text-slate-800">
                                             {{ p.nama }}
                                         </p>
-                                        <p class="text-slate-500 mt-1">
+                                        <p class="mt-1 text-slate-500">
                                             {{ p.qty }}x
                                             {{ formatCurrency(p.harga_satuan) }}
                                         </p>
@@ -506,7 +645,7 @@ async function handleSubmit() {
                                     <button
                                         type="button"
                                         @click="removePart(idx)"
-                                        class="text-rose-500 hover:text-rose-700 p-1"
+                                        class="p-1 text-rose-500 hover:text-rose-700"
                                     >
                                         <svg
                                             class="w-4 h-4"
@@ -524,7 +663,7 @@ async function handleSubmit() {
                                     </button>
                                 </div>
                                 <div
-                                    class="flex justify-between items-center pt-2 text-sm font-bold text-slate-700"
+                                    class="flex items-center justify-between pt-2 text-sm font-bold text-slate-700"
                                 >
                                     <span>Subtotal Part</span>
                                     <span>{{
@@ -536,24 +675,24 @@ async function handleSubmit() {
 
                         <div class="pt-2 border-t border-slate-100">
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Estimasi Biaya Jasa</label
                             >
                             <div class="relative">
                                 <span
-                                    class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-bold"
+                                    class="absolute inset-y-0 left-0 flex items-center pl-4 font-bold text-slate-400"
                                     >Rp</span
                                 >
                                 <input
                                     v-model="displayBiayaJasa"
                                     type="text"
-                                    class="block w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xl font-black text-slate-800 transition-all"
+                                    class="block w-full py-3 pl-12 pr-4 text-xl font-black transition-all border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800"
                                 />
                             </div>
                         </div>
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                                class="block mb-2 text-xs font-semibold tracking-widest uppercase text-slate-500"
                                 >Tanggal Masuk</label
                             >
                             <input
@@ -568,11 +707,11 @@ async function handleSubmit() {
                             <button
                                 type="submit"
                                 :disabled="isLoading"
-                                class="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-wider text-xs shadow-xl shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                class="flex items-center justify-center w-full gap-2 py-4 text-xs font-black tracking-wider text-white uppercase transition-all bg-blue-600 shadow-xl rounded-2xl shadow-blue-500/20 hover:bg-blue-700 disabled:opacity-50"
                             >
                                 <svg
                                     v-if="isLoading"
-                                    class="animate-spin h-4 w-4 text-white"
+                                    class="w-4 h-4 text-white animate-spin"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                 >
@@ -608,7 +747,7 @@ async function handleSubmit() {
                 </div>
 
                 <div
-                    class="p-4 bg-amber-50 rounded-2xl border border-amber-100 shadow-sm"
+                    class="p-4 border shadow-sm bg-amber-50 rounded-2xl border-amber-100"
                 >
                     <div class="flex gap-3">
                         <svg
@@ -634,5 +773,29 @@ async function handleSubmit() {
                 </div>
             </div>
         </form>
+
+        <QuickAddModal
+            v-if="showQuickAddTechnician"
+            title="Tambah Teknisi"
+            :show="showQuickAddTechnician"
+            :fields="[
+                { key: 'nama', label: 'Nama Teknisi *', required: true },
+                { key: 'no_hp', label: 'No. HP', required: false },
+                { key: 'specialist', label: 'Spesialis', required: false },
+            ]"
+            :submitFunction="handleQuickAddTechnician"
+            @close="showQuickAddTechnician = false"
+            @created="onTechnicianCreated"
+        />
+
+        <QuickAddModal
+            v-if="showQuickAddBrand"
+            title="Tambah Merk HP"
+            :show="showQuickAddBrand"
+            :fields="[{ key: 'nama', label: 'Nama Merk *', required: true }]"
+            :submitFunction="handleQuickAddBrand"
+            @close="showQuickAddBrand = false"
+            @created="() => toast.success('Merk HP berhasil ditambahkan')"
+        />
     </div>
 </template>

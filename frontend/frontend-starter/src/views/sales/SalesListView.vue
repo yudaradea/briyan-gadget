@@ -592,8 +592,11 @@ function servicePartsSummary(sale) {
                             <th class="w-32">Tanggal</th>
                             <th class="w-48">Pelanggan</th>
                             <th class="w-32">Kasir</th>
-                            <th v-if="!isServiceMode" class="w-32">Sales</th>
-                            <th v-else class="w-56">Sparepart Digunakan</th>
+                            <th v-if="isServiceMode" class="w-32">Teknisi</th>
+                            <th v-else class="w-32">Sales</th>
+                            <th v-if="isServiceMode" class="w-56">
+                                Sparepart Digunakan
+                            </th>
                             <th class="w-40 text-right">Sub Total</th>
                             <th class="w-20 text-center">Qty</th>
                             <th class="w-40 text-right">Uang Masuk</th>
@@ -603,7 +606,7 @@ function servicePartsSummary(sale) {
                     <tbody class="bg-white divide-y divide-slate-200">
                         <tr v-if="isLoading">
                             <td
-                                :colspan="isServiceMode ? 10 : 10"
+                                :colspan="isServiceMode ? 11 : 10"
                                 class="px-6 py-12 text-center text-slate-500"
                             >
                                 <div class="flex flex-col items-center gap-2">
@@ -618,7 +621,7 @@ function servicePartsSummary(sale) {
                         </tr>
                         <tr v-else-if="sales.length === 0">
                             <td
-                                :colspan="isServiceMode ? 10 : 10"
+                                :colspan="isServiceMode ? 11 : 10"
                                 class="px-6 py-12 italic text-center text-slate-500"
                             >
                                 {{
@@ -646,10 +649,12 @@ function servicePartsSummary(sale) {
                             <td class="table-cell font-bold text-blue-600">
                                 {{ s.no_invoice }}
                             </td>
-                            <td class="table-cell text-slate-500">
+                            <td class="table-cell font-semibold text-slate-500">
                                 {{ formatDate(s.tanggal) }}
                             </td>
-                            <td class="table-cell font-semibold text-slate-800">
+                            <td
+                                class="table-cell font-bold uppercase text-slate-500"
+                            >
                                 {{ s.pelanggan || "Umum" }}
                             </td>
                             <td
@@ -658,13 +663,19 @@ function servicePartsSummary(sale) {
                                 {{ s.user?.name || "-" }}
                             </td>
                             <td
+                                v-if="isServiceMode"
+                                class="table-cell text-[12px] font-bold text-slate-500 uppercase"
+                            >
+                                {{ s.service_order?.technician?.nama || "-" }}
+                            </td>
+                            <td
                                 v-if="!isServiceMode"
                                 class="table-cell text-slate-500 uppercase text-[10px] font-bold"
                             >
                                 {{ s.sales_rep?.nama || "-" }}
                             </td>
                             <td
-                                v-else
+                                v-if="!isServiceMode"
                                 class="table-cell text-slate-600 text-[11px] font-semibold"
                             >
                                 {{ servicePartsSummary(s) }}
@@ -940,6 +951,24 @@ function servicePartsSummary(sale) {
                                     >/ {{ selectedSale.sales_rep.nama }}</span
                                 ></span
                             >
+                        </div>
+                        <div
+                            v-if="
+                                isServiceMode &&
+                                selectedSale.service_order?.technician
+                            "
+                            class="p-4 border border-indigo-100 bg-indigo-50 rounded-xl"
+                        >
+                            <span
+                                class="block mb-1 text-xs font-medium tracking-wider text-indigo-500 uppercase"
+                            >
+                                Teknisi
+                            </span>
+                            <span class="block font-bold text-indigo-700"
+                                >{{
+                                    selectedSale.service_order.technician.nama
+                                }}
+                            </span>
                         </div>
                     </div>
 

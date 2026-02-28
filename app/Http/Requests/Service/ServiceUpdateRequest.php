@@ -22,6 +22,7 @@ class ServiceUpdateRequest extends FormRequest
             'imei_hp' => 'nullable|string|max:50',
             'kelengkapan' => 'nullable|string|max:1000',
             'biaya_jasa' => 'sometimes|numeric|min:0',
+            'technician_id' => 'nullable|uuid|exists:technicians,id',
             'status' => 'sometimes|in:pending,dikerjakan,selesai,batal',
             'status_pengambilan' => 'sometimes|in:belum_diambil,sudah_diambil',
             'catatan_teknisi' => 'nullable|string',

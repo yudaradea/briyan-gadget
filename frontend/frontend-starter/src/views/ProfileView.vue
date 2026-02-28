@@ -147,12 +147,12 @@ const changePassword = async () => {
 <template>
     <div class="space-y-6">
         <!-- Profile Settings Card -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-hidden bg-white rounded-lg shadow">
             <div class="p-6 border-b border-gray-200">
                 <h2 class="text-xl font-bold text-gray-800">
                     Profile Settings
                 </h2>
-                <p class="text-sm text-gray-600 mt-1">
+                <p class="mt-1 text-sm text-gray-600">
                     Update your personal information
                 </p>
             </div>
@@ -163,13 +163,13 @@ const changePassword = async () => {
             <div v-else class="p-6">
                 <div
                     v-if="message"
-                    class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded"
+                    class="px-4 py-3 mb-4 text-green-700 bg-green-100 border border-green-400 rounded"
                 >
                     {{ message }}
                 </div>
                 <div
                     v-if="error"
-                    class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+                    class="px-4 py-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded"
                 >
                     {{ error }}
                 </div>
@@ -181,16 +181,16 @@ const changePassword = async () => {
                             <img
                                 v-if="previewUrl"
                                 :src="previewUrl"
-                                class="h-16 w-16 object-cover rounded-full"
+                                class="object-cover w-16 h-16 rounded-full"
                             />
                             <img
                                 v-else-if="currentAvatarUrl"
                                 :src="currentAvatarUrl"
-                                class="h-16 w-16 object-cover rounded-full"
+                                class="object-cover w-16 h-16 rounded-full"
                             />
                             <div
                                 v-else
-                                class="h-16 w-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white"
+                                class="flex items-center justify-center w-16 h-16 text-white rounded-full bg-gradient-to-br from-indigo-500 to-purple-600"
                             >
                                 <span class="text-2xl font-bold">{{
                                     authStore.user?.name
@@ -200,17 +200,20 @@ const changePassword = async () => {
                             </div>
                         </div>
                         <label class="block">
-                            <span class="sr-only">Choose profile photo</span>
+                            <span class="sr-only">Choose profile </span>
                             <input
                                 type="file"
                                 @change="handleFileChange"
                                 accept="image/*"
                                 class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                             />
+                            <p class="mt-1 text-xs text-gray-500">
+                                PNG, JPG, GIF max 2MB
+                            </p>
                         </label>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700"
@@ -220,7 +223,7 @@ const changePassword = async () => {
                                 v-model="form.name"
                                 type="text"
                                 required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -232,7 +235,7 @@ const changePassword = async () => {
                                 v-model="form.email"
                                 type="email"
                                 required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -243,7 +246,7 @@ const changePassword = async () => {
                             <input
                                 v-model="form.phone"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -254,7 +257,7 @@ const changePassword = async () => {
                             <input
                                 v-model="form.address"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div class="md:col-span-2">
@@ -265,7 +268,7 @@ const changePassword = async () => {
                             <textarea
                                 v-model="form.bio"
                                 rows="3"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             ></textarea>
                         </div>
                     </div>
@@ -274,7 +277,7 @@ const changePassword = async () => {
                         <button
                             type="submit"
                             :disabled="authStore.loading"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{
                                 authStore.loading ? "Saving..." : "Save Changes"
@@ -286,10 +289,10 @@ const changePassword = async () => {
         </div>
 
         <!-- Change Password Card -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-hidden bg-white rounded-lg shadow">
             <div class="p-6 border-b border-gray-200">
                 <h2 class="text-xl font-bold text-gray-800">Change Password</h2>
-                <p class="text-sm text-gray-600 mt-1">
+                <p class="mt-1 text-sm text-gray-600">
                     Update your account password
                 </p>
             </div>
@@ -297,19 +300,19 @@ const changePassword = async () => {
             <div class="p-6">
                 <div
                     v-if="passwordMessage"
-                    class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded"
+                    class="px-4 py-3 mb-4 text-green-700 bg-green-100 border border-green-400 rounded"
                 >
                     {{ passwordMessage }}
                 </div>
                 <div
                     v-if="passwordError"
-                    class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+                    class="px-4 py-3 mb-4 text-red-700 bg-red-100 border border-red-400 rounded"
                 >
                     {{ passwordError }}
                 </div>
 
                 <form @submit.prevent="changePassword" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div class="md:col-span-2">
                             <label
                                 class="block text-sm font-medium text-gray-700"
@@ -319,7 +322,7 @@ const changePassword = async () => {
                                 v-model="passwordForm.current_password"
                                 type="password"
                                 required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -331,7 +334,7 @@ const changePassword = async () => {
                                 v-model="passwordForm.password"
                                 type="password"
                                 required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                         <div>
@@ -343,7 +346,7 @@ const changePassword = async () => {
                                 v-model="passwordForm.password_confirmation"
                                 type="password"
                                 required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
                         </div>
                     </div>
@@ -352,7 +355,7 @@ const changePassword = async () => {
                         <button
                             type="submit"
                             :disabled="authStore.loading"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{
                                 authStore.loading

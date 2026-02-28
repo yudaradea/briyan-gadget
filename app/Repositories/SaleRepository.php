@@ -22,7 +22,7 @@ class SaleRepository
     public function index($perPage, $search, $startDate = null, $endDate = null, $tipe = null, $userId = null, $salesRepId = null)
     {
         $query = $this->model->newQuery()
-            ->with(['user', 'salesRep', 'tax', 'serviceOrder.parts.product.masterProduct'])
+            ->with(['user', 'salesRep', 'tax', 'serviceOrder.technician', 'serviceOrder.parts.product.masterProduct'])
             ->withCount('items')
             ->withSum('items', 'qty')
             ->search($search)
@@ -71,6 +71,7 @@ class SaleRepository
             'user',
             'salesRep',
             'tax',
+            'serviceOrder.technician',
             'serviceOrder.parts.product.masterProduct',
             'items.product.masterProduct.brand',
             'items.product.masterProduct.category',

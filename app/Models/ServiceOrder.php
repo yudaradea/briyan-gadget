@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ * @property string $service_brand_id
+ * @property string $merk_hp
+ */
 class ServiceOrder extends Model
 {
     use HasFactory, UUID, SoftDeletes;
@@ -14,6 +19,8 @@ class ServiceOrder extends Model
     protected $fillable = [
         'no_service',
         'sales_transaction_id',
+        'technician_id',
+        'service_brand_id',
         'nama_pelanggan',
         'no_hp_pelanggan',
         'merk_hp',
@@ -46,6 +53,9 @@ class ServiceOrder extends Model
                 ->orWhere('id', 'like', '%' . $search . '%')
                 ->orWhere('nama_pelanggan', 'like', '%' . $search . '%')
                 ->orWhere('merk_hp', 'like', '%' . $search . '%')
+                ->orWhereHas('serviceBrand', function ($sq) use ($search) {
+                    $sq->where('nama', 'like', '%' . $search . '%');
+                })
                 ->orWhere('tipe_hp', 'like', '%' . $search . '%')
                 ->orWhere('no_hp_pelanggan', 'like', '%' . $search . '%')
                 ->orWhere('imei_hp', 'like', '%' . $search . '%');
@@ -65,11 +75,27 @@ class ServiceOrder extends Model
         return $query;
     }
 
+    public function scopeStatusPengambilan($query, $status)
+    {
+        if ($status) return $query->where('status_pengambilan', $status);
+        return $query;
+    }
+
     // === Relationships ===
 
     public function salesTransaction()
     {
         return $this->belongsTo(SalesTransaction::class);
+    }
+
+    public function technician()
+    {
+        return $this->belongsTo(Technician::class);
+    }
+
+    public function serviceBrand()
+    {
+        return $this->belongsTo(ServiceBrand::class, 'service_brand_id');
     }
 
     public function parts()

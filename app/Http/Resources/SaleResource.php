@@ -44,6 +44,10 @@ class SaleResource extends JsonResource
                 return [
                     'id' => $this->serviceOrder->id,
                     'no_service' => strtoupper(substr((string) $this->serviceOrder->id, 0, 8)),
+                    'technician' => $this->serviceOrder->technician ? [
+                        'id' => $this->serviceOrder->technician->id,
+                        'nama' => $this->serviceOrder->technician->nama,
+                    ] : null,
                     'biaya_jasa' => (float) ($this->serviceOrder->biaya_jasa ?? 0),
                     'parts' => $this->serviceOrder->parts->map(fn($part) => [
                         'id' => $part->id,

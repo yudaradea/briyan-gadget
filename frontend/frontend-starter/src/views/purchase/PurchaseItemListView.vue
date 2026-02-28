@@ -111,14 +111,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
             );
             filters.value.end_date = "";
             return;
         }
         fetchItems(1);
     },
-    { deep: true }
+    { deep: true },
 );
 
 function formatCurrency(val) {
@@ -135,11 +135,12 @@ function formatDate(dateStr) {
     return `${d}-${m}-${y}`;
 }
 
-async function printBarcode(purchaseId) {
+async function printBarcode(purchaseId, itemId = null) {
     if (!purchaseId) return toast.error("ID Pembelian tidak tersedia");
     router.push({
         name: "purchase-barcode",
         params: { id: purchaseId },
+        query: itemId ? { item_id: itemId } : {},
     });
 }
 
@@ -593,7 +594,12 @@ async function doDelete() {
                             <td class="table-col-action">
                                 <div class="table-actions">
                                     <button
-                                        @click="printBarcode(item.purchase_id)"
+                                        @click="
+                                            printBarcode(
+                                                item.purchase_id,
+                                                item.id,
+                                            )
+                                        "
                                         class="p-1.5 text-purple-500 hover:bg-blue-50 rounded-lg transition"
                                         title="Cetak Barcode"
                                     >
@@ -637,7 +643,7 @@ async function doDelete() {
                                         @click="
                                             confirmDelete(
                                                 item.id,
-                                                item.purchase_id
+                                                item.purchase_id,
                                             )
                                         "
                                         class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
@@ -678,7 +684,7 @@ async function doDelete() {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total
+                            pagination.total,
                         )
                     }}</span>
                     dari

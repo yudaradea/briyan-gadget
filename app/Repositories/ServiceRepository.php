@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\SalesTransaction;
 use App\Http\Resources\PaginateResource;
+use App\Http\Resources\ServiceOrderResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -16,29 +17,36 @@ class ServiceRepository
 {
     public function __construct(private ServiceOrder $model) {}
 
-    public function index($perPage, $search, $status = null, $startDate = null, $endDate = null)
+    public function index($perPage, $search, $status = null, $startDate = null, $endDate = null, $excludeSudahDiambil = true)
     {
         $query = $this->model->newQuery()
+            ->with(['technician', 'serviceBrand'])
             ->withCount('parts')
             ->search($search)
             ->status($status)
             ->dateRange($startDate, $endDate)
-            ->latest('tanggal_masuk')
+            ->statusPengambilan(request('status_pengambilan'));
+
+        if ($excludeSudahDiambil) {
+            $query->where('status_pengambilan', '!=', 'sudah_diambil');
+        }
+
+        $query->latest('tanggal_masuk')
             ->latest('created_at');
 
         $data = $query->paginate($perPage);
 
         return ResponseHelper::success(
-            new PaginateResource($data, \App\Http\Resources\ServiceOrderResource::class),
+            new PaginateResource($data, ServiceOrderResource::class),
             'Service orders retrieved successfully'
         );
     }
 
     public function show($id)
     {
-        $service = $this->model->with(['parts.product', 'salesTransaction'])->findOrFail($id);
+        $service = $this->model->with(['parts.product', 'salesTransaction', 'technician', 'serviceBrand'])->findOrFail($id);
         return ResponseHelper::success(
-            new \App\Http\Resources\ServiceOrderResource($service),
+            new ServiceOrderResource($service),
             'Service order details retrieved'
         );
     }
@@ -46,15 +54,25 @@ class ServiceRepository
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $merkHp = $data['merk_hp'] ?? null;
+            if (empty($merkHp) && !empty($data['service_brand_id'])) {
+                $brand = \App\Models\ServiceBrand::find($data['service_brand_id']);
+                if ($brand) {
+                    $merkHp = $brand->nama;
+                }
+            }
+
             $service = $this->model->create([
                 'nama_pelanggan' => $data['nama_pelanggan'],
                 'no_hp_pelanggan' => $data['no_hp_pelanggan'] ?? null,
-                'merk_hp' => $data['merk_hp'],
+                'service_brand_id' => $data['service_brand_id'] ?? null,
+                'merk_hp' => $merkHp,
                 'tipe_hp' => $data['tipe_hp'],
                 'kerusakan' => $data['kerusakan'],
                 'imei_hp' => $data['imei_hp'] ?? null,
                 'kelengkapan' => $data['kelengkapan'] ?? null,
                 'biaya_jasa' => $data['biaya_jasa'] ?? 0,
+                'technician_id' => $data['technician_id'] ?? null,
                 'status' => 'dikerjakan',
                 'tanggal_masuk' => $data['tanggal_masuk'] ?? now()->toDateString(),
             ]);
@@ -86,7 +104,7 @@ class ServiceRepository
             }
 
             return ResponseHelper::success(
-                new \App\Http\Resources\ServiceOrderResource($service->load('parts.product')),
+                new ServiceOrderResource($service->load('parts.product')),
                 'Service order created successfully',
                 201
             );
@@ -96,10 +114,19 @@ class ServiceRepository
     public function update($id, array $data)
     {
         $service = $this->model->findOrFail($id);
-        $service->update($data);
+
+        $updateData = $data;
+        if (empty($updateData['merk_hp']) && !empty($updateData['service_brand_id'])) {
+            $brand = \App\Models\ServiceBrand::find($updateData['service_brand_id']);
+            if ($brand) {
+                $updateData['merk_hp'] = $brand->nama;
+            }
+        }
+
+        $service->update($updateData);
 
         return ResponseHelper::success(
-            new \App\Http\Resources\ServiceOrderResource($service->fresh()),
+            new ServiceOrderResource($service->fresh()),
             'Service order updated successfully'
         );
     }
@@ -176,7 +203,7 @@ class ServiceRepository
             }
 
             return ResponseHelper::success(
-                new \App\Http\Resources\ServiceOrderResource(
+                new ServiceOrderResource(
                     $service->fresh()->load(['parts.product', 'salesTransaction'])
                 ),
                 "Status updated successfully"

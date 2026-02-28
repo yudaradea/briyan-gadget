@@ -11,9 +11,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SalesRepController;
+use App\Http\Controllers\ServiceBrandController;
 use App\Http\Controllers\StoreSettingController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TechnicianController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -72,6 +74,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/brands/quick', [BrandController::class, 'quickStore']);
     Route::apiResource('brands', BrandController::class);
 
+    // Service Brands (Merk HP Service)
+    Route::get('/service-brands/all', [ServiceBrandController::class, 'all']);
+    Route::post('/service-brands/quick', [ServiceBrandController::class, 'quickStore']);
+    Route::apiResource('service-brands', ServiceBrandController::class);
+
     // Categories (Kategori)
     Route::get('/categories/all', [CategoryController::class, 'all']);
     Route::post('/categories/quick', [CategoryController::class, 'quickStore']);
@@ -91,6 +98,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/sales-reps/all', [SalesRepController::class, 'all']);
     Route::post('/sales-reps/quick', [SalesRepController::class, 'quickStore']);
     Route::apiResource('sales-reps', SalesRepController::class);
+
+    // Technicians (Teknisi)
+    Route::get('/technicians/all', [TechnicianController::class, 'all']);
+    Route::post('/technicians/quick', [TechnicianController::class, 'quickStore']);
+    Route::apiResource('technicians', TechnicianController::class);
 
     // Suppliers (Suplier)
     Route::get('/suppliers/all', [SupplierController::class, 'all']);

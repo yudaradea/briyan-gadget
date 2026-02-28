@@ -32,6 +32,10 @@ const userInitial = computed(() => {
     return authStore.user?.name?.charAt(0)?.toUpperCase() || "U";
 });
 
+const photoUrl = computed(() => {
+    return authStore.user?.profile?.avatar_url;
+});
+
 const roleBadge = computed(() => {
     if (authStore.isSuperAdmin)
         return { label: "Super Admin", class: "bg-purple-100 text-purple-700" };
@@ -289,7 +293,12 @@ onMounted(fetchStoreProfile);
                     </router-link>
 
                     <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewSales || authStore.isKasir"
+                        v-if="
+                            authStore.isSuperAdmin ||
+                            authStore.isAdmin ||
+                            authStore.canViewSales ||
+                            authStore.isKasir
+                        "
                         to="/dashboard/sales"
                         class="nav-item"
                         :class="
@@ -354,7 +363,12 @@ onMounted(fetchStoreProfile);
                     </router-link>
 
                     <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewServices || authStore.isKasir"
+                        v-if="
+                            authStore.isSuperAdmin ||
+                            authStore.isAdmin ||
+                            authStore.canViewServices ||
+                            authStore.isKasir
+                        "
                         to="/dashboard/service-transactions"
                         class="mt-1 nav-item"
                         :class="
@@ -380,7 +394,13 @@ onMounted(fetchStoreProfile);
                     </router-link>
                 </div>
 
-                <div v-if="authStore.isSuperAdmin || authStore.isAdmin || authStore.canViewReports">
+                <div
+                    v-if="
+                        authStore.isSuperAdmin ||
+                        authStore.isAdmin ||
+                        authStore.canViewReports
+                    "
+                >
                     <div v-if="sidebarOpen" class="section-label">Laporan</div>
                     <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
 
@@ -523,6 +543,11 @@ onMounted(fetchStoreProfile);
                                         label: 'Merk',
                                     },
                                     {
+                                        to: '/dashboard/master/service-brands',
+                                        name: 'service-brand-list',
+                                        label: 'Merk HP Service',
+                                    },
+                                    {
                                         to: '/dashboard/master/categories',
                                         name: 'category-list',
                                         label: 'Kategori',
@@ -541,6 +566,11 @@ onMounted(fetchStoreProfile);
                                         to: '/dashboard/master/sales-reps',
                                         name: 'sales-rep-list',
                                         label: 'Sales',
+                                    },
+                                    {
+                                        to: '/dashboard/master/technicians',
+                                        name: 'technician-list',
+                                        label: 'Teknisi',
                                     },
                                     {
                                         to: '/dashboard/master/suppliers',
@@ -699,9 +729,25 @@ onMounted(fetchStoreProfile);
                     :class="{ 'justify-center': !sidebarOpen }"
                 >
                     <div
-                        class="flex items-center justify-center text-sm font-bold shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 shrink-0"
+                        class="relative flex-shrink-0 w-8 h-8 overflow-hidden rounded-full"
                     >
-                        {{ userInitial }}
+                        <div v-if="photoUrl">
+                            <img
+                                :src="photoUrl"
+                                class="object-cover w-full h-full"
+                            />
+                        </div>
+                        <div v-else>
+                            <div
+                                class="flex items-center justify-center w-full h-full text-white bg-gradient-to-br from-indigo-500 to-purple-600"
+                            >
+                                <span class="text-2xl font-bold">{{
+                                    authStore.user?.name
+                                        ?.charAt(0)
+                                        .toUpperCase() || "U"
+                                }}</span>
+                            </div>
+                        </div>
                     </div>
                     <div v-if="sidebarOpen" class="flex-1 min-w-0">
                         <p class="text-sm font-medium truncate">

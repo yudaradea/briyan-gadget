@@ -174,6 +174,7 @@ class ProductRepository
                     'harga_modal' => (float) $product->harga_modal,
                     'harga_jual' => (float) $product->harga_jual,
                     'grade' => $product->grade?->nama,
+                    'purchase_id' => $purchase?->id,
                     'invoice_pembelian' => $purchase?->no_invoice,
                     'supplier' => $purchase?->supplier?->nama,
                     'tanggal_pembelian' => optional($purchase?->tanggal)->format('Y-m-d'),

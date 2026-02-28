@@ -42,7 +42,6 @@ async function fetchStoreProfile() {
                 name: data.data.name || "App Kasir",
                 logo_url: data.data.logo_url || null,
             };
-            console.log(storeProfile.value.logo_url);
         }
     } catch (error) {
         // Fallback jika tidak ada data logo
