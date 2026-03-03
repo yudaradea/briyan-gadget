@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import api from "../../api";
 import { useRouter, useRoute } from "vue-router";
 import QuickAddModal from "../../components/QuickAddModal.vue";
@@ -587,9 +588,8 @@ onMounted(() => {
                             class="block text-xs font-medium text-slate-500 mb-1.5"
                             >Tanggal</label
                         >
-                        <input
+                        <DateInput
                             v-model="form.tanggal"
-                            type="date"
                             required
                             class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
                         />
@@ -1376,3 +1376,7 @@ onMounted(() => {
         />
     </div>
 </template>
+
+
+
+

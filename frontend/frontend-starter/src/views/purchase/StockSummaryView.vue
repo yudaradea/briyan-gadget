@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
@@ -103,19 +103,55 @@ const showDetailModal = ref(false);
 const detailLoading = ref(false);
 const detailItems = ref([]);
 const detailHeader = ref({ nama: "", grade: "-" });
+const detailSearch = ref("");
+const detailPerPage = ref(10);
+const detailPage = ref(1);
+
+const detailFiltered = computed(() => {
+    let rows = [...detailItems.value];
+    // Sort by newest first
+    rows.sort((a, b) => {
+        const da = a.tanggal_pembelian || "";
+        const db = b.tanggal_pembelian || "";
+        if (db > da) return 1;
+        if (db < da) return -1;
+        return (b.id || 0) - (a.id || 0);
+    });
+    const q = detailSearch.value.toLowerCase().trim();
+    if (q) {
+        rows = rows.filter((row) => {
+            return (
+                (row.invoice_pembelian || "").toLowerCase().includes(q) ||
+                (row.barcode || "").toLowerCase().includes(q)
+            );
+        });
+    }
+    return rows;
+});
+
+const detailTotalPages = computed(() =>
+    Math.max(1, Math.ceil(detailFiltered.value.length / detailPerPage.value))
+);
+
+const detailPaginated = computed(() => {
+    const start = (detailPage.value - 1) * detailPerPage.value;
+    return detailFiltered.value.slice(start, start + detailPerPage.value);
+});
+
+watch(detailSearch, () => { detailPage.value = 1; });
+watch(detailPerPage, () => { detailPage.value = 1; });
 
 async function openDetail(item) {
     showDetailModal.value = true;
     detailLoading.value = true;
     detailItems.value = [];
-    detailHeader.value = {
-        nama: item.nama,
-    };
+    detailSearch.value = "";
+    detailPerPage.value = 10;
+    detailPage.value = 1;
+    detailHeader.value = { nama: item.nama };
     try {
         const { data } = await api.get("/products/stock-details", {
-            params: {
-                master_product_id: item.master_product_id,
-            },
+            params: { master_product_id: item.master_product_id },
         });
         detailItems.value = data.data || [];
     } catch (error) {
@@ -451,10 +487,12 @@ function productIdentifier(item) {
             @click.self="showDetailModal = false"
         >
             <div
-                class="w-full max-w-6xl overflow-hidden bg-white border shadow-xl rounded-2xl border-slate-100"
+                class="w-full max-w-6xl flex flex-col bg-white border shadow-xl rounded-2xl border-slate-100"
+                style="max-height: 90vh;"
             >
+                <!-- Modal Header -->
                 <div
-                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50"
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl shrink-0"
                 >
                     <div>
                         <h3
@@ -470,162 +508,138 @@ function productIdentifier(item) {
                         @click="showDetailModal = false"
                         class="p-2 transition rounded-lg text-slate-500 hover:bg-slate-200"
                     >
-                        <svg
-                            class="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-                <div class="p-4 sm:p-6 overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50">
+
+                <!-- Toolbar: search + per-page -->
+                <div class="flex flex-wrap items-end gap-3 px-4 pt-4 pb-2 shrink-0">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Tampilkan</label>
+                        <div class="relative">
+                            <select
+                                v-model="detailPerPage"
+                                class="appearance-none w-20 px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none bg-white pr-7"
+                            >
+                                <option :value="10">10</option>
+                                <option :value="50">50</option>
+                                <option :value="100">100</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none text-slate-400">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 grow">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Cari Invoice / Barcode</label>
+                        <div class="relative">
+                            <input
+                                v-model="detailSearch"
+                                type="text"
+                                placeholder="Cari invoice atau barcode..."
+                                class="w-full sm:w-72 pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            />
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-2.5 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 pb-1.5">
+                        {{ detailFiltered.length }} data
+                    </p>
+                </div>
+
+                <!-- Table (scrollable) -->
+                <div class="overflow-auto flex-1 px-4">
+                    <table class="w-full" style="font-size: 13px;">
+                        <thead class="bg-slate-50 sticky top-0 z-10">
                             <tr>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
-                                >
-                                    Produk
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
-                                >
-                                    Invoice
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
-                                >
-                                    Supplier
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
-                                >
-                                    Satuan
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
-                                >
-                                    Grade
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-right uppercase text-slate-500"
-                                >
-                                    Harga Beli
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-right uppercase text-slate-500"
-                                >
-                                    Harga Jual
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-center uppercase text-slate-500"
-                                >
-                                    Stok
-                                </th>
-                                <th
-                                    class="px-4 py-3 text-xs font-bold text-center uppercase text-slate-500"
-                                >
-                                    Aksi
-                                </th>
+                                <th class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500 whitespace-nowrap">Produk</th>
+                                <th class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500 whitespace-nowrap">Invoice</th>
+                                <th class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500 whitespace-nowrap">Supplier</th>
+                                <th class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500 whitespace-nowrap">Satuan</th>
+                                <th class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500 whitespace-nowrap">Grade</th>
+                                <th class="px-4 py-3 text-xs font-bold text-right uppercase text-slate-500 whitespace-nowrap">Harga Beli</th>
+                                <th class="px-4 py-3 text-xs font-bold text-right uppercase text-slate-500 whitespace-nowrap">Harga Jual</th>
+                                <th class="px-4 py-3 text-xs font-bold text-center uppercase text-slate-500 whitespace-nowrap">Stok</th>
+                                <th class="px-4 py-3 text-xs font-bold text-center uppercase text-slate-500 whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             <tr v-if="detailLoading">
-                                <td
-                                    colspan="9"
-                                    class="px-4 py-8 text-center text-slate-500"
-                                >
-                                    Memuat detail...
-                                </td>
+                                <td colspan="9" class="px-4 py-8 text-center text-slate-500">Memuat detail...</td>
                             </tr>
-                            <tr v-else-if="detailItems.length === 0">
-                                <td
-                                    colspan="9"
-                                    class="px-4 py-8 text-center text-slate-400"
-                                >
-                                    Tidak ada data detail SKU.
-                                </td>
+                            <tr v-else-if="detailFiltered.length === 0">
+                                <td colspan="9" class="px-4 py-8 text-center text-slate-400">Tidak ada data ditemukan.</td>
                             </tr>
-                            <tr v-for="row in detailItems" :key="row.id">
-                                <td class="px-4 py-3">
-                                    <div class="font-semibold text-slate-800">
-                                        {{ row.nama }}
-                                    </div>
-                                    <div class="mt-1 text-xs text-slate-500">
+                            <tr v-for="row in detailPaginated" :key="row.id" class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-2.5">
+                                    <div class="font-semibold text-slate-800">{{ row.nama }}</div>
+                                    <div class="mt-0.5 text-xs text-slate-500">
                                         {{ row.barcode || "-" }}
                                         <span v-if="row.imei1 || row.imei2">
-                                            | IMEI: {{ row.imei1 || "-" }} /
-                                            {{ row.imei2 || "-" }}
+                                            | IMEI: {{ row.imei1 || "-" }} / {{ row.imei2 || "-" }}
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3 text-slate-700">
+                                <td class="px-4 py-2.5 text-slate-700">
                                     {{ row.invoice_pembelian || "-" }}
-                                    <div class="text-xs text-slate-500">
-                                        {{ formatDate(row.tanggal_pembelian) }}
-                                    </div>
+                                    <div class="text-xs text-slate-500">{{ formatDate(row.tanggal_pembelian) }}</div>
                                 </td>
-                                <td class="px-4 py-3 text-slate-700">
-                                    {{ row.supplier || "-" }}
-                                </td>
-                                <td class="px-4 py-3 text-slate-700 uppercase">
-                                    {{ row.satuan || "-" }}
-                                </td>
-                                <td class="px-4 py-3 text-slate-700">
-                                    {{ row.grade || "-" }}
-                                </td>
-                                <td
-                                    class="px-4 py-3 font-semibold text-right text-slate-700"
-                                >
-                                    {{ formatCurrency(row.harga_modal) }}
-                                </td>
-                                <td
-                                    class="px-4 py-3 font-semibold text-right text-blue-700"
-                                >
-                                    {{ formatCurrency(row.harga_jual) }}
-                                </td>
-                                <td
-                                    class="px-4 py-3 font-bold text-center text-slate-800"
-                                >
-                                    {{ row.stok }}
-                                </td>
-                                <td class="px-4 py-3 text-center">
+                                <td class="px-4 py-2.5 text-slate-700">{{ row.supplier || "-" }}</td>
+                                <td class="px-4 py-2.5 text-slate-700 uppercase">{{ row.satuan || "-" }}</td>
+                                <td class="px-4 py-2.5 text-slate-700">{{ row.grade || "-" }}</td>
+                                <td class="px-4 py-2.5 font-semibold text-right text-slate-700">{{ formatCurrency(row.harga_modal) }}</td>
+                                <td class="px-4 py-2.5 font-semibold text-right text-blue-700">{{ formatCurrency(row.harga_jual) }}</td>
+                                <td class="px-4 py-2.5 font-bold text-center text-slate-800">{{ row.stok }}</td>
+                                <td class="px-4 py-2.5 text-center">
                                     <button
                                         v-if="row.purchase_id"
-                                        @click="
-                                            printBarcode(
-                                                row.purchase_id,
-                                                row.id,
-                                            )
-                                        "
+                                        @click="printBarcode(row.purchase_id, row.id)"
                                         class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg transition"
                                         title="Cetak Barcode"
                                     >
-                                        <svg
-                                            class="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                                            />
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                         </svg>
                                     </button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Modal Pagination -->
+                <div
+                    v-if="detailTotalPages > 1 || detailFiltered.length > 0"
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-3 border-t border-slate-100 bg-slate-50 rounded-b-2xl shrink-0"
+                >
+                    <p class="text-xs text-slate-500">
+                        Menampilkan
+                        <span class="font-medium">{{ detailFiltered.length === 0 ? 0 : (detailPage - 1) * detailPerPage + 1 }}</span>
+                        s/d
+                        <span class="font-medium">{{ Math.min(detailPage * detailPerPage, detailFiltered.length) }}</span>
+                        dari <span class="font-medium">{{ detailFiltered.length }}</span> data
+                    </p>
+                    <div class="flex gap-2">
+                        <button
+                            @click="detailPage--"
+                            :disabled="detailPage <= 1"
+                            class="px-3 py-1 text-xs font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >Sebelumnya</button>
+                        <span class="px-3 py-1 text-xs font-medium text-slate-600">{{ detailPage }} / {{ detailTotalPages }}</span>
+                        <button
+                            @click="detailPage++"
+                            :disabled="detailPage >= detailTotalPages"
+                            class="px-3 py-1 text-xs font-medium bg-white border rounded border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >Selanjutnya</button>
+                    </div>
                 </div>
             </div>
         </div>

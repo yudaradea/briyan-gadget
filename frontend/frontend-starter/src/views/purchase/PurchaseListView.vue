@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, watch } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import api from "../../api";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import { useRouter } from "vue-router";
@@ -248,8 +249,8 @@ async function doDelete() {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Mulai</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
+                            
                             v-model="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
@@ -259,8 +260,8 @@ async function doDelete() {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sampai</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
+                            
                             v-model="filters.end_date"
                             :min="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -382,7 +383,7 @@ async function doDelete() {
                             >Search</label
                         >
                         <div class="relative">
-                            <input
+                            <DateInput
                                 type="text"
                                 v-model="searchQuery"
                                 placeholder="Cari invoice/supplier..."
@@ -471,10 +472,9 @@ async function doDelete() {
                                 </span>
                             </td>
                             <td class="table-cell">
-                                <input
+                                <DateInput
                                     v-if="editingPurchaseId === p.id"
                                     v-model="editForm.tanggal"
-                                    type="date"
                                     class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded outline-none focus:ring-2 focus:ring-blue-200"
                                 />
                                 <span
@@ -686,3 +686,7 @@ async function doDelete() {
         />
     </div>
 </template>
+
+
+
+

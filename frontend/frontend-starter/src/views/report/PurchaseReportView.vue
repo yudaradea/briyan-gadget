@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import debounce from "lodash-es/debounce";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
@@ -424,9 +425,9 @@ onMounted(() => {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Mulai</label
                         >
-                        <input
+                        <DateInput
                             v-model="filters.start_date"
-                            type="date"
+                            
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
                     </div>
@@ -435,10 +436,10 @@ onMounted(() => {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sampai</label
                         >
-                        <input
+                        <DateInput
                             v-model="filters.end_date"
                             :min="filters.start_date"
-                            type="date"
+                            
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
@@ -1057,3 +1058,7 @@ onMounted(() => {
         </Teleport>
     </div>
 </template>
+
+
+
+

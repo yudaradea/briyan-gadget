@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import { useRouter, useRoute } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
@@ -234,7 +235,7 @@ async function handleSubmit() {
                                 class="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
                                 >Nama Pelanggan *</label
                             >
-                            <input
+                            <DateInput
                                 v-model="form.nama_pelanggan"
                                 type="text"
                                 required
@@ -462,7 +463,7 @@ async function handleSubmit() {
                             >
                             <input
                                 v-model="form.tanggal_masuk"
-                                type="date"
+                                
                                 class="block w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium"
                             />
                         </div>
@@ -537,3 +538,7 @@ async function handleSubmit() {
         />
     </div>
 </template>
+
+
+
+

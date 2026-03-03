@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import { useAuthStore } from "../../stores/auth";
 import { useRouter, useRoute } from "vue-router";
 import api from "../../api";
@@ -20,7 +21,29 @@ const taxOptions = ref([]);
 const salesReps = ref([]);
 const users = ref([]);
 
-const today = new Date().toISOString().split("T")[0];
+function getJakartaDateISO() {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date());
+
+    const year = parts.find((p) => p.type === "year")?.value;
+    const month = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
+
+    return `${year}-${month}-${day}`;
+}
+
+function formatTanggalIndonesia(isoDate) {
+    if (!isoDate) return "-";
+    const [year, month, day] = String(isoDate).split("-");
+    if (!year || !month || !day) return String(isoDate);
+    return `${day}-${month}-${year}`;
+}
+
+const today = getJakartaDateISO();
 
 const form = ref({
     tanggal_invoice: today,
@@ -433,7 +456,7 @@ async function processTransaction() {
 
 function cancelTransaction() {
     Object.assign(form.value, {
-        tanggal_invoice: today,
+        tanggal_invoice: getJakartaDateISO(),
         pelanggan: "",
         sales_rep_id: "",
         tax_id: "",
@@ -497,7 +520,7 @@ function cancelTransaction() {
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Kasir</label
                 >
-                <input
+                <DateInput
                     type="text"
                     :value="
                         authStore.isKasir
@@ -539,8 +562,7 @@ function cancelTransaction() {
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Tanggal Invoice</label
                 >
-                <input
-                    type="date"
+                <DateInput
                     v-model="form.tanggal_invoice"
                     class="px-3 py-2 text-sm font-medium transition bg-white border rounded outline-none text-slate-700 border-slate-200 focus:ring-1 focus:ring-blue-400"
                 />
@@ -1252,3 +1274,7 @@ input[readonly] {
     opacity: 0.9;
 }
 </style>
+
+
+
+

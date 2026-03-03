@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onMounted, computed } from "vue";
+import DateInput from "../../components/DateInput.vue";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 import debounce from "lodash-es/debounce";
@@ -390,8 +391,8 @@ function servicePartsSummary(sale) {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Mulai</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
+                            
                             v-model="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
@@ -401,8 +402,8 @@ function servicePartsSummary(sale) {
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sampai</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
+                            
                             v-model="filters.end_date"
                             :min="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -1292,3 +1293,7 @@ function servicePartsSummary(sale) {
         />
     </div>
 </template>
+
+
+
+
