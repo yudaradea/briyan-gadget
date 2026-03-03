@@ -95,13 +95,13 @@ const router = createRouter({
                         import("../views/masterdata/UnitListView.vue"),
                     meta: { requiresAdmin: true },
                 },
-                {
-                    path: "master/sales-reps",
-                    name: "sales-rep-list",
-                    component: () =>
-                        import("../views/masterdata/SalesRepListView.vue"),
-                    meta: { requiresAdmin: true },
-                },
+                // {
+                //     path: "master/sales-reps",
+                //     name: "sales-rep-list",
+                //     component: () =>
+                //         import("../views/masterdata/SalesRepListView.vue"),
+                //     meta: { requiresAdmin: true },
+                // },
                 {
                     path: "master/technicians",
                     name: "technician-list",

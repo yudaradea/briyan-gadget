@@ -91,6 +91,11 @@ class SalesTransaction extends Model
         return $this->belongsTo(SalesRep::class, 'sales_rep_id');
     }
 
+    public function salesUser()
+    {
+        return $this->belongsTo(User::class, 'sales_rep_id');
+    }
+
     public function tax()
     {
         return $this->belongsTo(Tax::class);

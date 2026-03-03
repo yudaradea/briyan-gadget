@@ -674,7 +674,12 @@ function servicePartsSummary(sale) {
                                 {{ s.items_sum_qty || 0 }}
                             </td>
                             <td
-                                class="table-cell font-bold text-right text-emerald-600"
+                                class="table-cell font-bold text-right"
+                                :class="
+                                    Number(s.grand_total || 0) < 0
+                                        ? 'text-red-600'
+                                        : 'text-green-600'
+                                "
                             >
                                 {{ formatCurrency(s.grand_total) }}
                             </td>

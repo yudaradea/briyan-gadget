@@ -65,7 +65,7 @@ function saveBlob(blob, filename) {
     window.URL.revokeObjectURL(url);
 }
 
-const title = computed(() => "Laporan Penjualan & Service");
+const title = computed(() => "Laporan Penjualan");
 
 async function fetchSalesReps() {
     try {
@@ -95,7 +95,7 @@ async function fetchReport(page = 1) {
         filters.value.end_date < filters.value.start_date
     ) {
         toast.error(
-            "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai",
+            "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai"
         );
         filters.value.end_date = "";
         return;
@@ -133,7 +133,7 @@ watch(perPage, () => fetchReport(1));
 watch(
     () => filters.value,
     () => fetchReport(1),
-    { deep: true },
+    { deep: true }
 );
 
 async function exportExcel() {
@@ -147,9 +147,9 @@ async function exportExcel() {
 
         saveBlob(
             response.data,
-            `laporan-penjualan-service-${fileSafeDate(
-                filters.value.start_date,
-            )}-${fileSafeDate(filters.value.end_date)}.csv`,
+            `laporan-penjualan-${fileSafeDate(
+                filters.value.start_date
+            )}-${fileSafeDate(filters.value.end_date)}.csv`
         );
     } catch (error) {
         toast.error("Gagal export Excel");
@@ -171,15 +171,15 @@ function buildPdfHtml(dataRows, footerSummary) {
                     <td>${row.sales || "-"}</td>
                     <td style="text-align:center;">${row.qty_total || 0}</td>
                     <td style="text-align:left;">${formatCurrency(
-                        row.grand_total,
+                        row.grand_total
                     )}</td>
                     <td style="text-align:left;">${formatCurrency(
-                        row.hpp_total,
+                        row.hpp_total
                     )}</td>
                     <td style="text-align:left; color:${
-                        Number(row.laba_kotor || 0) < 0 ? "#dc2626" : "#0f766e"
+                        Number(row.laba_kotor || 0) < 0 ? "#dc2626" : "#16a34a"
                     };">${formatCurrency(row.laba_kotor)}</td>
-                </tr>`,
+                </tr>`
         )
         .join("");
 
@@ -200,7 +200,7 @@ function buildPdfHtml(dataRows, footerSummary) {
         <body>
             <h1>${title.value}</h1>
             <p>Periode: ${formatDate(
-                filters.value.start_date,
+                filters.value.start_date
             )} s/d ${formatDate(filters.value.end_date)} 
      | Sales: ${
          salesReps.value.find((s) => s.id === filters.value.sales_rep_id)
@@ -229,18 +229,18 @@ function buildPdfHtml(dataRows, footerSummary) {
                             footerSummary.qty_total || 0
                         }</td>
                         <td style="text-align:left;">${formatCurrency(
-                            footerSummary.grand_total || 0,
+                            footerSummary.grand_total || 0
                         )}</td>
                         <td style="text-align:left;">${formatCurrency(
-                            footerSummary.hpp_total || 0,
+                            footerSummary.hpp_total || 0
                         )}</td>
                         <td style="text-align:left; color:${
                             Number(footerSummary.laba_kotor || 0) < 0
                                 ? "#dc2626"
-                                : "#0f766e"
+                                : "#16a34a"
                         };">${formatCurrency(
-                            footerSummary.laba_kotor || 0,
-                        )}</td>
+        footerSummary.laba_kotor || 0
+    )}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -269,7 +269,7 @@ async function exportPdf() {
             return;
         }
         printWindow.document.write(
-            buildPdfHtml(allRows, data.data.summary || summary.value),
+            buildPdfHtml(allRows, data.data.summary || summary.value)
         );
         printWindow.document.close();
         printWindow.focus();
@@ -290,7 +290,7 @@ onMounted(() => {
         <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
             <h1 class="text-2xl font-black text-slate-800">{{ title }}</h1>
             <p class="mt-1 text-sm text-slate-500">
-                Menampilkan transaksi penjualan POS dan service.
+                Menampilkan transaksi penjualan.
             </p>
         </div>
 
@@ -556,11 +556,12 @@ onMounted(() => {
                             </td>
                             <td
                                 class="table-cell font-black text-right"
-                                :class="
-                                    Number(row.laba_kotor || 0) < 0
-                                        ? 'text-rose-600'
-                                        : 'text-emerald-600'
-                                "
+                                :style="{
+                                    color:
+                                        Number(row.laba_kotor || 0) < 0
+                                            ? '#dc2626'
+                                            : '#16a34a',
+                                }"
                             >
                                 {{ formatCurrency(row.laba_kotor) }}
                             </td>
@@ -585,11 +586,12 @@ onMounted(() => {
                             </td>
                             <td
                                 class="table-cell font-black text-right"
-                                :class="
-                                    summary.laba_kotor < 0
-                                        ? 'text-rose-600'
-                                        : 'text-emerald-700'
-                                "
+                                :style="{
+                                    color:
+                                        Number(summary.laba_kotor || 0) < 0
+                                            ? '#dc2626'
+                                            : '#15803d',
+                                }"
                             >
                                 {{ formatCurrency(summary.laba_kotor) }}
                             </td>
@@ -611,7 +613,7 @@ onMounted(() => {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari

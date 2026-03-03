@@ -18,10 +18,20 @@ class SaleResource extends JsonResource
                 'id' => $this->user->id,
                 'name' => $this->user->name,
             ]),
-            'sales_rep' => $this->whenLoaded('salesRep', fn() => [
-                'id' => $this->salesRep->id,
-                'nama' => $this->salesRep->nama,
-            ]),
+            'sales_rep' => $this->when(
+                $this->relationLoaded('salesRep') || $this->relationLoaded('salesUser'),
+                function () {
+                    $sales = $this->salesRep ?: $this->salesUser;
+                    if (!$sales) {
+                        return null;
+                    }
+
+                    return [
+                        'id' => $sales->id,
+                        'nama' => $sales->nama ?? $sales->name ?? null,
+                    ];
+                }
+            ),
             'subtotal' => (float) $this->subtotal,
             'diskon_persen' => (float) $this->diskon_persen,
             'diskon_nominal' => (float) $this->diskon_nominal,

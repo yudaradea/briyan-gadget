@@ -249,6 +249,10 @@ function clearFoto() {
 
 async function addItem() {
     if (!purchaseId.value) return;
+    if (!itemForm.value.grade_id) {
+        toast.error("Grade wajib dipilih");
+        return;
+    }
     addingItem.value = true;
     itemError.value = "";
     try {
@@ -756,10 +760,11 @@ onMounted(() => {
                     <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >Grade</label
+                            >Grade *</label
                         >
                         <select
                             v-model="itemForm.grade_id"
+                            required
                             class="w-full px-3.5 cursor-pointer py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
                         >
                             <option value="">Pilih Grade</option>

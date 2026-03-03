@@ -93,7 +93,7 @@ onUnmounted(() => {
             class="sticky top-0 z-50 bg-white border-b shadow-sm border-slate-200 backdrop-blur-md bg-white/90"
         >
             <div
-                class="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 h-16 flex items-center justify-between gap-4"
+                class="flex items-center justify-between w-full h-16 gap-4 px-4 mx-auto sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
             >
                 <!-- Left: Logo -->
                 <router-link
@@ -156,7 +156,7 @@ onUnmounted(() => {
                             :class="{
                                 'nav-link-active':
                                     $route.path.includes(
-                                        '/dashboard/purchases',
+                                        '/dashboard/purchases'
                                     ) ||
                                     $route.path.includes('/dashboard/stock'),
                             }"
@@ -202,7 +202,7 @@ onUnmounted(() => {
                             :class="{
                                 'nav-link-active':
                                     $route.path.includes('/pos') ||
-                                    $route.path.includes('/sales'),
+                                    $route.path.includes('dashboard/sales'),
                             }"
                         >
                             Transaksi Penjualan
@@ -377,11 +377,11 @@ onUnmounted(() => {
                                 class="dropdown-item"
                                 >Satuan</router-link
                             >
-                            <router-link
+                            <!-- <router-link
                                 to="/dashboard/master/sales-reps"
                                 class="dropdown-item"
                                 >Sales</router-link
-                            >
+                            > -->
                             <!-- <router-link
                                 to="/dashboard/master/technicians"
                                 class="dropdown-item"
@@ -753,7 +753,7 @@ onUnmounted(() => {
 
         <!-- Main Page Content -->
         <main
-            class="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 md:py-6 lg:py-8 animate-in-fade"
+            class="flex-1 w-full px-4 py-4 mx-auto sm:px-6 lg:px-8 xl:px-10 2xl:px-12 md:py-6 lg:py-8 animate-in-fade"
         >
             <router-view v-slot="{ Component }">
                 <transition name="page" mode="out-in">

@@ -86,7 +86,7 @@ watch(
         if (displayJumlahBayar.value !== formatted) {
             displayJumlahBayar.value = formatted;
         }
-    },
+    }
 );
 
 watch(
@@ -100,7 +100,7 @@ watch(
         if (displayDiskonNominal.value !== formatted) {
             displayDiskonNominal.value = formatted;
         }
-    },
+    }
 );
 
 onMounted(async () => {
@@ -112,14 +112,16 @@ onMounted(async () => {
 
 async function fetchOptions() {
     try {
-        const [resTax, resSales, resUsers] = await Promise.all([
+        const [resTax, resUsers] = await Promise.all([
             api.get("/taxes"),
-            api.get("/sales-reps"),
-            api.get("/user/all?role=kasir"),
+            api.get("/user/all"),
         ]);
         taxOptions.value = resTax.data.data.data;
-        salesReps.value = resSales.data.data.data;
-        users.value = resUsers.data.data;
+        users.value = resUsers.data.data || [];
+        salesReps.value = users.value.filter(
+            (user) =>
+                !user.roles?.some((role) => role.name === "super-admin")
+        );
 
         if (!isEditing.value) {
             if (authStore.user) {
@@ -159,7 +161,7 @@ async function fetchSaleDetails() {
 
         if (sale.diskon_nominal > 0) {
             displayDiskonNominal.value = formatInputCurrency(
-                sale.diskon_nominal,
+                sale.diskon_nominal
             );
         }
 
@@ -338,14 +340,14 @@ const activePelanggan = computed(() => form.value.pelanggan || "NN");
 const subtotal = computed(() => {
     return cart.value.reduce(
         (acc, item) => acc + item.harga_jual * item.qty,
-        0,
+        0
     );
 });
 
 const diskonNominal = computed(() => {
     if (form.value.diskon_type === "persen") {
         return Math.floor(
-            subtotal.value * ((form.value.diskon_persen || 0) / 100),
+            subtotal.value * ((form.value.diskon_persen || 0) / 100)
         );
     }
     return form.value.diskon_nominal || 0;
@@ -377,14 +379,17 @@ const kembalian = computed(() => {
 
 async function processTransaction() {
     if (cart.value.length === 0) return toast.error("Keranjang belanja kosong");
+    if (!form.value.sales_rep_id) return toast.error("Sales wajib dipilih");
+    if (!form.value.pelanggan?.trim())
+        return toast.error("Nama pelanggan wajib diisi");
 
     isProcessing.value = true;
     try {
         const payload = {
             tanggal: form.value.tanggal_invoice,
-            pelanggan: form.value.pelanggan || "NN",
+            pelanggan: form.value.pelanggan.trim(),
             user_id: form.value.user_id || authStore.user?.id,
-            sales_rep_id: form.value.sales_rep_id || null,
+            sales_rep_id: form.value.sales_rep_id,
             tax_id: form.value.tax_id || null,
             tax_persen: form.value.tax_persen || 0,
             diskon_persen:
@@ -417,7 +422,7 @@ async function processTransaction() {
         }
 
         router.push(
-            `/dashboard/pos/${res.data.data.id}/invoice?from=/dashboard/pos`,
+            `/dashboard/pos/${res.data.data.id}/invoice?from=/dashboard/pos`
         );
     } catch (error) {
         toast.error(error.response?.data?.message || "Terjadi kesalahan");
@@ -457,14 +462,14 @@ function cancelTransaction() {
 
 <template>
     <div
-        class="w-full mx-auto flex flex-col gap-6 bg-slate-50 min-h-screen pb-20"
+        class="flex flex-col w-full min-h-screen gap-6 pb-20 mx-auto bg-slate-50"
     >
         <!-- Title Header -->
         <div
-            class="flex items-end justify-between border-b-2 border-slate-200 pb-3 mt-4 mx-6"
+            class="flex items-end justify-between pb-3 mx-6 mt-4 border-b-2 border-slate-200"
         >
             <h1
-                class="text-xl font-bold text-slate-700 flex items-center gap-2"
+                class="flex items-center gap-2 text-xl font-bold text-slate-700"
             >
                 Penjualan
                 <span class="text-sm font-normal text-slate-400"
@@ -480,14 +485,14 @@ function cancelTransaction() {
         </div>
 
         <!-- Top Information Blocks -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 px-6 relative z-10">
+        <div class="relative z-10 grid grid-cols-1 gap-4 px-6 lg:grid-cols-4">
             <!-- Blue Top Line Decoration -->
             <div
                 class="absolute -top-[1.2rem] left-6 right-6 h-[3px] bg-cyan-400 rounded-t-sm shadow-sm"
             ></div>
 
             <div
-                class="flex flex-col gap-1 bg-white p-3 rounded shadow-sm border border-slate-100"
+                class="flex flex-col gap-1 p-3 bg-white border rounded shadow-sm border-slate-100"
             >
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Kasir</label
@@ -501,34 +506,35 @@ function cancelTransaction() {
                               authStore.user?.name
                     "
                     readonly
-                    class="bg-slate-100 text-slate-500 px-3 py-2 rounded text-sm font-bold border border-slate-200 outline-none"
+                    class="px-3 py-2 text-sm font-bold border rounded outline-none bg-slate-100 text-slate-500 border-slate-200"
                 />
             </div>
 
             <!-- Removed No. Invoice as requested by User (Replaced by Sales Dropdown which was in Col 3) -->
             <div
-                class="flex flex-col gap-1 bg-white p-3 rounded shadow-sm border border-slate-100"
+                class="flex flex-col gap-1 p-3 bg-white border rounded shadow-sm border-slate-100"
             >
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Sales</label
                 >
                 <select
                     v-model="form.sales_rep_id"
-                    class="bg-white border text-slate-700 border-slate-200 px-3 py-2 rounded text-sm font-medium focus:ring-1 focus:ring-blue-400 outline-none transition"
+                    class="px-3 py-2 text-sm font-medium transition bg-white border rounded outline-none text-slate-700 border-slate-200 focus:ring-1 focus:ring-blue-400"
+                    required=""
                 >
-                    <option value="">PIlih Sales (Opsional)</option>
+                    <option value="">PIlih Sales</option>
                     <option
                         v-for="rep in salesReps"
                         :key="rep.id"
                         :value="rep.id"
                     >
-                        {{ rep.nama }}
+                        {{ rep.name || rep.nama }}
                     </option>
                 </select>
             </div>
 
             <div
-                class="flex flex-col gap-1 bg-white p-3 rounded shadow-sm border border-slate-100"
+                class="flex flex-col gap-1 p-3 bg-white border rounded shadow-sm border-slate-100"
             >
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Tanggal Invoice</label
@@ -536,12 +542,12 @@ function cancelTransaction() {
                 <input
                     type="date"
                     v-model="form.tanggal_invoice"
-                    class="bg-white border text-slate-700 border-slate-200 px-3 py-2 rounded text-sm font-medium focus:ring-1 focus:ring-blue-400 outline-none transition"
+                    class="px-3 py-2 text-sm font-medium transition bg-white border rounded outline-none text-slate-700 border-slate-200 focus:ring-1 focus:ring-blue-400"
                 />
             </div>
 
             <div
-                class="flex flex-col gap-1 bg-white p-3 rounded shadow-sm border border-slate-100"
+                class="flex flex-col gap-1 p-3 bg-white border rounded shadow-sm border-slate-100"
             >
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Pelanggan</label
@@ -549,26 +555,27 @@ function cancelTransaction() {
                 <input
                     type="text"
                     v-model="form.pelanggan"
-                    placeholder="Masukkan Nama Pelanggan... (Wajib)"
-                    class="bg-white border text-slate-800 border-slate-200 px-3 py-2 rounded text-sm font-medium focus:ring-1 focus:border-blue-500 focus:ring-blue-400 outline-none transition"
+                    placeholder="Masukkan Nama Pelanggan"
+                    class="px-3 py-2 text-sm font-medium transition bg-white border rounded outline-none text-slate-800 border-slate-200 focus:ring-1 focus:border-blue-500 focus:ring-blue-400"
+                    required=""
                 />
             </div>
         </div>
 
         <!-- Main Body (Form + Table) -->
-        <div class="flex flex-col lg:flex-row gap-6 px-6">
+        <div class="flex flex-col gap-6 px-6 lg:flex-row">
             <!-- Left Side: Tambah Pembelian (300px width) -->
             <div
                 class="w-full lg:w-[400px] bg-white rounded shadow-sm border border-slate-100 shrink-0 self-start"
             >
                 <div
-                    class="p-4 border-b border-slate-100 border-l-4 border-l-blue-500"
+                    class="p-4 border-b border-l-4 border-slate-100 border-l-blue-500"
                 >
                     <h2 class="text-lg font-normal text-slate-700">
                         Tambah Pembelian
                     </h2>
                 </div>
-                <div class="p-4 flex flex-col gap-4">
+                <div class="flex flex-col gap-4 p-4">
                     <!-- Kode Produk -->
                     <div class="flex flex-col gap-1">
                         <label
@@ -582,7 +589,7 @@ function cancelTransaction() {
                                 @keydown.enter.prevent="searchByCode"
                                 @blur="searchByCode"
                                 placeholder="Kode..."
-                                class="w-2/3 bg-white border border-slate-200 px-3 py-2 rounded-sm text-sm focus:border-blue-500 outline-none transition uppercase"
+                                class="w-2/3 px-3 py-2 text-sm uppercase transition bg-white border rounded-sm outline-none border-slate-200 focus:border-blue-500"
                             />
                             <button
                                 @click="openSearchModal"
@@ -615,7 +622,7 @@ function cancelTransaction() {
                             type="text"
                             :value="inputForm.nama"
                             readonly
-                            class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 rounded-sm text-sm font-medium outline-none cursor-not-allowed"
+                            class="px-3 py-2 text-sm font-medium border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />
                     </div>
 
@@ -628,7 +635,7 @@ function cancelTransaction() {
                             type="text"
                             :value="inputForm.satuan"
                             readonly
-                            class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 rounded-sm text-sm font-medium outline-none cursor-not-allowed"
+                            class="px-3 py-2 text-sm font-medium border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />
                     </div>
 
@@ -641,7 +648,7 @@ function cancelTransaction() {
                             type="text"
                             :value="inputForm.imei"
                             readonly
-                            class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 rounded-sm text-sm font-medium outline-none cursor-not-allowed"
+                            class="px-3 py-2 text-sm font-medium border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />
                     </div>
 
@@ -654,7 +661,7 @@ function cancelTransaction() {
                             type="text"
                             :value="formatCurrency(inputForm.harga_modal)"
                             readonly
-                            class="bg-slate-100 border border-slate-200 text-slate-700 px-3 py-2 rounded-sm text-sm font-bold outline-none cursor-not-allowed"
+                            class="px-3 py-2 text-sm font-bold border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />
                     </div>
 
@@ -679,13 +686,13 @@ function cancelTransaction() {
             </div>
 
             <!-- Right Side: Daftar Pembelian (Table) -->
-            <div class="flex-1 flex flex-col gap-4">
+            <div class="flex flex-col flex-1 gap-4">
                 <!-- Table Card -->
                 <div
-                    class="bg-white rounded shadow-sm border border-slate-100 overflow-hidden"
+                    class="overflow-hidden bg-white border rounded shadow-sm border-slate-100"
                 >
                     <div
-                        class="p-4 border-b border-slate-100 border-l-4 border-l-blue-500"
+                        class="p-4 border-b border-l-4 border-slate-100 border-l-blue-500"
                     >
                         <h2 class="text-lg font-normal text-slate-700">
                             Daftar Pembelian
@@ -695,25 +702,25 @@ function cancelTransaction() {
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-[12px]">
                             <thead
-                                class="bg-white border-b border-slate-200 text-slate-700 font-bold uppercase"
+                                class="font-bold uppercase bg-white border-b border-slate-200 text-slate-700"
                             >
                                 <tr>
-                                    <th class="py-3 px-4">Kode Produk</th>
-                                    <th class="py-3 px-4">Nama Produk</th>
-                                    <th class="py-3 px-4">Satuan</th>
-                                    <th class="py-3 px-4 text-right">Harga</th>
-                                    <th class="py-3 px-4 text-center">
+                                    <th class="px-4 py-3">Kode Produk</th>
+                                    <th class="px-4 py-3">Nama Produk</th>
+                                    <th class="px-4 py-3">Satuan</th>
+                                    <th class="px-4 py-3 text-right">Harga</th>
+                                    <th class="px-4 py-3 text-center">
                                         Jumlah
                                     </th>
-                                    <th class="py-3 px-4 text-right">Total</th>
-                                    <th class="py-3 px-4 text-center">Opsi</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                    <th class="px-4 py-3 text-center">Opsi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="cart.length === 0">
                                     <td
                                         colspan="7"
-                                        class="py-8 text-center text-slate-400 italic"
+                                        class="py-8 italic text-center text-slate-400"
                                     >
                                         Belum ada barang di keranjang.
                                     </td>
@@ -721,14 +728,14 @@ function cancelTransaction() {
                                 <tr
                                     v-for="(item, idx) in cart"
                                     :key="item.id"
-                                    class="hover:bg-slate-50 transition"
+                                    class="transition hover:bg-slate-50"
                                 >
                                     <td
-                                        class="py-3 px-4 font-mono text-slate-500"
+                                        class="px-4 py-3 font-mono text-slate-500"
                                     >
                                         {{ item.kode }}
                                     </td>
-                                    <td class="py-3 px-4 text-slate-800">
+                                    <td class="px-4 py-3 text-slate-800">
                                         <div class="font-bold">
                                             {{ item.nama }}
                                         </div>
@@ -745,46 +752,46 @@ function cancelTransaction() {
                                             >
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4 text-slate-600">
+                                    <td class="px-4 py-3 text-slate-600">
                                         {{ item.satuan }}
                                     </td>
                                     <td
-                                        class="py-3 px-4 text-right font-bold text-slate-700"
+                                        class="px-4 py-3 font-bold text-right text-slate-700"
                                     >
                                         {{ formatCurrency(item.harga_jual) }}
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td class="px-4 py-3">
                                         <div
                                             class="flex items-center justify-center gap-2"
                                         >
                                             <button
                                                 @click="updateQty(item, -1)"
-                                                class="w-6 h-6 flex items-center justify-center bg-slate-100 rounded hover:bg-slate-200 text-slate-600"
+                                                class="flex items-center justify-center w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600"
                                             >
                                                 -
                                             </button>
                                             <span
-                                                class="w-6 text-center font-bold text-slate-800"
+                                                class="w-6 font-bold text-center text-slate-800"
                                                 >{{ item.qty }}</span
                                             >
                                             <button
                                                 @click="updateQty(item, 1)"
-                                                class="w-6 h-6 flex items-center justify-center bg-slate-100 rounded hover:bg-slate-200 text-slate-600"
+                                                class="flex items-center justify-center w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600"
                                             >
                                                 +
                                             </button>
                                         </div>
                                     </td>
                                     <td
-                                        class="py-3 px-4 text-right font-bold text-blue-700"
+                                        class="px-4 py-3 font-bold text-right text-blue-700"
                                     >
                                         {{
                                             formatCurrency(
-                                                item.harga_jual * item.qty,
+                                                item.harga_jual * item.qty
                                             )
                                         }}
                                     </td>
-                                    <td class="py-3 px-4 text-center">
+                                    <td class="px-4 py-3 text-center">
                                         <button
                                             @click="removeFromCart(idx)"
                                             class="bg-[#e74c3c] hover:bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm flex items-center justify-center mx-auto gap-1 transition"
@@ -813,22 +820,22 @@ function cancelTransaction() {
                                 <tr>
                                     <td
                                         colspan="4"
-                                        class="py-3 px-4 text-right font-black"
+                                        class="px-4 py-3 font-black text-right"
                                     >
                                         Total
                                     </td>
                                     <td
-                                        class="py-3 px-4 text-center font-bold text-blue-700"
+                                        class="px-4 py-3 font-bold text-center text-blue-700"
                                     >
                                         {{
                                             cart.reduce(
                                                 (acc, c) => acc + c.qty,
-                                                0,
+                                                0
                                             )
                                         }}
                                     </td>
                                     <td
-                                        class="py-3 px-4 text-right font-bold text-blue-700"
+                                        class="px-4 py-3 font-bold text-right text-blue-700"
                                     >
                                         {{ formatCurrency(subtotal) }}
                                     </td>
@@ -840,7 +847,7 @@ function cancelTransaction() {
                 </div>
 
                 <!-- Footer Summary (Subtotal, Diskon, dsb) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                <div class="grid grid-cols-1 gap-6 mt-2 md:grid-cols-2">
                     <!-- Left Summary Card -->
                     <div
                         class="bg-white rounded shadow-sm border border-slate-100 p-0 text-[12px] h-fit"
@@ -848,18 +855,18 @@ function cancelTransaction() {
                         <div
                             class="flex items-center px-4 py-3 border-b border-slate-100"
                         >
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Sub Total Pembelian</span
                             >
                             <span
-                                class="text-right font-bold flex-1 text-slate-600"
+                                class="flex-1 font-bold text-right text-slate-600"
                                 >{{ formatCurrency(subtotal) }}</span
                             >
                         </div>
                         <div
                             class="flex items-center px-4 py-3 border-b border-slate-100"
                         >
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Diskon</span
                             >
                             <div class="flex items-center flex-1">
@@ -892,12 +899,12 @@ function cancelTransaction() {
                         <div
                             class="flex items-center px-4 py-3 border-b border-slate-100 bg-slate-50/50"
                         >
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Total Pembelian</span
                             >
                             <span
-                                class="text-right font-bold flex-1 text-slate-700"
-                                >{{ formatCurrency(afterDiskon) }}</span
+                                class="flex-1 font-bold text-right text-slate-700"
+                                >{{ formatCurrency(grandTotal) }}</span
                             >
                         </div>
                     </div>
@@ -907,7 +914,7 @@ function cancelTransaction() {
                         class="bg-white rounded shadow-sm border border-slate-100 p-4 text-[12px] h-fit flex flex-col gap-3"
                     >
                         <div class="flex items-center">
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Pajak</span
                             >
                             <div class="flex-1">
@@ -928,7 +935,7 @@ function cancelTransaction() {
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Metode Bayar</span
                             >
                             <div class="flex-1">
@@ -948,14 +955,14 @@ function cancelTransaction() {
                             class="flex items-center"
                             v-if="form.metode_pembayaran === 'cash'"
                         >
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Jumlah Bayar</span
                             >
                             <div
-                                class="flex-1 flex text-xl shadow-inner rounded overflow-hidden"
+                                class="flex flex-1 overflow-hidden text-xl rounded shadow-inner"
                             >
                                 <span
-                                    class="bg-blue-50 border border-r-0 border-blue-200 text-blue-600 font-black px-3 py-2 text-sm flex items-center"
+                                    class="flex items-center px-3 py-2 text-sm font-black text-blue-600 border border-r-0 border-blue-200 bg-blue-50"
                                     >Rp.</span
                                 >
                                 <input
@@ -970,11 +977,11 @@ function cancelTransaction() {
                             class="flex items-center"
                             v-if="form.metode_pembayaran === 'cash'"
                         >
-                            <span class="font-bold text-slate-700 w-1/3"
+                            <span class="w-1/3 font-bold text-slate-700"
                                 >Kembalian</span
                             >
                             <span
-                                class="text-right font-black flex-1 text-lg"
+                                class="flex-1 text-lg font-black text-right"
                                 :class="
                                     kembalian < 0
                                         ? 'text-rose-600'
@@ -987,7 +994,7 @@ function cancelTransaction() {
                 </div>
 
                 <!-- Action Bar -->
-                <div class="flex items-center justify-between mt-6 px-2">
+                <div class="flex items-center justify-between px-2 mt-6">
                     <button
                         @click="cancelTransaction"
                         class="bg-[#e74c3c] hover:bg-red-600 text-white px-5 py-2.5 rounded-sm text-sm font-bold shadow-sm flex items-center gap-2 transition"
@@ -1045,12 +1052,12 @@ function cancelTransaction() {
             >
                 <!-- Header -->
                 <div
-                    class="px-5 py-4 border-b flex items-center justify-between bg-white text-slate-700"
+                    class="flex items-center justify-between px-5 py-4 bg-white border-b text-slate-700"
                 >
-                    <h3 class="font-bold text-base">Pilih Pembelian produk</h3>
+                    <h3 class="text-base font-bold">Pilih Pembelian produk</h3>
                     <button
                         @click="showSearchModal = false"
-                        class="text-slate-400 hover:text-rose-500 transition"
+                        class="transition text-slate-400 hover:text-rose-500"
                     >
                         <svg
                             class="w-6 h-6"
@@ -1069,9 +1076,9 @@ function cancelTransaction() {
                 </div>
                 <!-- Search Bar -->
                 <div
-                    class="p-4 border-b flex justify-end gap-2 bg-slate-50 items-center"
+                    class="flex items-center justify-end gap-2 p-4 border-b bg-slate-50"
                 >
-                    <span class="text-sm text-slate-600 font-medium"
+                    <span class="text-sm font-medium text-slate-600"
                         >Search:</span
                     >
                     <input
@@ -1081,22 +1088,22 @@ function cancelTransaction() {
                     />
                 </div>
                 <!-- Table -->
-                <div class="flex-1 overflow-auto bg-white p-4">
+                <div class="flex-1 p-4 overflow-auto bg-white">
                     <table class="w-full text-left text-[11px] min-w-[800px]">
                         <thead
-                            class="bg-white uppercase font-bold text-slate-600 border-b-2 border-slate-200"
+                            class="font-bold uppercase bg-white border-b-2 text-slate-600 border-slate-200"
                         >
                             <tr>
-                                <th class="pb-3 px-2">NO</th>
-                                <th class="pb-3 px-2">KODE</th>
+                                <th class="px-2 pb-3">NO</th>
+                                <th class="px-2 pb-3">KODE</th>
                                 <th class="pb-3 px-2 w-[180px]">PRODUK</th>
-                                <th class="pb-3 px-2">SATUAN</th>
-                                <th class="pb-3 px-2">IMEI</th>
-                                <th class="pb-3 px-2">HARGA BELI</th>
-                                <th class="pb-3 px-2">HARGA JUAL</th>
-                                <th class="pb-3 px-2">SUPLIER</th>
-                                <th class="pb-3 px-2">KETERANGAN</th>
-                                <th class="pb-3 px-2"></th>
+                                <th class="px-2 pb-3">SATUAN</th>
+                                <th class="px-2 pb-3">IMEI</th>
+                                <th class="px-2 pb-3">HARGA BELI</th>
+                                <th class="px-2 pb-3">HARGA JUAL</th>
+                                <th class="px-2 pb-3">SUPLIER</th>
+                                <th class="px-2 pb-3">KETERANGAN</th>
+                                <th class="px-2 pb-3"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -1111,7 +1118,7 @@ function cancelTransaction() {
                             <tr v-else-if="modalItems.length === 0">
                                 <td
                                     colspan="10"
-                                    class="py-12 text-center text-slate-400 italic"
+                                    class="py-12 italic text-center text-slate-400"
                                 >
                                     Data tidak ditemukan.
                                 </td>
@@ -1121,7 +1128,7 @@ function cancelTransaction() {
                                 :key="item.id"
                                 class="hover:bg-slate-50"
                             >
-                                <td class="py-3 px-2 text-slate-500">
+                                <td class="px-2 py-3 text-slate-500">
                                     {{
                                         (modalPagination.current_page - 1) *
                                             10 +
@@ -1129,15 +1136,15 @@ function cancelTransaction() {
                                         1
                                     }}
                                 </td>
-                                <td class="py-3 px-2 font-mono text-slate-600">
+                                <td class="px-2 py-3 font-mono text-slate-600">
                                     {{ item.product?.barcode }}
                                 </td>
                                 <td
-                                    class="py-3 px-2 font-bold text-slate-800 break-words"
+                                    class="px-2 py-3 font-bold break-words text-slate-800"
                                 >
                                     {{ item.product?.nama }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-600">
+                                <td class="px-2 py-3 text-slate-600">
                                     {{
                                         item.product?.unit ||
                                         item.product?.masterProduct?.unit
@@ -1145,7 +1152,7 @@ function cancelTransaction() {
                                         "-"
                                     }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-600 font-mono">
+                                <td class="px-2 py-3 font-mono text-slate-600">
                                     {{
                                         [
                                             item.product?.imei1,
@@ -1155,21 +1162,21 @@ function cancelTransaction() {
                                             .join("\n") || "-"
                                     }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-700 font-bold">
+                                <td class="px-2 py-3 font-bold text-slate-700">
                                     {{ formatCurrency(item.harga_beli) }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-700 font-bold">
+                                <td class="px-2 py-3 font-bold text-slate-700">
                                     {{
                                         formatCurrency(item.product?.harga_jual)
                                     }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-600">
+                                <td class="px-2 py-3 text-slate-600">
                                     {{ item.purchase?.supplier?.nama || "-" }}
                                 </td>
-                                <td class="py-3 px-2 text-slate-500 uppercase">
+                                <td class="px-2 py-3 uppercase text-slate-500">
                                     {{ item.product?.keterangan || "-" }}
                                 </td>
-                                <td class="py-3 px-2 text-right">
+                                <td class="px-2 py-3 text-right">
                                     <button
                                         @click="selectFromModal(item)"
                                         class="bg-[#00a65a] hover:bg-green-700 text-white shadow font-bold py-1.5 px-3 rounded text-[11px] transition"
@@ -1183,7 +1190,7 @@ function cancelTransaction() {
                 </div>
                 <!-- Pagination -->
                 <div
-                    class="px-5 py-3 border-t bg-white flex items-center justify-between text-sm text-slate-600 rounded-b-lg"
+                    class="flex items-center justify-between px-5 py-3 text-sm bg-white border-t rounded-b-lg text-slate-600"
                 >
                     <span
                         >Showing
@@ -1206,7 +1213,7 @@ function cancelTransaction() {
                             :disabled="modalPagination.current_page === 1"
                             @click="
                                 fetchModalItems(
-                                    modalPagination.current_page - 1,
+                                    modalPagination.current_page - 1
                                 )
                             "
                             class="px-3 py-1.5 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-100 transition border-r font-medium border-slate-300"
@@ -1224,7 +1231,7 @@ function cancelTransaction() {
                             "
                             @click="
                                 fetchModalItems(
-                                    modalPagination.current_page + 1,
+                                    modalPagination.current_page + 1
                                 )
                             "
                             class="px-3 py-1.5 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:bg-slate-100 transition border-l font-medium border-slate-300"

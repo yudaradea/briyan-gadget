@@ -18,7 +18,7 @@ class UserRepository implements UserRepositoryInterface
      */
     public function all($role = null)
     {
-        $query = User::orderBy('name');
+        $query = User::with('roles')->orderBy('name');
 
         if ($role) {
             $query->whereHas('roles', function ($q) use ($role) {

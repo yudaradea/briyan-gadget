@@ -6,8 +6,10 @@ use App\Helpers\ResponseHelper;
 use App\Http\Resources\PaginateResource;
 use App\Http\Resources\SaleResource;
 use App\Models\Product;
+use App\Models\SalesRep;
 use App\Models\SalesTransaction;
 use App\Models\SaleItem;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -22,7 +24,7 @@ class SaleRepository
     public function index($perPage, $search, $startDate = null, $endDate = null, $tipe = null, $userId = null, $salesRepId = null)
     {
         $query = $this->model->newQuery()
-            ->with(['user', 'salesRep', 'tax', 'serviceOrder.technician', 'serviceOrder.parts.product.masterProduct'])
+            ->with(['user', 'salesRep', 'salesUser', 'tax', 'serviceOrder.technician', 'serviceOrder.parts.product.masterProduct'])
             ->withCount('items')
             ->withSum('items', 'qty')
             ->search($search)
@@ -70,6 +72,7 @@ class SaleRepository
         $sale = $this->model->with([
             'user',
             'salesRep',
+            'salesUser',
             'tax',
             'serviceOrder.technician',
             'serviceOrder.parts.product.masterProduct',
@@ -87,6 +90,8 @@ class SaleRepository
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $resolvedSalesRepId = $this->resolveSalesRepId($data['sales_rep_id'] ?? null);
+
             // Validate items availability first
             $items = $data['items'];
             foreach ($items as $item) {
@@ -106,7 +111,7 @@ class SaleRepository
                 'tanggal' => $data['tanggal'] ?? date('Y-m-d'),
                 'pelanggan' => $data['pelanggan'] ?? 'Umum',
                 'user_id' => $data['user_id'] ?? Auth::id(),
-                'sales_rep_id' => $data['sales_rep_id'] ?? null,
+                'sales_rep_id' => $resolvedSalesRepId,
                 'subtotal' => 0, // Will be calculated
                 'diskon_persen' => $data['diskon_persen'] ?? 0,
                 'diskon_nominal' => $data['diskon_nominal'] ?? 0,
@@ -189,6 +194,7 @@ class SaleRepository
     public function update($id, array $data)
     {
         return DB::transaction(function () use ($id, $data) {
+            $resolvedSalesRepId = $this->resolveSalesRepId($data['sales_rep_id'] ?? null);
             $sale = $this->model->with('items.allocations')->findOrFail($id);
 
             // 1. Temporary Restore Stock for previous items
@@ -223,7 +229,7 @@ class SaleRepository
                 'tanggal' => $data['tanggal'] ?? $sale->tanggal,
                 'pelanggan' => $data['pelanggan'] ?? $sale->pelanggan,
                 'user_id' => $data['user_id'] ?? $sale->user_id,
-                'sales_rep_id' => $data['sales_rep_id'] ?? null,
+                'sales_rep_id' => $resolvedSalesRepId,
                 'diskon_persen' => $data['diskon_persen'] ?? 0,
                 'diskon_nominal' => $data['diskon_nominal'] ?? 0,
                 'tax_id' => $data['tax_id'] ?? null,
@@ -378,5 +384,44 @@ class SaleRepository
         }
 
         return $allocations;
+    }
+
+    /**
+     * Make sure sales_rep_id always points to sales_reps table (FK-safe).
+     * If FE sends a user id, mirror it into sales_reps first.
+     */
+    private function resolveSalesRepId(?string $salesRepId): ?string
+    {
+        if (!$salesRepId) {
+            return null;
+        }
+
+        if (SalesRep::query()->whereKey($salesRepId)->exists()) {
+            return $salesRepId;
+        }
+
+        $user = User::query()
+            ->whereKey($salesRepId)
+            ->with('roles')
+            ->first();
+
+        if (!$user) {
+            throw new Exception('Sales yang dipilih tidak valid.');
+        }
+
+        $isSuperAdmin = $user->roles->contains(fn($role) => $role->name === 'super-admin');
+        if ($isSuperAdmin) {
+            throw new Exception('User super-admin tidak bisa dipilih sebagai sales.');
+        }
+
+        $salesRep = SalesRep::query()->whereKey($user->id)->first();
+        if (!$salesRep) {
+            $salesRep = new SalesRep();
+            $salesRep->id = $user->id;
+        }
+        $salesRep->nama = $user->name;
+        $salesRep->save();
+
+        return $user->id;
     }
 }
