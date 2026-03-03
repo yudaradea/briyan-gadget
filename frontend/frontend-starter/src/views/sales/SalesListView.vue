@@ -12,7 +12,7 @@ const authStore = useAuthStore();
 const route = useRoute();
 const isServiceMode = computed(() => route.name === "service-transaction-list");
 const transactionType = computed(() =>
-    isServiceMode.value ? "service" : "penjualan"
+    isServiceMode.value ? "service" : "penjualan",
 );
 
 const sales = ref([]);
@@ -126,14 +126,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
             );
             filters.value.end_date = "";
             return;
         }
         fetchSales(1);
     },
-    { deep: true }
+    { deep: true },
 );
 
 const showDeleteDialog = ref(false);
@@ -153,7 +153,7 @@ const deleteSale = async () => {
         toast.success(
             isServiceMode.value
                 ? "Transaksi service dihapus"
-                : "Transaksi dihapus dan stok dikembalikan"
+                : "Transaksi dihapus dan stok dikembalikan",
         );
         showDeleteDialog.value = false;
         fetchSales(pagination.value.current_page);
@@ -203,29 +203,12 @@ function formatDate(dateStr) {
 }
 
 function getProductIdentifierLines(product) {
-    if (!product) return [];
+    if (!product) return [`IMEI 1: -`, `IMEI 2: -`];
 
-    const identifierType = String(product.identifier_type || "none");
-    const imei1 = product.imei1 ? String(product.imei1).trim() : "";
-    const imei2 = product.imei2 ? String(product.imei2).trim() : "";
-    const serial = product.barcode ? String(product.barcode).trim() : "";
+    const imei1 = product.imei1 ? String(product.imei1).trim() : "-";
+    const imei2 = product.imei2 ? String(product.imei2).trim() : "-";
 
-    if (identifierType === "imei1") {
-        return imei1 ? [`IMEI: ${imei1}`] : [];
-    }
-
-    if (identifierType === "imei2") {
-        const lines = [];
-        if (imei1) lines.push(`IMEI 1: ${imei1}`);
-        if (imei2) lines.push(`IMEI 2: ${imei2}`);
-        return lines;
-    }
-
-    if (identifierType === "serial") {
-        return serial ? [`SN: ${serial}`] : [];
-    }
-
-    return [];
+    return [`IMEI 1: ${imei1}`, `IMEI 2: ${imei2}`];
 }
 
 function servicePartsSummary(sale) {
@@ -675,7 +658,7 @@ function servicePartsSummary(sale) {
                                 {{ s.sales_rep?.nama || "-" }}
                             </td>
                             <td
-                                v-if="!isServiceMode"
+                                v-if="isServiceMode"
                                 class="table-cell text-slate-600 text-[11px] font-semibold"
                             >
                                 {{ servicePartsSummary(s) }}
@@ -737,7 +720,7 @@ function servicePartsSummary(sale) {
                                         </svg>
                                     </router-link>
                                     <router-link
-                                        :to="`/dashboard/pos/${s.id}/invoice`"
+                                        :to="`/dashboard/pos/${s.id}/invoice?from=/dashboard/sales`"
                                         class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg transition"
                                         title="Print Invoice"
                                     >
@@ -799,7 +782,7 @@ function servicePartsSummary(sale) {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total
+                            pagination.total,
                         )
                     }}</span>
                     dari
@@ -851,7 +834,7 @@ function servicePartsSummary(sale) {
                     </h3>
                     <div class="flex items-center gap-3">
                         <router-link
-                            :to="`/dashboard/pos/${selectedSale.id}/invoice`"
+                            :to="`/dashboard/pos/${selectedSale.id}/invoice?from=/dashboard/sales`"
                             class="px-4 py-1.5 bg-slate-800 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 transition flex items-center gap-2"
                         >
                             <svg
@@ -1067,7 +1050,7 @@ function servicePartsSummary(sale) {
                                             v-if="
                                                 !isServiceMode &&
                                                 getProductIdentifierLines(
-                                                    item.product
+                                                    item.product,
                                                 ).length > 0
                                             "
                                             class="mt-1 font-mono text-xs leading-relaxed text-slate-500"
@@ -1076,7 +1059,7 @@ function servicePartsSummary(sale) {
                                                 v-for="(
                                                     line, lineIndex
                                                 ) in getProductIdentifierLines(
-                                                    item.product
+                                                    item.product,
                                                 )"
                                                 :key="`identifier-${item.id}-${lineIndex}`"
                                             >
@@ -1125,7 +1108,7 @@ function servicePartsSummary(sale) {
                                         {{
                                             formatCurrency(
                                                 selectedSale.service_order
-                                                    ?.biaya_jasa || 0
+                                                    ?.biaya_jasa || 0,
                                             )
                                         }}
                                     </td>
@@ -1140,7 +1123,7 @@ function servicePartsSummary(sale) {
                                         {{
                                             formatCurrency(
                                                 selectedSale.service_order
-                                                    ?.biaya_jasa || 0
+                                                    ?.biaya_jasa || 0,
                                             )
                                         }}
                                     </td>
@@ -1173,7 +1156,7 @@ function servicePartsSummary(sale) {
                                 <span class="font-bold text-slate-700">{{
                                     formatCurrency(
                                         selectedSale.service_order
-                                            ?.biaya_jasa || 0
+                                            ?.biaya_jasa || 0,
                                     )
                                 }}</span>
                             </div>
@@ -1188,7 +1171,7 @@ function servicePartsSummary(sale) {
                                     >-
                                     {{
                                         formatCurrency(
-                                            selectedSale.diskon_nominal
+                                            selectedSale.diskon_nominal,
                                         )
                                     }}</span
                                 >
@@ -1253,7 +1236,7 @@ function servicePartsSummary(sale) {
                                     >
                                     <span class="font-bold text-emerald-600">{{
                                         formatCurrency(
-                                            selectedSale.jumlah_bayar
+                                            selectedSale.jumlah_bayar,
                                         )
                                     }}</span>
                                 </div>

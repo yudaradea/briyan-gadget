@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useRouter } from "vue-router";
 import { useToast } from "../composables/useToast";
@@ -9,18 +9,15 @@ const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
 
-const sidebarOpen = ref(true);
 const masterDataOpen = ref(false);
 const userMgmtOpen = ref(false);
-const mobileSidebarOpen = ref(false);
+const profileDropdownOpen = ref(false);
+const mobileMenuOpen = ref(false);
+
 const storeProfile = ref({
     name: "App Kasir",
     logo_url: null,
 });
-
-const toggleSidebar = () => {
-    sidebarOpen.value = !sidebarOpen.value;
-};
 
 const handleLogout = async () => {
     await authStore.logout();
@@ -38,10 +35,19 @@ const photoUrl = computed(() => {
 
 const roleBadge = computed(() => {
     if (authStore.isSuperAdmin)
-        return { label: "Super Admin", class: "bg-purple-100 text-purple-700" };
+        return {
+            label: "Super Admin",
+            class: "bg-purple-100 text-purple-700 border-purple-200",
+        };
     if (authStore.isAdmin)
-        return { label: "Admin", class: "bg-blue-100 text-blue-700" };
-    return { label: "Kasir", class: "bg-green-100 text-green-700" };
+        return {
+            label: "Admin",
+            class: "bg-blue-100 text-blue-700 border-blue-200",
+        };
+    return {
+        label: "Kasir",
+        class: "bg-green-100 text-green-700 border-green-200",
+    };
 });
 
 async function fetchStoreProfile() {
@@ -54,857 +60,801 @@ async function fetchStoreProfile() {
             };
         }
     } catch (error) {
-        // Keep fallback when settings are not available.
+        // Keep fallback
     }
 }
 
-onMounted(fetchStoreProfile);
+// Close dropdowns on outside click
+const closeDropdowns = (e) => {
+    if (
+        !e.target.closest(".dropdown-trigger") &&
+        !e.target.closest(".nav-dropdown")
+    ) {
+        masterDataOpen.value = false;
+        userMgmtOpen.value = false;
+        profileDropdownOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchStoreProfile();
+    window.addEventListener("click", closeDropdowns);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("click", closeDropdowns);
+});
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-slate-50">
-        <!-- Mobile Overlay -->
-        <div
-            v-if="mobileSidebarOpen"
-            @click="mobileSidebarOpen = false"
-            class="fixed inset-0 z-40 transition-opacity bg-black/40 md:hidden backdrop-blur-sm"
-        ></div>
-
-        <!-- Sidebar -->
-        <aside
-            :class="[
-                'z-50 flex flex-col transition-all duration-300 ease-in-out shrink-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl h-screen',
-                sidebarOpen ? 'w-64' : 'w-[70px]',
-                mobileSidebarOpen
-                    ? 'fixed translate-x-0'
-                    : 'fixed md:sticky top-0 -translate-x-full md:translate-x-0',
-            ]"
+    <div class="flex flex-col min-h-screen bg-slate-50">
+        <!-- Top Navigation Bar -->
+        <header
+            class="sticky top-0 z-50 bg-white border-b shadow-sm border-slate-200 backdrop-blur-md bg-white/90"
         >
-            <!-- Logo -->
             <div
-                class="flex items-center gap-3 px-4 py-5 border-b border-white/10"
+                class="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 h-16 flex items-center justify-between gap-4"
             >
-                <div
-                    class="flex items-center justify-center shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/25 shrink-0"
-                >
-                    <img
-                        v-if="storeProfile.logo_url"
-                        :src="storeProfile.logo_url"
-                        alt="Logo Toko"
-                        class="object-cover w-full h-full rounded-xl"
-                    />
-                    <svg
-                        v-else
-                        class="w-5 h-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                    </svg>
-                </div>
-                <transition name="fade">
-                    <span
-                        v-if="sidebarOpen"
-                        class="text-lg font-bold tracking-tight"
-                        >{{ storeProfile.name }}</span
-                    >
-                </transition>
-            </div>
-
-            <!-- Navigation -->
-            <nav
-                class="flex-1 px-3 py-4 space-y-1 overflow-y-auto"
-                :class="{ 'px-2': !sidebarOpen }"
-            >
-                <!-- Dashboard -->
+                <!-- Left: Logo -->
                 <router-link
                     to="/dashboard"
-                    class="nav-item"
-                    :class="
-                        $route.name === 'dashboard'
-                            ? 'nav-active'
-                            : 'nav-inactive'
-                    "
-                >
-                    <svg
-                        class="w-5 h-5 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                        />
-                    </svg>
-                    <span v-if="sidebarOpen">Dashboard</span>
-                </router-link>
-
-                <router-link
-                    to="/dashboard/profile"
-                    class="nav-item"
-                    :class="
-                        $route.name === 'profile'
-                            ? 'nav-active'
-                            : 'nav-inactive'
-                    "
-                >
-                    <svg
-                        class="w-5 h-5 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                    </svg>
-                    <span v-if="sidebarOpen">Profil Saya</span>
-                </router-link>
-
-                <!-- Gudang & Stok Section -->
-                <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
-                    <div v-if="sidebarOpen" class="section-label">
-                        Gudang & Stok
-                    </div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
-                        to="/dashboard/purchases"
-                        class="nav-item"
-                        :class="
-                            $route.path === '/dashboard/purchases'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen"
-                            >Pembelian (Input Invoice Supplier)</span
-                        >
-                    </router-link>
-
-                    <router-link
-                        to="/dashboard/stock-summary"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.path === '/dashboard/stock-summary'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen"
-                            >Stok Barang (Ringkasan per SKU)</span
-                        >
-                    </router-link>
-
-                    <router-link
-                        to="/dashboard/purchase-items"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.path === '/dashboard/purchase-items'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen">Mutasi Stok</span>
-                    </router-link>
-                </div>
-
-                <div>
-                    <div v-if="sidebarOpen" class="section-label">
-                        Penjualan
-                    </div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <router-link
-                        to="/dashboard/pos"
-                        class="nav-item"
-                        :class="
-                            $route.path.startsWith('/dashboard/pos')
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen">POS</span>
-                    </router-link>
-
-                    <router-link
-                        v-if="
-                            authStore.isSuperAdmin ||
-                            authStore.isAdmin ||
-                            authStore.canViewSales ||
-                            authStore.isKasir
-                        "
-                        to="/dashboard/sales"
-                        class="nav-item"
-                        :class="
-                            $route.path === '/dashboard/sales'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            ></path>
-                        </svg>
-                        <span v-if="sidebarOpen">Transaksi Penjualan</span>
-                    </router-link>
-                </div>
-
-                <!-- Servis HP Section -->
-                <div>
-                    <div v-if="sidebarOpen" class="section-label">
-                        Servis HP
-                    </div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <router-link
-                        to="/dashboard/services"
-                        class="nav-item"
-                        :class="
-                            $route.path.startsWith('/dashboard/services')
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen">Data Servis Masuk</span>
-                    </router-link>
-
-                    <router-link
-                        v-if="
-                            authStore.isSuperAdmin ||
-                            authStore.isAdmin ||
-                            authStore.canViewServices ||
-                            authStore.isKasir
-                        "
-                        to="/dashboard/service-transactions"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.path === '/dashboard/service-transactions'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            ></path>
-                        </svg>
-                        <span v-if="sidebarOpen">Transaksi Service</span>
-                    </router-link>
-                </div>
-
-                <div
-                    v-if="
-                        authStore.isSuperAdmin ||
-                        authStore.isAdmin ||
-                        authStore.canViewReports
-                    "
-                >
-                    <div v-if="sidebarOpen" class="section-label">Laporan</div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <router-link
-                        to="/dashboard/report/sales"
-                        class="nav-item"
-                        :class="
-                            $route.name === 'report-sales'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M11 5h6a2 2 0 012 2v12M5 7h4m0 0h6m-6 0v12m0-12H5a2 2 0 00-2 2v10a2 2 0 002 2h4"
-                            ></path>
-                        </svg>
-                        <span v-if="sidebarOpen"
-                            >Laporan Penjualan & Service</span
-                        >
-                    </router-link>
-
-                    <router-link
-                        to="/dashboard/report/purchases"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.name === 'report-purchases'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8c-2.21 0-4 1.343-4 3v6h8v-6c0-1.657-1.79-3-4-3zM5 14h2m4-4h3m-3 4h3"
-                            ></path>
-                        </svg>
-                        <span v-if="sidebarOpen">Laporan Pembelian</span>
-                    </router-link>
-
-                    <router-link
-                        to="/dashboard/report/profit"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.name === 'report-profit'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4l3 3m-6.5-1.5h3a1.5 1.5 0 013 0H18M5 3h14a2 2 0 012 2v4a2 2 0 01-2 2h-3.5a2 2 0 00-2 2v5a2 2 0 01-2 2h-3a2 2 0 01-2-2v-6a2 2 0 00-2-2H5a2 2 0 01-2-2V5a2 2 0 012-2z"
-                            ></path>
-                        </svg>
-                        <span v-if="sidebarOpen">Laba Rugi / HPP</span>
-                    </router-link>
-                </div>
-                <!-- Master Data Section -->
-                <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
-                    <div v-if="sidebarOpen" class="section-label">
-                        Master Data
-                    </div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <button
-                        @click="masterDataOpen = !masterDataOpen"
-                        class="justify-between w-full nav-item nav-inactive"
-                    >
-                        <span class="flex items-center gap-3">
-                            <svg
-                                class="w-5 h-5 shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
-                                />
-                            </svg>
-                            <span v-if="sidebarOpen">Master Data</span>
-                        </span>
-                        <svg
-                            v-if="sidebarOpen"
-                            :class="masterDataOpen ? 'rotate-180' : ''"
-                            class="w-4 h-4 transition-transform duration-200"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-                    </button>
-
-                    <transition name="slide">
-                        <div
-                            v-show="masterDataOpen && sidebarOpen"
-                            class="ml-3 pl-3 border-l border-white/10 space-y-0.5 mt-1"
-                        >
-                            <router-link
-                                v-for="item in [
-                                    {
-                                        to: '/dashboard/master/products',
-                                        name: 'master-product-list',
-                                        label: 'Katalog Produk',
-                                    },
-                                    {
-                                        to: '/dashboard/master/brands',
-                                        name: 'brand-list',
-                                        label: 'Merk',
-                                    },
-                                    {
-                                        to: '/dashboard/master/service-brands',
-                                        name: 'service-brand-list',
-                                        label: 'Merk HP Service',
-                                    },
-                                    {
-                                        to: '/dashboard/master/categories',
-                                        name: 'category-list',
-                                        label: 'Kategori',
-                                    },
-                                    {
-                                        to: '/dashboard/master/grades',
-                                        name: 'grade-list',
-                                        label: 'Grade',
-                                    },
-                                    {
-                                        to: '/dashboard/master/units',
-                                        name: 'unit-list',
-                                        label: 'Satuan',
-                                    },
-                                    {
-                                        to: '/dashboard/master/sales-reps',
-                                        name: 'sales-rep-list',
-                                        label: 'Sales',
-                                    },
-                                    {
-                                        to: '/dashboard/master/technicians',
-                                        name: 'technician-list',
-                                        label: 'Teknisi',
-                                    },
-                                    {
-                                        to: '/dashboard/master/suppliers',
-                                        name: 'supplier-list',
-                                        label: 'Supplier',
-                                    },
-                                    {
-                                        to: '/dashboard/master/taxes',
-                                        name: 'tax-list',
-                                        label: 'Pajak',
-                                    },
-                                ]"
-                                :key="item.name"
-                                :to="item.to"
-                                class="sub-nav-item"
-                                :class="
-                                    $route.name === item.name
-                                        ? 'text-white bg-white/10'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                "
-                            >
-                                <span
-                                    class="w-1.5 h-1.5 rounded-full"
-                                    :class="
-                                        $route.name === item.name
-                                            ? 'bg-blue-400'
-                                            : 'bg-slate-500'
-                                    "
-                                ></span>
-                                {{ item.label }}
-                            </router-link>
-                        </div>
-                    </transition>
-                </div>
-
-                <!-- Pengaturan Section -->
-                <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
-                    <div v-if="sidebarOpen" class="section-label">
-                        Pengaturan
-                    </div>
-                    <div v-else class="w-8 h-px mx-auto my-3 bg-white/20"></div>
-
-                    <button
-                        @click="userMgmtOpen = !userMgmtOpen"
-                        class="justify-between w-full nav-item nav-inactive"
-                    >
-                        <span class="flex items-center gap-3">
-                            <svg
-                                class="w-5 h-5 shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                                />
-                            </svg>
-                            <span v-if="sidebarOpen">User Management</span>
-                        </span>
-                        <svg
-                            v-if="sidebarOpen"
-                            :class="userMgmtOpen ? 'rotate-180' : ''"
-                            class="w-4 h-4 transition-transform duration-200"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-                    </button>
-
-                    <transition name="slide">
-                        <div
-                            v-show="userMgmtOpen && sidebarOpen"
-                            class="ml-3 pl-3 border-l border-white/10 space-y-0.5 mt-1"
-                        >
-                            <router-link
-                                v-for="item in [
-                                    {
-                                        to: '/dashboard/users',
-                                        name: 'user-list',
-                                        label: 'Daftar User',
-                                    },
-                                    {
-                                        to: '/dashboard/users/create',
-                                        name: 'create-user',
-                                        label: 'Tambah User',
-                                    },
-                                    {
-                                        to: '/dashboard/roles',
-                                        name: 'role-list',
-                                        label: 'Role & Hak Akses',
-                                    },
-                                ]"
-                                :key="item.name"
-                                :to="item.to"
-                                class="sub-nav-item"
-                                :class="
-                                    $route.name === item.name
-                                        ? 'text-white bg-white/10'
-                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                "
-                            >
-                                <span
-                                    class="w-1.5 h-1.5 rounded-full"
-                                    :class="
-                                        $route.name === item.name
-                                            ? 'bg-blue-400'
-                                            : 'bg-slate-500'
-                                    "
-                                ></span>
-                                {{ item.label }}
-                            </router-link>
-                        </div>
-                    </transition>
-
-                    <router-link
-                        to="/dashboard/settings"
-                        class="mt-1 nav-item"
-                        :class="
-                            $route.path === '/dashboard/settings'
-                                ? 'nav-active'
-                                : 'nav-inactive'
-                        "
-                    >
-                        <svg
-                            class="w-5 h-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                            />
-                        </svg>
-                        <span v-if="sidebarOpen">Info Toko</span>
-                    </router-link>
-                </div>
-            </nav>
-
-            <!-- User Card at Bottom -->
-            <div class="p-3 border-t border-white/10">
-                <div
-                    class="flex items-center gap-3"
-                    :class="{ 'justify-center': !sidebarOpen }"
+                    class="flex items-center gap-3 shrink-0"
                 >
                     <div
-                        class="relative flex-shrink-0 w-8 h-8 overflow-hidden rounded-full"
+                        class="flex items-center justify-center shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-blue-500/20"
                     >
-                        <div v-if="photoUrl">
-                            <img
-                                :src="photoUrl"
-                                class="object-cover w-full h-full"
+                        <img
+                            v-if="storeProfile.logo_url"
+                            :src="storeProfile.logo_url"
+                            alt="Logo"
+                            class="object-cover w-full h-full rounded-xl"
+                        />
+                        <svg
+                            v-else
+                            class="w-5 h-5 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2.5"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"
                             />
-                        </div>
-                        <div v-else>
-                            <div
-                                class="flex items-center justify-center w-full h-full text-white bg-gradient-to-br from-indigo-500 to-purple-600"
+                        </svg>
+                    </div>
+                    <span
+                        class="hidden text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-700 sm:block"
+                    >
+                        {{ storeProfile.name }}
+                    </span>
+                </router-link>
+
+                <!-- Center: Desktop Menu -->
+                <nav
+                    class="items-center justify-center flex-1 hidden max-w-4xl gap-1 lg:flex"
+                >
+                    <!-- Dashboard -->
+                    <router-link
+                        to="/dashboard"
+                        class="nav-link"
+                        :class="{
+                            'nav-link-active': $route.name === 'dashboard',
+                        }"
+                    >
+                        Dashboard
+                    </router-link>
+
+                    <!-- Gudang & Stok Dropdown (if admin) -->
+                    <div
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        class="relative group"
+                    >
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes(
+                                        '/dashboard/purchases',
+                                    ) ||
+                                    $route.path.includes('/dashboard/stock'),
+                            }"
+                        >
+                            Stok Barang
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                             >
-                                <span class="text-2xl font-bold">{{
-                                    authStore.user?.name
-                                        ?.charAt(0)
-                                        .toUpperCase() || "U"
-                                }}</span>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu">
+                            <router-link
+                                to="/dashboard/purchases"
+                                class="dropdown-item"
+                                >Pembelian (Invoice)</router-link
+                            >
+                            <router-link
+                                to="/dashboard/stock-summary"
+                                class="dropdown-item"
+                                >Stok Barang</router-link
+                            >
+                            <router-link
+                                to="/dashboard/purchase-items"
+                                class="dropdown-item"
+                                >Mutasi Stok</router-link
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Penjualan Dropdown -->
+                    <div class="relative group">
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/pos') ||
+                                    $route.path.includes('/sales'),
+                            }"
+                        >
+                            Transaksi Penjualan
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu">
+                            <router-link
+                                to="/dashboard/pos"
+                                class="flex items-center gap-2 dropdown-item"
+                            >
+                                Input Penjualan
+                            </router-link>
+                            <router-link
+                                to="/dashboard/sales"
+                                class="dropdown-item"
+                                >Riwayat Transaksi
+                            </router-link>
+                        </div>
+                    </div>
+
+                    <!-- Servis HP -->
+                    <!-- <div class="relative group">
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/services'),
+                            }"
+                        >
+                            Servis HP
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu">
+                            <router-link
+                                to="/dashboard/services"
+                                class="dropdown-item"
+                                >Data Servis Masuk</router-link
+                            >
+                            <router-link
+                                to="/dashboard/service-transactions"
+                                class="dropdown-item"
+                                >Transaksi Servis</router-link
+                            >
+                        </div>
+                    </div> -->
+
+                    <!-- Laporan (if authorized) -->
+                    <div
+                        v-if="
+                            authStore.isSuperAdmin ||
+                            authStore.isAdmin ||
+                            authStore.canViewReports
+                        "
+                        class="relative group"
+                    >
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/report'),
+                            }"
+                        >
+                            Laporan
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu">
+                            <router-link
+                                to="/dashboard/report/sales"
+                                class="dropdown-item"
+                                >Laporan Penjualan</router-link
+                            >
+                            <router-link
+                                to="/dashboard/report/purchases"
+                                class="dropdown-item"
+                                >Laporan Pembelian</router-link
+                            >
+                            <router-link
+                                to="/dashboard/report/profit"
+                                class="dropdown-item"
+                                >Laba Rugi</router-link
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Master Data Dropdown (if admin) -->
+                    <div
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        class="relative group"
+                    >
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/master'),
+                            }"
+                        >
+                            Master
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu grid grid-cols-2 w-[400px]">
+                            <router-link
+                                to="/dashboard/master/products"
+                                class="dropdown-item"
+                                >Katalog Produk</router-link
+                            >
+                            <router-link
+                                to="/dashboard/master/brands"
+                                class="dropdown-item"
+                                >Merk</router-link
+                            >
+                            <!-- <router-link
+                                to="/dashboard/master/service-brands"
+                                class="dropdown-item"
+                                >Merk HP Servis</router-link
+                            > -->
+
+                            <router-link
+                                to="/dashboard/master/grades"
+                                class="dropdown-item"
+                                >Grade</router-link
+                            >
+                            <router-link
+                                to="/dashboard/master/units"
+                                class="dropdown-item"
+                                >Satuan</router-link
+                            >
+                            <router-link
+                                to="/dashboard/master/sales-reps"
+                                class="dropdown-item"
+                                >Sales</router-link
+                            >
+                            <!-- <router-link
+                                to="/dashboard/master/technicians"
+                                class="dropdown-item"
+                                >Teknisi</router-link
+                            > -->
+                            <router-link
+                                to="/dashboard/master/suppliers"
+                                class="dropdown-item"
+                                >Supplier</router-link
+                            >
+                            <router-link
+                                to="/dashboard/master/taxes"
+                                class="dropdown-item"
+                                >Pajak</router-link
+                            >
+                        </div>
+                    </div>
+                    <!-- user management -->
+                    <div
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        class="relative group"
+                    >
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/management'),
+                            }"
+                        >
+                            User Management
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu grid grid-cols-2 w-[400px]">
+                            <router-link
+                                to="/dashboard/management/users"
+                                class="dropdown-item"
+                                >User List</router-link
+                            >
+                            <router-link
+                                to="/dashboard/management/user/create"
+                                class="dropdown-item"
+                                >Tambah User</router-link
+                            >
+                            <router-link
+                                to="/dashboard/management/roles"
+                                class="dropdown-item"
+                                >Role</router-link
+                            >
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Right: User Profile & Dropdown -->
+                <div class="flex items-center gap-2">
+                    <!-- Mobile Menu Toggle -->
+                    <button
+                        @click="mobileMenuOpen = !mobileMenuOpen"
+                        class="p-2 lg:hidden text-slate-500 hover:bg-slate-100 rounded-xl"
+                    >
+                        <svg
+                            class="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16"
+                            />
+                        </svg>
+                    </button>
+
+                    <div class="relative dropdown-trigger">
+                        <button
+                            @click="profileDropdownOpen = !profileDropdownOpen"
+                            class="flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded-2xl transition-all duration-300"
+                        >
+                            <div
+                                class="overflow-hidden border-2 border-white shadow-inner w-9 h-9 rounded-xl ring-1 ring-slate-200"
+                            >
+                                <img
+                                    v-if="photoUrl"
+                                    :src="photoUrl"
+                                    class="object-cover w-full h-full"
+                                />
+                                <div
+                                    v-else
+                                    class="flex items-center justify-center w-full h-full bg-gradient-to-br from-blue-500 to-indigo-600"
+                                >
+                                    <span class="font-bold text-white">{{
+                                        userInitial
+                                    }}</span>
+                                </div>
+                            </div>
+                            <div class="hidden mr-1 text-left md:block">
+                                <p
+                                    class="text-xs font-bold leading-none text-slate-800"
+                                >
+                                    {{ authStore.user?.name }}
+                                </p>
+                                <span
+                                    class="text-[10px] text-slate-500 font-medium"
+                                    >{{ roleBadge.label }}</span
+                                >
+                            </div>
+                            <svg
+                                class="hidden w-4 h-4 text-slate-400 md:block"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+
+                        <!-- Profile Dropdown -->
+                        <div
+                            v-show="profileDropdownOpen"
+                            class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-[60] animate-in-fade-slide overflow-hidden font-medium"
+                        >
+                            <div
+                                class="px-4 py-3 mb-1 border-b border-slate-100 lg:hidden"
+                            >
+                                <p class="text-sm font-bold text-slate-800">
+                                    {{ authStore.user?.name }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ roleBadge.label }}
+                                </p>
+                            </div>
+                            <router-link
+                                to="/dashboard/profile"
+                                class="dropdown-item flex items-center gap-3 py-2.5"
+                            >
+                                <svg
+                                    class="w-4 h-4 text-slate-400 group-hover:text-blue-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                </svg>
+                                Edit Profile
+                            </router-link>
+                            <router-link
+                                v-if="
+                                    authStore.isAdmin || authStore.isSuperAdmin
+                                "
+                                to="/dashboard/settings"
+                                class="dropdown-item flex items-center gap-3 py-2.5"
+                            >
+                                <svg
+                                    class="w-4 h-4 text-slate-400 group-hover:text-blue-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                                    />
+                                </svg>
+                                Pengaturan Toko
+                            </router-link>
+                            <div class="h-px mx-2 my-1 bg-slate-100"></div>
+                            <button
+                                @click="handleLogout"
+                                class="w-full text-left dropdown-item flex items-center gap-3 py-2.5 text-rose-600 hover:bg-rose-50"
+                            >
+                                <svg
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                    />
+                                </svg>
+                                Keluar Aplikasi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Navigation Drawer -->
+        <transition name="mobile-menu">
+            <div
+                v-show="mobileMenuOpen"
+                class="fixed inset-0 z-[100] lg:hidden"
+            >
+                <div
+                    @click="mobileMenuOpen = false"
+                    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+                ></div>
+                <div
+                    class="fixed top-0 bottom-0 left-0 w-[80%] max-w-sm bg-white shadow-2xl flex flex-col p-6 overflow-y-auto"
+                >
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-lg"
+                            >
+                                <svg
+                                    class="w-4 h-4 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                                    />
+                                </svg>
+                            </div>
+                            <span class="font-bold text-slate-800"
+                                >Menu Navigasi</span
+                            >
+                        </div>
+                        <button
+                            @click="mobileMenuOpen = false"
+                            class="p-2 rounded-lg bg-slate-100"
+                        >
+                            <svg
+                                class="w-5 h-5 text-slate-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <router-link
+                            @click="mobileMenuOpen = false"
+                            to="/dashboard"
+                            class="mobile-link"
+                            >Dashboard</router-link
+                        >
+
+                        <div>
+                            <p class="section-badge">Manajemen Stok</p>
+                            <div class="mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/purchases"
+                                    class="mobile-sublink"
+                                    >Pembelian (Invoice)</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/stock-summary"
+                                    class="mobile-sublink"
+                                    >Stok Barang</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/purchase-items"
+                                    class="mobile-sublink"
+                                    >Mutasi Stok</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="section-badge">Penjualan & Kasir</p>
+                            <div class="mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/pos"
+                                    class="font-bold text-blue-600 mobile-sublink"
+                                    >POS Kasir</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/sales"
+                                    class="mobile-sublink"
+                                    >Riwayat Transaksi</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <!-- <div>
+                            <p class="section-badge">Servis HP</p>
+                            <div class="mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/services"
+                                    class="mobile-sublink"
+                                    >Servis Masuk</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/service-transactions"
+                                    class="mobile-sublink"
+                                    >Transaksi Servis</router-link
+                                >
+                            </div>
+                        </div> -->
+
+                        <div v-if="authStore.isAdmin || authStore.isSuperAdmin">
+                            <p class="section-badge">Master Data</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/products"
+                                    class="mobile-sublink"
+                                    >Katalog Produk</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/brands"
+                                    class="mobile-sublink"
+                                    >Merk</router-link
+                                >
+
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/users"
+                                    class="mobile-sublink"
+                                    >User Management</router-link
+                                >
                             </div>
                         </div>
                     </div>
-                    <div v-if="sidebarOpen" class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">
-                            {{ authStore.user?.name }}
-                        </p>
-                        <span
-                            :class="roleBadge.class"
-                            class="text-[10px] font-semibold px-1.5 py-0.5 rounded-md inline-block mt-0.5"
-                            >{{ roleBadge.label }}</span
-                        >
-                    </div>
                 </div>
             </div>
-        </aside>
+        </transition>
 
-        <!-- Main Content -->
-        <div
-            class="flex flex-col flex-1 min-w-0 min-h-screen transition-all duration-300"
+        <!-- Main Page Content -->
+        <main
+            class="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-4 md:py-6 lg:py-8 animate-in-fade"
         >
-            <!-- Top Bar -->
-            <header
-                class="sticky top-0 z-30 bg-white border-b shadow-sm border-slate-200"
+            <router-view v-slot="{ Component }">
+                <transition name="page" mode="out-in">
+                    <component :is="Component" />
+                </transition>
+            </router-view>
+        </main>
+
+        <!-- Footer -->
+        <footer class="px-6 py-4 mt-auto text-center border-t border-slate-200">
+            <p
+                class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
             >
-                <div
-                    class="flex items-center justify-between h-16 px-4 md:px-6"
-                >
-                    <div class="flex items-center gap-3">
-                        <!-- Sidebar Toggle -->
-                        <button
-                            @click="sidebarOpen = !sidebarOpen"
-                            class="hidden p-2 transition md:flex rounded-xl hover:bg-slate-100 text-slate-500"
-                        >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        </button>
-                        <!-- Mobile Menu -->
-                        <button
-                            @click="mobileSidebarOpen = true"
-                            class="p-2 transition md:hidden rounded-xl hover:bg-slate-100 text-slate-500"
-                        >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <span
-                            :class="roleBadge.class"
-                            class="text-xs font-semibold px-2.5 py-1 rounded-lg hidden sm:inline-block"
-                            >{{ roleBadge.label }}</span
-                        >
-                        <span
-                            class="hidden text-sm font-medium text-slate-600 sm:inline-block"
-                            >{{ authStore.user?.name }}</span
-                        >
-                        <button
-                            @click="handleLogout"
-                            class="flex items-center gap-2 px-3 py-2 text-sm font-medium transition text-slate-500 hover:text-red-500 rounded-xl hover:bg-red-50"
-                        >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                />
-                            </svg>
-                            <span class="hidden sm:inline">Logout</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main class="flex-1 p-4 md:p-6 lg:p-8">
-                <router-view />
-            </main>
-        </div>
+                &copy; 2026 {{ storeProfile.name }}. Developed with &hearts;
+            </p>
+        </footer>
     </div>
 </template>
 
 <style scoped>
-.nav-item {
-    @apply flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all duration-200 text-sm font-medium;
+.nav-link {
+    @apply px-4 py-2 text-sm font-semibold text-slate-600 rounded-xl transition-all duration-300 hover:text-blue-600 hover:bg-blue-50/50 relative whitespace-nowrap;
 }
-.nav-active {
-    @apply bg-gradient-to-r from-blue-600/90 to-indigo-600/80 text-white shadow-lg shadow-blue-500/20;
+.nav-link-active {
+    @apply text-blue-700 bg-blue-50 shadow-sm shadow-blue-500/5 ring-1 ring-blue-100/50;
 }
-.nav-inactive {
-    @apply text-slate-300 hover:bg-white/10 hover:text-white;
+.dropdown-menu {
+    @apply absolute top-full left-0 mt-0 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-[60] animate-in-fade-slide min-w-[220px];
 }
-.sub-nav-item {
-    @apply flex items-center gap-2.5 py-2 px-3 rounded-lg text-sm transition-all duration-150;
+.group:hover .dropdown-menu,
+.dropdown-menu:hover {
+    @apply block;
 }
-.section-label {
-    @apply text-[11px] font-semibold text-slate-500 uppercase tracking-widest px-3 mt-5 mb-2;
+.dropdown-item {
+    @apply px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50/70 transition-all duration-150 flex items-center;
+}
+.mobile-link {
+    @apply block text-lg font-bold text-slate-800 hover:text-blue-600 transition-colors;
+}
+.mobile-sublink {
+    @apply block py-1.5 text-sm font-medium text-slate-600 hover:text-blue-600;
+}
+.section-badge {
+    @apply text-[10px] font-black text-slate-400 uppercase tracking-[0.2em];
 }
 
-/* Transitions */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
+/* Animations */
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+.animate-in-fade-slide {
+    animation: fadeInSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.slide-enter-active {
-    transition: all 0.25s ease-out;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
-.slide-leave-active {
-    transition: all 0.2s ease-in;
+.animate-in-fade {
+    animation: fadeIn 0.4s ease-out forwards;
 }
-.slide-enter-from {
-    max-height: 0;
+
+.page-enter-active,
+.page-leave-active {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-enter-from {
     opacity: 0;
-    overflow: hidden;
+    transform: translateY(5px);
 }
-.slide-enter-to {
-    max-height: 500px;
-    opacity: 1;
-}
-.slide-leave-from {
-    max-height: 500px;
-    opacity: 1;
-}
-.slide-leave-to {
-    max-height: 0;
+.page-leave-to {
     opacity: 0;
-    overflow: hidden;
+    transform: translateY(-5px);
+}
+
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+    transition: all 0.3s ease;
+}
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+    opacity: 0;
+}
+.mobile-menu-enter-from > div:last-child {
+    transform: translateX(-100%);
+}
+.mobile-menu-enter-to > div:last-child {
+    transform: translateX(0);
+}
+.mobile-menu-leave-to > div:last-child {
+    transform: translateX(-100%);
 }
 </style>

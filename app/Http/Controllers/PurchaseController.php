@@ -52,7 +52,7 @@ class PurchaseController extends Controller implements HasMiddleware
             $request->query('supplier_id'),
             $request->query('no_invoice'),
             $request->query('status'),
-            $request->query('category_id')
+            $request->query('brand_id')
         );
     }
 

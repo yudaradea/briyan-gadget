@@ -15,28 +15,22 @@ class BarcodeService
      */
     public function generate(): string
     {
-        $prefix = 'BG';
-        $date = now()->format('Ymd');
+        $prefix = 'BRYN';
 
-        // Include soft-deleted records to avoid duplicate barcodes
-        $latestBarcode = Product::withTrashed()
-            ->where('barcode', 'like', "{$prefix}-{$date}-%")
-            ->orderByDesc('barcode')
-            ->value('barcode');
+        $latest = \Illuminate\Support\Facades\DB::table('products')
+            ->where('barcode', 'like', "{$prefix}%")
+            ->whereRaw('LENGTH(barcode) <= 8')
+            ->selectRaw('CAST(SUBSTRING(barcode, 3) AS UNSIGNED) as num')
+            ->orderByDesc('num')
+            ->first();
 
-        if ($latestBarcode) {
-            $lastNumber = (int) substr($latestBarcode, -5);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
+        $nextNumber = $latest ? $latest->num + 1 : 1;
+        $barcode = sprintf('%s%05d', $prefix, $nextNumber);
 
-        $barcode = sprintf('%s-%s-%05d', $prefix, $date, $nextNumber);
-
-        // Safety check: ensure the barcode doesn't exist (handles edge cases)
+        // Safety check: ensure the barcode doesn't exist
         while (Product::withTrashed()->where('barcode', $barcode)->exists()) {
             $nextNumber++;
-            $barcode = sprintf('%s-%s-%05d', $prefix, $date, $nextNumber);
+            $barcode = sprintf('%s%05d', $prefix, $nextNumber);
         }
 
         return $barcode;

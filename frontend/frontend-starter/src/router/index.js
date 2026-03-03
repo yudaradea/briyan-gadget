@@ -41,19 +41,19 @@ const router = createRouter({
                 },
                 // --- User Management (Admin+) ---
                 {
-                    path: "users",
+                    path: "management/users",
                     name: "user-list",
                     component: () => import("../views/UserListView.vue"),
                     meta: { requiresAdmin: true },
                 },
                 {
-                    path: "users/create",
+                    path: "management/user/create",
                     name: "create-user",
                     component: () => import("../views/AdminUserCreateView.vue"),
                     meta: { requiresAdmin: true },
                 },
                 {
-                    path: "roles",
+                    path: "management/roles",
                     name: "role-list",
                     component: () => import("../views/RoleManagerView.vue"),
                     meta: { requiresSuperAdmin: true },
@@ -80,13 +80,7 @@ const router = createRouter({
                         import("../views/masterdata/ServiceBrandListView.vue"),
                     meta: { requiresAdmin: true },
                 },
-                {
-                    path: "master/categories",
-                    name: "category-list",
-                    component: () =>
-                        import("../views/masterdata/CategoryListView.vue"),
-                    meta: { requiresAdmin: true },
-                },
+
                 {
                     path: "master/grades",
                     name: "grade-list",

@@ -50,6 +50,15 @@ class ProductController extends Controller
         );
     }
 
+    public function summary(Request $request)
+    {
+        return $this->repository->stockSummary(
+            $request->query('per_page', 10),
+            $request->query('search'),
+            $request->query('brand_id')
+        );
+    }
+
     public function stockDetails(Request $request)
     {
         $request->validate([

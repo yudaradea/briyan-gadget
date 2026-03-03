@@ -1,18 +1,28 @@
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { useRoute } from "vue-router";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 
 const route = useRoute();
-const router = useRouter();
 const toast = useToast();
 
 const sale = ref(null);
 const store = ref(null);
 const isLoading = ref(true);
 
+// Determine where to go back after print
+const returnTo = route.query.from || "/dashboard/sales";
+
+// After print dialog closes (Save or Cancel), auto navigate back
+// Use full page reload to cleanly reset all Vue/SPA state
+const handleAfterPrint = () => {
+    window.location.href = returnTo;
+};
+
 onMounted(async () => {
+    window.addEventListener("afterprint", handleAfterPrint);
+
     try {
         const id = route.params.id;
         const [saleRes, storeRes] = await Promise.all([
@@ -28,18 +38,17 @@ onMounted(async () => {
         // Auto print after load
         nextTick(() => {
             setTimeout(() => {
-                window.print();
+                if (sale.value) {
+                    window.print();
+                }
             }, 500);
         });
     }
 });
 
-// Auto close/go back after print
-if (typeof window !== "undefined") {
-    window.onafterprint = () => {
-        router.back();
-    };
-}
+onUnmounted(() => {
+    window.removeEventListener("afterprint", handleAfterPrint);
+});
 
 function formatCurrency(val) {
     return new Intl.NumberFormat("id-ID", {
@@ -55,29 +64,12 @@ function formatDisplayDate(dateStr) {
 }
 
 function getProductIdentifierLines(product) {
-    if (!product) return [];
+    if (!product) return [`IMEI 1: -`, `IMEI 2: -`];
 
-    const identifierType = String(product.identifier_type || "none");
-    const imei1 = product.imei1 ? String(product.imei1).trim() : "";
-    const imei2 = product.imei2 ? String(product.imei2).trim() : "";
-    const serial = product.barcode ? String(product.barcode).trim() : "";
+    const imei1 = product.imei1 ? String(product.imei1).trim() : "-";
+    const imei2 = product.imei2 ? String(product.imei2).trim() : "-";
 
-    if (identifierType === "imei1") {
-        return imei1 ? [`IMEI: ${imei1}`] : [];
-    }
-
-    if (identifierType === "imei2") {
-        const lines = [];
-        if (imei1) lines.push(`IMEI 1: ${imei1}`);
-        if (imei2) lines.push(`IMEI 2: ${imei2}`);
-        return lines;
-    }
-
-    if (identifierType === "serial") {
-        return serial ? [`SN: ${serial}`] : [];
-    }
-
-    return [];
+    return [`IMEI 1: ${imei1}`, `IMEI 2: ${imei2}`];
 }
 
 function printInvoice() {
@@ -103,33 +95,14 @@ function printInvoice() {
         <!-- Print Button (Hidden in Print) -->
         <div class="max-w-[800px] mx-auto pt-6 px-4 print:hidden">
             <div
-                class="flex items-center justify-between p-4 mb-6 border bg-slate-50 rounded-xl border-slate-200"
+                class="flex items-center justify-center p-4 mb-6 border bg-slate-50 rounded-xl border-slate-200"
             >
                 <button
-                    @click="router.back()"
-                    class="flex items-center gap-2 text-sm font-medium text-slate-600"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        />
-                    </svg>
-                    KEMBALI
-                </button>
-                <button
                     @click="printInvoice"
-                    class="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white transition bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700"
+                    class="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white transition bg-indigo-600 rounded-lg shadow-lg hover:bg-indigo-700 active:scale-95"
                 >
                     <svg
-                        class="w-4 h-4"
+                        class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -141,13 +114,14 @@ function printInvoice() {
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                         ></path>
                     </svg>
-                    CETAK SEKARANG
+                    CETAK INVOICE
                 </button>
             </div>
         </div>
 
         <!-- ACTUAL INVOICE AREA -->
         <div
+            v-if="sale"
             id="invoice-printable"
             class="bg-white w-full max-w-[800px] mx-auto p-8 mb-20 print:mb-0 print:p-0 font-mono text-[11px] text-black"
         >
@@ -310,18 +284,14 @@ function printInvoice() {
                                 {{ item.product?.brand || "-" }}
                             </div>
                             <div
-                                v-if="
-                                    sale.tipe !== 'service' &&
-                                    getProductIdentifierLines(item.product)
-                                        .length > 0
-                                "
+                                v-if="sale.tipe !== 'service'"
                                 class="text-[8px] text-blue-800 font-mono mt-2 pt-1 border-t border-slate-100 border-dashed"
                             >
                                 <div
                                     v-for="(
                                         line, lineIndex
                                     ) in getProductIdentifierLines(
-                                        item.product
+                                        item.product,
                                     )"
                                     :key="`identifier-${idx}-${lineIndex}`"
                                 >
@@ -376,7 +346,7 @@ function printInvoice() {
                         <td class="p-3 text-right border-r border-slate-200">
                             Rp.{{
                                 formatCurrency(
-                                    sale.service_order?.biaya_jasa || 0
+                                    sale.service_order?.biaya_jasa || 0,
                                 )
                             }},-
                         </td>
@@ -388,7 +358,7 @@ function printInvoice() {
                         <td class="p-3 font-bold text-right text-black">
                             Rp.{{
                                 formatCurrency(
-                                    sale.service_order?.biaya_jasa || 0
+                                    sale.service_order?.biaya_jasa || 0,
                                 )
                             }},-
                         </td>
@@ -406,7 +376,7 @@ function printInvoice() {
                             {{
                                 sale.items.reduce(
                                     (acc, item) => acc + item.qty,
-                                    0
+                                    0,
                                 )
                             }}
                         </td>
@@ -444,11 +414,18 @@ function printInvoice() {
                                     sale.metode_pembayaran === 'transfer'
                                 "
                             >
-                                <p class="mb-1 text-xs font-bold text-blue-800">
+                                <p
+                                    class="mb-1 text-xs font-black text-blue-800"
+                                >
+                                    TRANSFER BANK
+                                </p>
+                                <p
+                                    class="mb-1 text-[11px] font-bold text-slate-700"
+                                >
                                     {{ store?.bank_name || "BANK" }}
                                     {{ store?.bank_account }}
                                 </p>
-                                <p class="font-black text-black">
+                                <p class="font-bold text-black uppercase">
                                     A/N :
                                     {{
                                         store?.bank_account_name ||
@@ -586,7 +563,7 @@ function printInvoice() {
     /* RESET EVERYTHING FOR CLEAN PRINT */
     @page {
         size: auto;
-        margin: 0mm;
+        margin: 5mm 8mm;
     }
 
     html,
@@ -616,7 +593,7 @@ function printInvoice() {
         width: 100% !important;
         max-width: none !important;
         margin: 0 !important;
-        padding: 10mm !important;
+        padding: 0 !important;
         background: white !important;
         box-shadow: none !important;
         border: none !important;

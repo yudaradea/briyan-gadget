@@ -133,6 +133,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Product Search Routes (POS)
     // ============================================
     Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/summary', [ProductController::class, 'summary']);
     Route::get('/products/stock-details', [ProductController::class, 'stockDetails']);
     Route::get('/products/scan', [ProductController::class, 'scan']);
     Route::get('/products/search', [ProductController::class, 'search']);

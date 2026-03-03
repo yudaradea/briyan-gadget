@@ -44,7 +44,7 @@ class PurchaseRepository
     /**
      * List individual purchase items (broken down per product)
      */
-    public function indexItems($perPage, $search, $startDate = null, $endDate = null, $supplierId = null, $invoiceNo = null, $status = null, $categoryId = null)
+    public function indexItems($perPage, $search, $startDate = null, $endDate = null, $supplierId = null, $invoiceNo = null, $status = null, $brandId = null)
     {
         $query = PurchaseItem::query()
             ->with([
@@ -60,9 +60,9 @@ class PurchaseRepository
                     ->when($supplierId, fn($sq) => $sq->where('supplier_id', $supplierId))
                     ->when($invoiceNo, fn($sq) => $sq->where('no_invoice', 'like', "%{$invoiceNo}%"));
             })
-            ->whereHas('product', function ($q) use ($search, $status, $categoryId) {
+            ->whereHas('product', function ($q) use ($search, $status, $brandId) {
                 $q->search($search)
-                    ->when($categoryId, fn($sq) => $sq->where('category_id', $categoryId));
+                    ->when($brandId, fn($sq) => $sq->whereHas('masterProduct', fn($mq) => $mq->where('brand_id', $brandId)));
 
                 if ($status === 'sold') {
                     $q->has('saleItems');
@@ -146,6 +146,10 @@ class PurchaseRepository
                 }
 
                 $product->update($productUpdateData);
+
+                if (!empty($data['unit_id'])) {
+                    $product->masterProduct()->update(['unit_id' => $data['unit_id']]);
+                }
             } else {
                 // Use provided barcode or generate for NEW product
                 $barcode = $data['barcode'] ?? $this->barcodeService->generate();
@@ -163,6 +167,10 @@ class PurchaseRepository
                     'keterangan' => $data['keterangan'] ?? null,
                     'foto' => $data['foto'] ?? null,
                 ]);
+
+                if (!empty($data['unit_id'])) {
+                    \App\Models\MasterProduct::where('id', $data['master_product_id'])->update(['unit_id' => $data['unit_id']]);
+                }
             }
 
             // Create purchase item
@@ -244,6 +252,10 @@ class PurchaseRepository
             }
             if (!empty($productData)) {
                 $product->update($productData);
+            }
+
+            if (!empty($data['unit_id'])) {
+                $product->masterProduct()->update(['unit_id' => $data['unit_id']]);
             }
 
             // Update purchase item
@@ -397,21 +409,29 @@ class PurchaseRepository
      */
     public function generateInvoiceNumber(): string
     {
-        $prefix = 'PUR';
-        $date = now()->format('Ymd');
+        $prefix = 'INV';
+        $date = date('ymd');
 
         $latest = $this->model->withTrashed()
-            ->where('no_invoice', 'like', "{$prefix}-{$date}-%")
+            ->where('no_invoice', 'like', "{$prefix}{$date}%")
+            ->whereRaw('LENGTH(no_invoice) <= 12')
             ->orderByDesc('no_invoice')
             ->value('no_invoice');
 
         if ($latest) {
-            $lastNum = (int) substr($latest, -4);
+            $lastNum = (int) substr($latest, 9);
             $nextNum = $lastNum + 1;
         } else {
             $nextNum = 1;
         }
 
-        return sprintf('%s-%s-%04d', $prefix, $date, $nextNum);
+        $invoice = sprintf('%s%s%03d', $prefix, $date, $nextNum);
+
+        while ($this->model->withTrashed()->where('no_invoice', $invoice)->exists()) {
+            $nextNum++;
+            $invoice = sprintf('%s%s%03d', $prefix, $date, $nextNum);
+        }
+
+        return $invoice;
     }
 }

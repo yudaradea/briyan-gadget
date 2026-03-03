@@ -34,10 +34,10 @@ class MasterProductController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'brand_id' => 'required|uuid|exists:brands,id',
-            'category_id' => 'required|uuid|exists:categories,id',
-            'unit_id' => 'required|uuid|exists:units,id',
-            'grade_id' => 'required|uuid|exists:grades,id',
-            'identifier_type' => 'required|in:none,imei1,imei2,serial',
+            'category_id' => 'nullable|uuid|exists:categories,id',
+            'unit_id' => 'nullable|uuid|exists:units,id',
+            'grade_id' => 'nullable|uuid|exists:grades,id',
+            'identifier_type' => 'nullable|in:none,imei1,imei2,serial',
             'foto' => 'nullable|string',
             'keterangan' => 'nullable|string',
         ]);
@@ -56,10 +56,10 @@ class MasterProductController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'brand_id' => 'required|uuid|exists:brands,id',
-            'category_id' => 'required|uuid|exists:categories,id',
-            'unit_id' => 'required|uuid|exists:units,id',
-            'grade_id' => 'required|uuid|exists:grades,id',
-            'identifier_type' => 'required|in:none,imei1,imei2,serial',
+            'category_id' => 'nullable|uuid|exists:categories,id',
+            'unit_id' => 'nullable|uuid|exists:units,id',
+            'grade_id' => 'nullable|uuid|exists:grades,id',
+            'identifier_type' => 'nullable|in:none,imei1,imei2,serial',
             'foto' => 'nullable|string',
             'keterangan' => 'nullable|string',
         ]);

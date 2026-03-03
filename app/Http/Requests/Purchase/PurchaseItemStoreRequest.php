@@ -81,18 +81,6 @@ class PurchaseItemStoreRequest extends FormRequest
             if (in_array($identifierType, ['imei1', 'imei2', 'serial'], true) && $qty !== 1) {
                 $validator->errors()->add('qty', 'Qty harus 1 untuk produk yang menggunakan IMEI/Serial Number.');
             }
-
-            if ($identifierType === 'imei1' && !$this->filled('imei1')) {
-                $validator->errors()->add('imei1', 'IMEI 1 wajib diisi untuk produk ini.');
-            }
-
-            if ($identifierType === 'imei2' && !$this->filled('imei1')) {
-                $validator->errors()->add('imei1', 'IMEI 1 wajib diisi untuk produk dual IMEI.');
-            }
-
-            if ($identifierType === 'serial' && !$this->filled('barcode')) {
-                $validator->errors()->add('barcode', 'Serial Number wajib diisi untuk produk ini.');
-            }
         });
     }
 }

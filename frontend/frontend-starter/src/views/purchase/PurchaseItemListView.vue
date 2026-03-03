@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from "vue";
 import api from "../../api";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
+import CurrencyInput from "../../components/CurrencyInput.vue";
 import { useRouter } from "vue-router";
 import { useToast } from "../../composables/useToast";
 import debounce from "lodash-es/debounce";
@@ -11,7 +12,8 @@ const toast = useToast();
 
 const items = ref([]);
 const suppliers = ref([]);
-const categories = ref([]);
+const brands = ref([]);
+const units = ref([]);
 const isLoading = ref(false);
 const searchQuery = ref("");
 const perPage = ref(10);
@@ -26,7 +28,7 @@ const filters = ref({
     start_date: "",
     end_date: "",
     supplier_id: "",
-    category_id: "",
+    brand_id: "",
     no_invoice: "",
     status: "",
 });
@@ -38,15 +40,25 @@ const deleting = ref(false);
 onMounted(() => {
     fetchItems();
     fetchSuppliers();
-    fetchCategories();
+    fetchBrands();
+    fetchUnits();
 });
 
-async function fetchCategories() {
+async function fetchUnits() {
     try {
-        const { data } = await api.get("/categories/all");
-        categories.value = data.data;
+        const { data } = await api.get("/units/all");
+        units.value = data.data;
     } catch (e) {
-        console.error("Gagal memuat kategori", e);
+        console.error("Gagal memuat satuan", e);
+    }
+}
+
+async function fetchBrands() {
+    try {
+        const { data } = await api.get("/brands/all");
+        brands.value = data.data;
+    } catch (e) {
+        console.error("Gagal memuat merk", e);
     }
 }
 
@@ -70,7 +82,7 @@ async function fetchItems(page = 1) {
                 start_date: filters.value.start_date,
                 end_date: filters.value.end_date,
                 supplier_id: filters.value.supplier_id,
-                category_id: filters.value.category_id,
+                brand_id: filters.value.brand_id,
                 no_invoice: filters.value.no_invoice,
                 status: filters.value.status,
             },
@@ -163,6 +175,95 @@ async function doDelete() {
         deleting.value = false;
     }
 }
+
+// Edit Modal Logic
+const editModal = ref({
+    show: false,
+    title: "",
+    type: "", // 'unit', 'imei1', 'imei2', 'harga_beli', 'harga_jual'
+    item: null,
+    oldValueDisplay: "",
+    newValue: "",
+});
+const savingEdit = ref(false);
+
+function openEditModal(type, item) {
+    editModal.value.type = type;
+    editModal.value.item = item;
+    editModal.value.show = true;
+
+    if (type === "unit") {
+        editModal.value.title = "Update Satuan";
+        editModal.value.newValue = item.product?.unit_id || "";
+    } else if (type === "imei1") {
+        editModal.value.title = "Update IMEI 1";
+        editModal.value.newValue = item.product?.imei1 || "";
+    } else if (type === "imei2") {
+        editModal.value.title = "Update IMEI 2";
+        editModal.value.newValue = item.product?.imei2 || "";
+    } else if (type === "harga_beli") {
+        editModal.value.title = "Update Harga Modal";
+        editModal.value.oldValueDisplay = formatCurrency(item.harga_beli);
+        editModal.value.newValue = item.harga_beli || 0;
+    } else if (type === "harga_jual") {
+        editModal.value.title = "Update Harga Jual";
+        editModal.value.oldValueDisplay = formatCurrency(
+            item.product?.harga_jual,
+        );
+        editModal.value.newValue = item.product?.harga_jual || 0;
+    }
+}
+
+async function saveEdit() {
+    if (!editModal.value.item) return;
+    const item = editModal.value.item;
+    const type = editModal.value.type;
+
+    savingEdit.value = true;
+    try {
+        const payload = {};
+        if (type === "unit") payload.unit_id = editModal.value.newValue;
+        if (type === "imei1") payload.imei1 = editModal.value.newValue;
+        if (type === "imei2") payload.imei2 = editModal.value.newValue;
+        if (type === "harga_beli")
+            payload.harga_beli = editModal.value.newValue;
+        if (type === "harga_jual")
+            payload.harga_jual = editModal.value.newValue;
+
+        await api.put(
+            `/purchases/${item.purchase_id}/items/${item.id}`,
+            payload,
+        );
+        toast.success("Berhasil diupdate!");
+        editModal.value.show = false;
+        fetchItems(pagination.value.current_page);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengupdate");
+    } finally {
+        savingEdit.value = false;
+    }
+}
+
+import { computed } from "vue";
+
+const copyAmountStok = computed(() => {
+    return items.value.reduce(
+        (acc, curr) => acc + (curr.qty || curr.product?.stok || 0),
+        0,
+    );
+});
+const copyTotalModal = computed(() => {
+    return items.value.reduce(
+        (acc, curr) => acc + (curr.harga_beli || 0) * (curr.qty || 1),
+        0,
+    );
+});
+const copyTotalJual = computed(() => {
+    return items.value.reduce(
+        (acc, curr) => acc + (curr.product?.harga_jual || 0) * (curr.qty || 1),
+        0,
+    );
+});
 </script>
 
 <template>
@@ -269,16 +370,16 @@ async function doDelete() {
                     <div class="flex flex-col gap-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
-                            >Kategori</label
+                            >Merk</label
                         >
                         <div class="relative">
                             <select
-                                v-model="filters.category_id"
+                                v-model="filters.brand_id"
                                 class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[140px] pr-8 shadow-sm"
                             >
-                                <option value="">Semua Kategori</option>
+                                <option value="">Semua Merk</option>
                                 <option
-                                    v-for="c in categories"
+                                    v-for="c in brands"
                                     :key="c.id"
                                     :value="c.id"
                                 >
@@ -362,7 +463,7 @@ async function doDelete() {
                                     start_date: '',
                                     end_date: '',
                                     supplier_id: '',
-                                    category_id: '',
+                                    brand_id: '',
                                     no_invoice: '',
                                 };
                                 searchQuery = '';
@@ -460,30 +561,38 @@ async function doDelete() {
             </div>
 
             <!-- Table Section -->
-            <div class="table-container">
-                <table class="table-fixed-layout table-wide">
-                    <thead class="table-header">
+            <div
+                class="overflow-x-auto border-0 rounded-none shadow-none text-[11px]"
+            >
+                <table class="min-w-full leading-normal">
+                    <thead
+                        class="bg-slate-100/70 border-b border-slate-200 uppercase text-slate-500 font-bold whitespace-nowrap"
+                    >
                         <tr>
-                            <th class="w-12 text-center">No</th>
-                            <th class="w-32">Kode</th>
-                            <th class="w-56 text-left">Nama Barang</th>
-                            <th class="w-24">Satuan</th>
-                            <th class="w-32">Kategori</th>
-                            <th class="w-24">Grade</th>
-                            <th class="w-40">IMEI 1</th>
-                            <th class="w-40">IMEI 2</th>
-                            <th class="w-20 text-center">Stok</th>
-                            <th class="w-32 text-right">Modal</th>
-                            <th class="w-32 text-right">Jual</th>
-                            <th class="w-40">No Invoice</th>
-                            <th class="w-40">Supplier</th>
-                            <th class="w-32">Tanggal</th>
-                            <th class="w-48">Keterangan</th>
-                            <th class="text-left w-28">Status</th>
-                            <th class="table-col-action-h">AKSI</th>
+                            <th class="px-2 py-2 text-center">No</th>
+                            <th class="px-2 py-2 text-left">Kode</th>
+                            <th class="px-2 py-2 text-left">Nama Barang</th>
+                            <th class="px-2 py-2 text-left">Satuan</th>
+                            <th class="px-2 py-2 text-left">Merk</th>
+                            <th class="px-2 py-2 text-left">Grade</th>
+                            <th class="px-2 py-2 text-left">IMEI 1</th>
+                            <th class="px-2 py-2 text-left">IMEI 2</th>
+                            <th class="px-2 py-2 text-center">Stok</th>
+                            <th class="px-2 py-2 text-right">Modal</th>
+                            <th class="px-2 py-2 text-right">Jual</th>
+                            <th class="px-2 py-2 text-left">No Invoice</th>
+                            <th class="px-2 py-2 text-left">Supplier</th>
+                            <th class="px-2 py-2 text-left">Tanggal</th>
+                            <th class="px-2 py-2 text-left">Keterangan</th>
+                            <th class="px-2 py-2 text-left">Status</th>
+                            <th
+                                class="px-2 py-2 text-center sticky right-0 bg-slate-100/90 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"
+                            >
+                                AKSI
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-slate-200">
+                    <tbody class="bg-white divide-y divide-slate-100">
                         <tr v-if="isLoading">
                             <td
                                 colspan="17"
@@ -502,7 +611,7 @@ async function doDelete() {
                         <tr v-else-if="items.length === 0">
                             <td
                                 colspan="17"
-                                class="px-6 py-12 italic text-center text-slate-500"
+                                class="px-6 py-12 italic text-center text-slate-500 text-[14px]"
                             >
                                 Tidak ada data ditemukan.
                             </td>
@@ -512,7 +621,9 @@ async function doDelete() {
                             :key="item.id"
                             class="table-row group"
                         >
-                            <td class="table-cell text-center text-slate-500">
+                            <td
+                                class="px-2 py-2 text-center text-slate-500 whitespace-nowrap"
+                            >
                                 {{
                                     (pagination.current_page - 1) *
                                         pagination.per_page +
@@ -521,62 +632,107 @@ async function doDelete() {
                                 }}
                             </td>
                             <td
-                                class="table-cell font-mono text-[10px] text-slate-600"
+                                class="px-2 py-2 font-mono text-[12px] text-slate-600 whitespace-nowrap"
                             >
                                 {{ item.product?.barcode }}
                             </td>
-                            <td class="table-cell font-semibold text-slate-800">
+                            <td
+                                class="px-2 py-2 text-slate-800 break-words text-[12px] line-clamp-2 max-w-[200px]"
+                                style="display: table-cell"
+                            >
                                 {{ item.product?.nama }}
                             </td>
-                            <td class="table-cell text-slate-500">
-                                {{ item.product?.unit || "-" }}
-                            </td>
-                            <td class="table-cell text-slate-500">
-                                {{ item.product?.category || "-" }}
-                            </td>
-                            <td class="table-cell">
-                                <span
-                                    class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100 uppercase"
+                            <td
+                                class="px-2 py-2 text-blue-600 whitespace-nowrap text-[12px] uppercase font-medium"
+                            >
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('unit', item)"
+                                    class="hover:underline"
                                 >
-                                    {{ item.product?.grade || "-" }}
-                                </span>
-                            </td>
-                            <td class="table-cell font-medium text-slate-600">
-                                {{ item.product?.imei1 || "-" }}
-                            </td>
-                            <td class="table-cell font-medium text-slate-600">
-                                {{ item.product?.imei2 || "-" }}
+                                    {{ item.product?.unit || "INPUT" }}
+                                </a>
                             </td>
                             <td
-                                class="table-cell font-bold text-center text-slate-700"
+                                class="px-2 py-2 text-slate-800 text-[12px] whitespace-nowrap"
                             >
-                                {{ item.product?.stok }}
+                                {{ item.product?.brand || "-" }}
+                            </td>
+                            <td class="px-2 py-2 whitespace-nowrap text-[12px]">
+                                {{ item.product?.grade || "-" }}
                             </td>
                             <td
-                                class="table-cell font-bold text-right text-slate-500"
+                                class="px-2 py-2 font-medium text-blue-600 whitespace-nowrap text-[12px]"
                             >
-                                {{ formatCurrency(item.harga_beli) }}
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('imei1', item)"
+                                    class="hover:underline"
+                                >
+                                    {{ item.product?.imei1 || "INPUT" }}
+                                </a>
                             </td>
                             <td
-                                class="table-cell font-bold text-right text-emerald-600"
+                                class="px-2 py-2 font-medium text-blue-600 whitespace-nowrap text-[12px]"
                             >
-                                {{ formatCurrency(item.product?.harga_jual) }}
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('imei2', item)"
+                                    class="hover:underline"
+                                >
+                                    {{ item.product?.imei2 || "INPUT" }}
+                                </a>
                             </td>
-                            <td class="table-cell font-medium text-blue-600">
+                            <td
+                                class="px-2 py-2 font-bold text-center text-slate-700 whitespace-nowrap text-[12px]"
+                            >
+                                {{ item.qty || item.product?.stok || 0 }}
+                            </td>
+                            <td
+                                class="px-2 py-2 font-bold text-right text-blue-600 whitespace-nowrap text-[12px]"
+                            >
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('harga_beli', item)"
+                                    class="hover:underline"
+                                >
+                                    {{ formatCurrency(item.harga_beli) }}
+                                </a>
+                            </td>
+                            <td
+                                class="px-2 py-2 font-bold text-right text-emerald-600 whitespace-nowrap text-[12px]"
+                            >
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('harga_jual', item)"
+                                    class="hover:underline"
+                                >
+                                    {{
+                                        formatCurrency(item.product?.harga_jual)
+                                    }}
+                                </a>
+                            </td>
+                            <td
+                                class="px-2 py-2 font-medium text-slate-600 whitespace-nowrap text-[12px]"
+                            >
                                 {{ item.purchase?.no_invoice }}
                             </td>
-                            <td class="table-cell text-slate-600">
+                            <td
+                                class="px-2 py-2 text-slate-800 whitespace-nowrap text-[12px]"
+                            >
                                 {{ item.purchase?.supplier?.nama || "-" }}
                             </td>
-                            <td class="table-cell text-slate-500">
+                            <td
+                                class="px-2 py-2 text-slate-800 whitespace-nowrap text-[12px]"
+                            >
                                 {{ formatDate(item.purchase?.tanggal) }}
                             </td>
                             <td
-                                class="table-cell text-slate-400 italic truncate max-w-[150px]"
+                                class="px-2 py-2 text-slate-400 italic break-words max-w-[120px] text-[12px]"
                             >
                                 {{ item.product?.keterangan || "-" }}
                             </td>
-                            <td class="table-cell">
+                            <td class="px-2 py-2 whitespace-nowrap text-[12px]">
                                 <span
                                     v-if="item.product?.is_sold"
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100"
@@ -591,8 +747,12 @@ async function doDelete() {
                                 </span>
                             </td>
                             <!-- Sticky Ops Column for better UX -->
-                            <td class="table-col-action">
-                                <div class="table-actions">
+                            <td
+                                class="px-2 py-2 text-center sticky right-0 bg-white/95 group-hover:bg-slate-50/95 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] whitespace-nowrap"
+                            >
+                                <div
+                                    class="flex items-center justify-center gap-1"
+                                >
                                     <button
                                         @click="
                                             printBarcode(
@@ -600,7 +760,7 @@ async function doDelete() {
                                                 item.id,
                                             )
                                         "
-                                        class="p-1.5 text-purple-500 hover:bg-blue-50 rounded-lg transition"
+                                        class="p-1 text-purple-500 hover:bg-purple-100 rounded transition"
                                         title="Cetak Barcode"
                                     >
                                         <svg
@@ -622,7 +782,7 @@ async function doDelete() {
                                             name: 'purchase-edit',
                                             params: { id: item.purchase_id },
                                         }"
-                                        class="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition"
+                                        class="p-1 text-amber-500 hover:bg-amber-100 rounded transition"
                                         title="Edit Transaksi"
                                     >
                                         <svg
@@ -646,7 +806,7 @@ async function doDelete() {
                                                 item.purchase_id,
                                             )
                                         "
-                                        class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                                        class="p-1 text-rose-500 hover:bg-rose-100 rounded transition"
                                         title="Hapus"
                                     >
                                         <svg
@@ -667,6 +827,29 @@ async function doDelete() {
                             </td>
                         </tr>
                     </tbody>
+                    <tfoot
+                        v-if="items.length > 0"
+                        class="bg-blue-50/50 font-bold border-t border-slate-200"
+                    >
+                        <tr>
+                            <td
+                                colspan="8"
+                                class="px-2 py-3 text-center tracking-wider text-slate-800 uppercase"
+                            >
+                                TOTAL
+                            </td>
+                            <td class="px-2 py-3 text-center text-slate-800">
+                                {{ copyAmountStok }}
+                            </td>
+                            <td class="px-2 py-3 text-right text-blue-700">
+                                {{ formatCurrency(copyTotalModal) }}
+                            </td>
+                            <td class="px-2 py-3 text-right text-emerald-700">
+                                {{ formatCurrency(copyTotalJual) }}
+                            </td>
+                            <td colspan="6"></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
@@ -718,5 +901,130 @@ async function doDelete() {
             @confirm="doDelete"
             @cancel="showDelete = false"
         />
+
+        <!-- Inline Edit Modal -->
+        <div
+            v-if="editModal.show"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+        >
+            <div
+                class="w-full max-w-md bg-white rounded-lg shadow-2xl overflow-hidden"
+            >
+                <div
+                    class="flex items-center justify-between px-4 py-3 bg-blue-600 text-white"
+                >
+                    <h3 class="font-bold text-sm">{{ editModal.title }}</h3>
+                    <button
+                        @click="editModal.show = false"
+                        class="text-white hover:text-rose-300"
+                    >
+                        <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            ></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="px-5 py-6">
+                    <!-- For Unit -->
+                    <div
+                        v-if="editModal.type === 'unit'"
+                        class="flex items-center gap-3"
+                    >
+                        <label class="font-bold text-sm text-slate-700 w-24"
+                            >Satuan :</label
+                        >
+                        <select
+                            v-model="editModal.newValue"
+                            class="flex-1 px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="">Pilih Satuan</option>
+                            <option
+                                v-for="u in units"
+                                :key="u.id"
+                                :value="u.id"
+                            >
+                                {{ u.nama }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- For IMEI -->
+                    <div
+                        v-if="
+                            editModal.type === 'imei1' ||
+                            editModal.type === 'imei2'
+                        "
+                        class="flex flex-col gap-2"
+                    >
+                        <label
+                            class="font-bold text-sm text-slate-700 uppercase"
+                            >{{
+                                editModal.type === "imei1" ? "IMEI 1" : "IMEI 2"
+                            }}</label
+                        >
+                        <input
+                            type="text"
+                            v-model="editModal.newValue"
+                            class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <!-- For Harga -->
+                    <div
+                        v-if="
+                            editModal.type === 'harga_beli' ||
+                            editModal.type === 'harga_jual'
+                        "
+                        class="flex flex-col gap-2"
+                    >
+                        <div class="font-bold text-slate-700 text-sm mb-2">
+                            {{
+                                editModal.type === "harga_beli"
+                                    ? "Harga Modal Lama"
+                                    : "Harga Jual Lama"
+                            }}
+                            : {{ editModal.oldValueDisplay }}
+                        </div>
+                        <label class="font-bold text-sm text-slate-700">{{
+                            editModal.type === "harga_beli"
+                                ? "Harga Modal"
+                                : "Harga Jual"
+                        }}</label>
+                        <CurrencyInput
+                            v-model="editModal.newValue"
+                            :allowThousands="true"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    class="flex items-center justify-end px-5 py-4 border-t border-slate-100 bg-slate-50 gap-2"
+                >
+                    <button
+                        @click="editModal.show = false"
+                        class="px-4 py-1.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded transition shadow"
+                    >
+                        Tutup
+                    </button>
+                    <button
+                        @click="saveEdit"
+                        :disabled="savingEdit"
+                        class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition shadow disabled:opacity-50"
+                    >
+                        {{ savingEdit ? "Menyimpan..." : "Simpan" }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>

@@ -234,7 +234,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 mx-auto py-6 space-y-6 max-w-[1400px]">
+    <div class="px-4 md:px-8 mx-auto py-6 space-y-6 w-full">
         <!-- Header -->
         <div class="flex items-center gap-4">
             <button

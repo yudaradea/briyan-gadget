@@ -14,32 +14,17 @@ const deleting = ref(false);
 const saving = ref(false);
 const error = ref("");
 const showQuickBrand = ref(false);
-const showQuickCategory = ref(false);
-const showQuickGrade = ref(false);
-const showQuickUnit = ref(false);
 
 const form = ref({
     nama: "",
     brand_id: null,
-    category_id: null,
-    grade_id: null,
-    unit_id: null,
-    identifier_type: "none",
-    keterangan: "",
 });
 
 const brands = ref([]);
-const categories = ref([]);
-const grades = ref([]);
-const units = ref([]);
 
 const columns = [
     { key: "nama", label: "Nama Produk" },
     { key: "brand.nama", label: "Merk" },
-    { key: "category.nama", label: "Kategori" },
-    { key: "grade.nama", label: "Grade" },
-    { key: "identifier_type", label: "Identifier" },
-    { key: "unit.nama", label: "Satuan" },
 ];
 
 async function fetchMasterProducts(params) {
@@ -49,16 +34,8 @@ async function fetchMasterProducts(params) {
 
 async function fetchOptions() {
     try {
-        const [b, c, g, u] = await Promise.all([
-            api.get("/brands/all"),
-            api.get("/categories/all"),
-            api.get("/grades/all"),
-            api.get("/units/all"),
-        ]);
+        const b = await api.get("/brands/all");
         brands.value = b.data.data;
-        categories.value = c.data.data;
-        grades.value = g.data.data;
-        units.value = u.data.data;
     } catch (err) {
         console.error("Gagal mengambil opsi:", err);
     }
@@ -73,11 +50,6 @@ function openCreate() {
     form.value = {
         nama: "",
         brand_id: null,
-        category_id: null,
-        grade_id: null,
-        unit_id: null,
-        identifier_type: "none",
-        keterangan: "",
     };
     error.value = "";
     showForm.value = true;
@@ -88,31 +60,11 @@ async function quickBrandCreated(result) {
     form.value.brand_id = result.data.id;
 }
 
-async function quickCategoryCreated(result) {
-    await fetchOptions();
-    form.value.category_id = result.data.id;
-}
-
-async function quickGradeCreated(result) {
-    await fetchOptions();
-    form.value.grade_id = result.data.id;
-}
-
-async function quickUnitCreated(result) {
-    await fetchOptions();
-    form.value.unit_id = result.data.id;
-}
-
 function openEdit(row) {
     editId.value = row.id;
     form.value = {
         nama: row.nama,
         brand_id: row.brand_id,
-        category_id: row.category_id,
-        grade_id: row.grade_id,
-        unit_id: row.unit_id,
-        identifier_type: row.identifier_type || "none",
-        keterangan: row.keterangan || "",
     };
     error.value = "";
     showForm.value = true;
@@ -285,161 +237,35 @@ async function doDelete() {
                             />
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label
-                                    class="block text-sm font-semibold text-gray-700 mb-1"
-                                    >Merk</label
-                                >
-                                <div class="flex gap-2">
-                                    <select
-                                        v-model="form.brand_id"
-                                        required
-                                        class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
-                                    >
-                                        <option :value="null">Pilih Merk</option>
-                                        <option
-                                            v-for="b in brands"
-                                            :key="b.id"
-                                            :value="b.id"
-                                        >
-                                            {{ b.nama }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showQuickBrand = true"
-                                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600"
-                                        title="Tambah merk cepat"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-sm font-semibold text-gray-700 mb-1"
-                                    >Kategori</label
-                                >
-                                <div class="flex gap-2">
-                                    <select
-                                        v-model="form.category_id"
-                                        required
-                                        class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
-                                    >
-                                        <option :value="null">
-                                            Pilih Kategori
-                                        </option>
-                                        <option
-                                            v-for="c in categories"
-                                            :key="c.id"
-                                            :value="c.id"
-                                        >
-                                            {{ c.nama }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showQuickCategory = true"
-                                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600"
-                                        title="Tambah kategori cepat"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-sm font-semibold text-gray-700 mb-1"
-                                    >Grade</label
-                                >
-                                <div class="flex gap-2">
-                                    <select
-                                        v-model="form.grade_id"
-                                        required
-                                        class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
-                                    >
-                                        <option :value="null">Pilih Grade</option>
-                                        <option
-                                            v-for="g in grades"
-                                            :key="g.id"
-                                            :value="g.id"
-                                        >
-                                            {{ g.nama }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showQuickGrade = true"
-                                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600"
-                                        title="Tambah grade cepat"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label
-                                    class="block text-sm font-semibold text-gray-700 mb-1"
-                                    >Jenis Identifier</label
-                                >
-                                <select
-                                    v-model="form.identifier_type"
-                                    required
-                                    class="w-full px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
-                                >
-                                    <option value="none">Tanpa IMEI/SN</option>
-                                    <option value="imei1">IMEI Tunggal</option>
-                                    <option value="imei2">Dual IMEI</option>
-                                    <option value="serial">Serial Number</option>
-                                </select>
-                            </div>
-                            <div>
-                            <label
-                                class="block text-sm font-semibold text-gray-700 mb-1"
-                                >Satuan</label
-                            >
-                            <div class="flex gap-2">
-                                <select
-                                    v-model="form.unit_id"
-                                    required
-                                    class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
-                                >
-                                    <option :value="null">Pilih Satuan</option>
-                                    <option
-                                        v-for="u in units"
-                                        :key="u.id"
-                                        :value="u.id"
-                                    >
-                                        {{ u.nama }}
-                                        </option>
-                                    </select>
-                                    <button
-                                        type="button"
-                                        @click="showQuickUnit = true"
-                                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600"
-                                        title="Tambah satuan cepat"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
                         <div>
                             <label
                                 class="block text-sm font-semibold text-gray-700 mb-1"
-                                >Keterangan (Opsional)</label
+                                >Merk</label
                             >
-                            <textarea
-                                v-model="form.keterangan"
-                                rows="3"
-                                class="w-full px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm resize-none"
-                                placeholder="Tambahkan deskripsi produk..."
-                            ></textarea>
+                            <div class="flex gap-2">
+                                <select
+                                    v-model="form.brand_id"
+                                    required
+                                    class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
+                                >
+                                    <option :value="null">Pilih Merk</option>
+                                    <option
+                                        v-for="b in brands"
+                                        :key="b.id"
+                                        :value="b.id"
+                                    >
+                                        {{ b.nama }}
+                                    </option>
+                                </select>
+                                <button
+                                    type="button"
+                                    @click="showQuickBrand = true"
+                                    class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600"
+                                    title="Tambah merk cepat"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
 
                         <p v-if="error" class="text-red-500 text-sm italic">
@@ -482,33 +308,6 @@ async function doDelete() {
             "
             @created="quickBrandCreated"
             @close="showQuickBrand = false"
-        />
-        <QuickAddModal
-            :show="showQuickCategory"
-            title="Tambah Kategori Cepat"
-            :submit-function="
-                (d) => api.post('/categories/quick', d).then((r) => r.data)
-            "
-            @created="quickCategoryCreated"
-            @close="showQuickCategory = false"
-        />
-        <QuickAddModal
-            :show="showQuickGrade"
-            title="Tambah Grade Cepat"
-            :submit-function="
-                (d) => api.post('/grades/quick', d).then((r) => r.data)
-            "
-            @created="quickGradeCreated"
-            @close="showQuickGrade = false"
-        />
-        <QuickAddModal
-            :show="showQuickUnit"
-            title="Tambah Satuan Cepat"
-            :submit-function="
-                (d) => api.post('/units/quick', d).then((r) => r.data)
-            "
-            @created="quickUnitCreated"
-            @close="showQuickUnit = false"
         />
     </div>
 </template>

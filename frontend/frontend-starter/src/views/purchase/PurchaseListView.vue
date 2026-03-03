@@ -31,6 +31,41 @@ const showDelete = ref(false);
 const deleteId = ref(null);
 const deleting = ref(false);
 
+const editingPurchaseId = ref(null);
+const editForm = ref({
+    no_invoice: "",
+    tanggal: "",
+    supplier_id: "",
+});
+const savingEdit = ref(false);
+
+function startEditPurchase(p) {
+    editingPurchaseId.value = p.id;
+    editForm.value = {
+        no_invoice: p.no_invoice,
+        tanggal: p.tanggal,
+        supplier_id: p.supplier_id || (p.supplier ? p.supplier.id : ""),
+    };
+}
+
+function cancelEditPurchase() {
+    editingPurchaseId.value = null;
+}
+
+async function saveEditPurchase(id) {
+    savingEdit.value = true;
+    try {
+        await api.put(`/purchases/${id}`, editForm.value);
+        toast.success("Informasi invoice berhasil diupdate");
+        editingPurchaseId.value = null;
+        fetchPurchases(pagination.value.current_page);
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengupdate invoice");
+    } finally {
+        savingEdit.value = false;
+    }
+}
+
 onMounted(() => {
     fetchPurchases();
     fetchSuppliers();
@@ -95,14 +130,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
             );
             filters.value.end_date = "";
             return;
         }
         fetchPurchases(1);
     },
-    { deep: true }
+    { deep: true },
 );
 
 function formatCurrency(val) {
@@ -409,14 +444,63 @@ async function doDelete() {
                                     1
                                 }}
                             </td>
-                            <td class="table-cell font-medium text-blue-600">
-                                {{ p.no_invoice }}
+                            <td class="table-cell">
+                                <input
+                                    v-if="editingPurchaseId === p.id"
+                                    v-model="editForm.no_invoice"
+                                    type="text"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                />
+                                <span
+                                    v-else
+                                    @click="startEditPurchase(p)"
+                                    class="cursor-pointer border-b border-dashed border-blue-300 pb-0.5 hover:text-blue-700 transition inline-block text-blue-600"
+                                    title="Klik untuk mengedit"
+                                >
+                                    {{ p.no_invoice }}
+                                </span>
                             </td>
-                            <td class="table-cell text-slate-500">
-                                {{ formatDate(p.tanggal) }}
+                            <td class="table-cell">
+                                <input
+                                    v-if="editingPurchaseId === p.id"
+                                    v-model="editForm.tanggal"
+                                    type="date"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                />
+                                <span
+                                    v-else
+                                    @click="startEditPurchase(p)"
+                                    class="cursor-pointer border-b border-dashed border-slate-300 pb-0.5 hover:text-slate-700 transition inline-block text-blue-600"
+                                    title="Klik untuk mengedit"
+                                >
+                                    {{ formatDate(p.tanggal) }}
+                                </span>
                             </td>
-                            <td class="table-cell font-medium text-slate-800">
-                                {{ p.supplier?.nama || "-" }}
+                            <td class="table-cell font-medium">
+                                <select
+                                    v-if="editingPurchaseId === p.id"
+                                    v-model="editForm.supplier_id"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                >
+                                    <option value="" disabled>
+                                        Pilih Supplier
+                                    </option>
+                                    <option
+                                        v-for="s in suppliers"
+                                        :key="s.id"
+                                        :value="s.id"
+                                    >
+                                        {{ s.nama }}
+                                    </option>
+                                </select>
+                                <span
+                                    v-else
+                                    @click="startEditPurchase(p)"
+                                    class="cursor-pointer border-b border-dashed border-slate-300 pb-0.5 hover:text-blue-600 transition inline-block relative text-blue-600"
+                                    title="Klik untuk mengedit"
+                                >
+                                    {{ p.supplier?.nama || "-" }}
+                                </span>
                             </td>
                             <td class="table-cell text-center">
                                 <span
@@ -433,88 +517,108 @@ async function doDelete() {
                             <td
                                 class="px-4 py-4 text-sm font-medium text-center"
                             >
-                                <router-link
-                                    :to="`/dashboard/purchases/${p.id}`"
-                                    class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg inline-flex"
-                                    title="Detail"
+                                <div
+                                    v-if="editingPurchaseId === p.id"
+                                    class="flex justify-center gap-1.5 pt-1"
                                 >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                    <button
+                                        @click="saveEditPurchase(p.id)"
+                                        :disabled="savingEdit"
+                                        class="px-2.5 py-1 text-[11px] font-semibold text-white bg-blue-600 rounded shadow hover:bg-blue-700 disabled:opacity-50 transition flex items-center gap-1"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                    </svg>
-                                </router-link>
-                                <router-link
-                                    :to="`/dashboard/purchases/${p.id}/edit`"
-                                    class="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg inline-flex"
-                                    title="Tambah Item"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                        {{ savingEdit ? "..." : "Simpan" }}
+                                    </button>
+                                    <button
+                                        @click="cancelEditPurchase"
+                                        class="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 rounded hover:bg-slate-200 border border-slate-200 transition"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M12 4v16m8-8H4"
-                                        />
-                                    </svg>
-                                </router-link>
-                                <router-link
-                                    :to="`/dashboard/purchases/${p.id}/barcode`"
-                                    class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg inline-flex"
-                                    title="Barcode"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                        Batal
+                                    </button>
+                                </div>
+                                <div v-else class="flex justify-center">
+                                    <router-link
+                                        :to="`/dashboard/purchases/${p.id}`"
+                                        class="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg inline-flex"
+                                        title="Detail"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                                        />
-                                    </svg>
-                                </router-link>
-                                <button
-                                    @click="confirmDelete(p.id)"
-                                    class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg inline-flex"
-                                    title="Hapus"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                            />
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                            />
+                                        </svg>
+                                    </router-link>
+                                    <router-link
+                                        :to="`/dashboard/purchases/${p.id}/edit`"
+                                        class="p-1.5 text-emerald-500 hover:bg-emerald-50 rounded-lg inline-flex"
+                                        title="Tambah Item"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                        />
-                                    </svg>
-                                </button>
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                    </router-link>
+                                    <router-link
+                                        :to="`/dashboard/purchases/${p.id}/barcode`"
+                                        class="p-1.5 text-purple-500 hover:bg-purple-50 rounded-lg inline-flex"
+                                        title="Barcode"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                            />
+                                        </svg>
+                                    </router-link>
+                                    <button
+                                        @click="confirmDelete(p.id)"
+                                        class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg inline-flex"
+                                        title="Hapus"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -535,7 +639,7 @@ async function doDelete() {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total
+                            pagination.total,
                         )
                     }}</span>
                     dari

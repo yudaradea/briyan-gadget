@@ -33,6 +33,7 @@ class ProductRepository
             'imei1' => $product->imei1,
             'imei2' => $product->imei2,
             'harga_jual' => (float) $product->harga_jual,
+            'harga_modal' => (float) $product->harga_modal,
             'stok' => $availableStock,
             'brand' => $product->masterProduct->brand?->nama,
             'category' => $product->masterProduct->category?->nama,
@@ -146,17 +147,63 @@ class ProductRepository
         return ResponseHelper::success($data, 'Grouped stock retrieved successfully');
     }
 
+    public function stockSummary($perPage = 10, $search = null, $brandId = null)
+    {
+        $query = \App\Models\MasterProduct::query()
+            ->leftJoin('products', 'master_products.id', '=', 'products.master_product_id')
+            ->leftJoin('brands', 'master_products.brand_id', '=', 'brands.id')
+            ->leftJoin('units', 'master_products.unit_id', '=', 'units.id')
+            ->select(
+                'master_products.id as master_product_id',
+                'master_products.nama',
+                'master_products.brand_id',
+                'master_products.unit_id',
+                DB::raw('COALESCE(SUM(products.stok), 0) as total_stok'),
+                'brands.nama as brand_nama',
+                'units.nama as unit_nama'
+            )
+            ->groupBy(
+                'master_products.id',
+                'master_products.nama',
+                'master_products.brand_id',
+                'master_products.unit_id',
+                'brands.nama',
+                'units.nama'
+            )
+            ->when($search, function ($q) use ($search) {
+                $q->where('master_products.nama', 'like', "%{$search}%");
+            })
+            ->when($brandId, fn($q) => $q->where('master_products.brand_id', $brandId))
+            ->orderBy('master_products.nama');
+
+        $data = $query->paginate($perPage);
+
+        // Transform data format for frontend consistency
+        $data->getCollection()->transform(function ($item) {
+            return [
+                'master_product_id' => $item->master_product_id,
+                'nama' => $item->nama,
+                'total_stok' => (int) $item->total_stok,
+                'brand' => ['nama' => $item->brand_nama],
+                'unit' => ['nama' => $item->unit_nama],
+            ];
+        });
+
+        return ResponseHelper::success($data, 'Stock summary retrieved successfully');
+    }
+
     public function groupedStockDetails(string $masterProductId, ?string $gradeId = null)
     {
         $products = Product::query()
             ->with([
                 'masterProduct.brand',
                 'masterProduct.category',
+                'masterProduct.unit',
                 'grade',
                 'purchaseItems.purchase.supplier',
             ])
             ->where('master_product_id', $masterProductId)
-            ->when($gradeId, fn($q) => $q->where('grade_id', $gradeId), fn($q) => $q->whereNull('grade_id'))
+            ->when($gradeId, fn($q) => $q->where('grade_id', $gradeId))
             ->where('stok', '>', 0)
             ->orderBy('created_at')
             ->get()
@@ -178,6 +225,7 @@ class ProductRepository
                     'invoice_pembelian' => $purchase?->no_invoice,
                     'supplier' => $purchase?->supplier?->nama,
                     'tanggal_pembelian' => optional($purchase?->tanggal)->format('Y-m-d'),
+                    'satuan' => $product->masterProduct?->unit?->nama,
                 ];
             })
             ->values();

@@ -15,7 +15,6 @@ const perPage = ref(10);
 const filters = ref({
     start_date: "",
     end_date: "",
-    tipe: "all",
     sales_rep_id: "",
 });
 
@@ -84,7 +83,6 @@ function buildParams(page, exportMode = null) {
         search: search.value || undefined,
         start_date: filters.value.start_date || undefined,
         end_date: filters.value.end_date || undefined,
-        tipe: filters.value.tipe || "all",
         sales_rep_id: filters.value.sales_rep_id || undefined,
         export: exportMode || undefined,
     };
@@ -97,7 +95,7 @@ async function fetchReport(page = 1) {
         filters.value.end_date < filters.value.start_date
     ) {
         toast.error(
-            "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai"
+            "Tanggal sampai tidak boleh lebih kecil dari tanggal mulai",
         );
         filters.value.end_date = "";
         return;
@@ -135,7 +133,7 @@ watch(perPage, () => fetchReport(1));
 watch(
     () => filters.value,
     () => fetchReport(1),
-    { deep: true }
+    { deep: true },
 );
 
 async function exportExcel() {
@@ -150,8 +148,8 @@ async function exportExcel() {
         saveBlob(
             response.data,
             `laporan-penjualan-service-${fileSafeDate(
-                filters.value.start_date
-            )}-${fileSafeDate(filters.value.end_date)}.csv`
+                filters.value.start_date,
+            )}-${fileSafeDate(filters.value.end_date)}.csv`,
         );
     } catch (error) {
         toast.error("Gagal export Excel");
@@ -169,20 +167,19 @@ function buildPdfHtml(dataRows, footerSummary) {
                     <td>${row.no_invoice || "-"}</td>
                     <td>${formatDate(row.tanggal)}</td>
                     <td>${row.pelanggan || "-"}</td>
-                    <td>${formatType(row.tipe)}</td>
                     <td>${row.kasir || "-"}</td>
                     <td>${row.sales || "-"}</td>
                     <td style="text-align:center;">${row.qty_total || 0}</td>
                     <td style="text-align:left;">${formatCurrency(
-                        row.grand_total
+                        row.grand_total,
                     )}</td>
                     <td style="text-align:left;">${formatCurrency(
-                        row.hpp_total
+                        row.hpp_total,
                     )}</td>
                     <td style="text-align:left; color:${
                         Number(row.laba_kotor || 0) < 0 ? "#dc2626" : "#0f766e"
                     };">${formatCurrency(row.laba_kotor)}</td>
-                </tr>`
+                </tr>`,
         )
         .join("");
 
@@ -203,13 +200,12 @@ function buildPdfHtml(dataRows, footerSummary) {
         <body>
             <h1>${title.value}</h1>
             <p>Periode: ${formatDate(
-                filters.value.start_date
-            )} s/d ${formatDate(filters.value.end_date)} | Tipe: ${
-        filters.value.tipe
-    } | Sales: ${
-        salesReps.value.find((s) => s.id === filters.value.sales_rep_id)
-            ?.nama || "Semua"
-    }</p>
+                filters.value.start_date,
+            )} s/d ${formatDate(filters.value.end_date)} 
+     | Sales: ${
+         salesReps.value.find((s) => s.id === filters.value.sales_rep_id)
+             ?.nama || "Semua"
+     }</p>
             <table>
                 <thead>
                     <tr>
@@ -217,7 +213,6 @@ function buildPdfHtml(dataRows, footerSummary) {
                         <th>No. Invoice</th>
                         <th>Tanggal</th>
                         <th>Pelanggan</th>
-                        <th>Tipe</th>
                         <th>Kasir</th>
                         <th>Sales</th>
                         <th>Qty</th>
@@ -229,23 +224,23 @@ function buildPdfHtml(dataRows, footerSummary) {
                 <tbody>${bodyRows}</tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="7" style="text-align:center;">TOTAL</td>
+                        <td colspan="6" style="text-align:center;">TOTAL</td>
                         <td style="text-align:center;">${
                             footerSummary.qty_total || 0
                         }</td>
                         <td style="text-align:left;">${formatCurrency(
-                            footerSummary.grand_total || 0
+                            footerSummary.grand_total || 0,
                         )}</td>
                         <td style="text-align:left;">${formatCurrency(
-                            footerSummary.hpp_total || 0
+                            footerSummary.hpp_total || 0,
                         )}</td>
                         <td style="text-align:left; color:${
                             Number(footerSummary.laba_kotor || 0) < 0
                                 ? "#dc2626"
                                 : "#0f766e"
                         };">${formatCurrency(
-        footerSummary.laba_kotor || 0
-    )}</td>
+                            footerSummary.laba_kotor || 0,
+                        )}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -263,7 +258,6 @@ async function exportPdf() {
                 search: search.value || undefined,
                 start_date: filters.value.start_date || undefined,
                 end_date: filters.value.end_date || undefined,
-                tipe: filters.value.tipe || "all",
                 sales_rep_id: filters.value.sales_rep_id || undefined,
             },
         });
@@ -275,7 +269,7 @@ async function exportPdf() {
             return;
         }
         printWindow.document.write(
-            buildPdfHtml(allRows, data.data.summary || summary.value)
+            buildPdfHtml(allRows, data.data.summary || summary.value),
         );
         printWindow.document.close();
         printWindow.focus();
@@ -336,39 +330,6 @@ onMounted(() => {
                     <div class="flex flex-col gap-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
-                            >Tipe</label
-                        >
-                        <div class="relative">
-                            <select
-                                v-model="filters.tipe"
-                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white pr-8"
-                            >
-                                <option value="all">Semua</option>
-                                <option value="penjualan">Penjualan</option>
-                                <option value="service">Service</option>
-                            </select>
-                            <div
-                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
-                            >
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sales</label
                         >
                         <div class="relative">
@@ -414,7 +375,6 @@ onMounted(() => {
                                 filters = {
                                     start_date: '',
                                     end_date: '',
-                                    tipe: 'all',
                                     sales_rep_id: '',
                                 }
                             "
@@ -530,7 +490,6 @@ onMounted(() => {
                             <th class="">No.Invoice</th>
                             <th class="">Tanggal</th>
                             <th class="">Pelanggan</th>
-                            <th class="">Tipe</th>
                             <th class="">Kasir</th>
                             <th class="">Sales</th>
                             <th class="text-center">Qty</th>
@@ -579,18 +538,7 @@ onMounted(() => {
                             <td class="table-cell">
                                 {{ row.pelanggan || "-" }}
                             </td>
-                            <td class="table-cell">
-                                <span
-                                    class="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
-                                    :class="
-                                        row.tipe === 'service'
-                                            ? 'bg-purple-50 text-purple-600'
-                                            : 'bg-blue-50 text-blue-600'
-                                    "
-                                >
-                                    {{ formatType(row.tipe) }}
-                                </span>
-                            </td>
+
                             <td class="table-cell">{{ row.kasir || "-" }}</td>
                             <td class="table-cell">{{ row.sales || "-" }}</td>
                             <td class="table-cell font-bold text-center">
@@ -621,7 +569,7 @@ onMounted(() => {
                     <tfoot v-if="rows.length > 0">
                         <tr class="border-t bg-sky-50 border-slate-200">
                             <td
-                                colspan="7"
+                                colspan="6"
                                 class="table-cell font-black tracking-wider text-center uppercase"
                             >
                                 Total
@@ -663,7 +611,7 @@ onMounted(() => {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total
+                            pagination.total,
                         )
                     }}</span>
                     dari

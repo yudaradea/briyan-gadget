@@ -217,7 +217,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Total -->
-                    <div class="flex flex-col items-end pb-1">
+                    <!-- <div class="flex flex-col items-end pb-1">
                         <span
                             class="text-[10px] font-bold text-gray-400 uppercase"
                             >Total Data</span
@@ -225,6 +225,16 @@ onMounted(() => {
                         <span
                             class="text-sm font-bold text-indigo-600 leading-none"
                             >{{ pagination.total || 0 }}</span
+                        >
+                    </div> -->
+                    <!-- tambah user -->
+                    <div
+                        class="flex flex-col items-end px-3 py-1.5 bg-blue-600 text-white rounded-lg shadow-lg"
+                    >
+                        <router-link
+                            to="/dashboard/management/user/create"
+                            class="btn btn-primary text-sm"
+                            >+ Tambah User</router-link
                         >
                     </div>
                 </div>

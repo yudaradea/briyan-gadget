@@ -5,6 +5,7 @@ import { useRouter, useRoute } from "vue-router";
 import QuickAddModal from "../../components/QuickAddModal.vue";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import CurrencyInput from "../../components/CurrencyInput.vue";
+import SearchableSelect from "../../components/SearchableSelect.vue";
 import ImageModal from "../../components/ImageModal.vue";
 import PurchaseItemRow from "../../components/PurchaseItemRow.vue";
 import { useToast } from "../../composables/useToast";
@@ -53,14 +54,7 @@ const filteredBrands = computed(() => brands.value);
 
 const filteredGrades = computed(() => grades.value);
 
-const filteredMasterProducts = computed(() =>
-    masterProducts.value.filter(
-        (m) =>
-            m.category_id === itemForm.value.category_id &&
-            m.brand_id === itemForm.value.brand_id &&
-            m.grade_id === itemForm.value.grade_id,
-    ),
-);
+const filteredMasterProducts = computed(() => masterProducts.value);
 
 const selectedMasterProduct = computed(() =>
     masterProducts.value.find((m) => m.id === itemForm.value.master_product_id),
@@ -72,45 +66,6 @@ const selectedIdentifierType = computed(
 
 const isSerializedProduct = computed(() =>
     ["imei1", "imei2", "serial"].includes(selectedIdentifierType.value),
-);
-
-watch(
-    () => itemForm.value.category_id,
-    () => {
-        itemForm.value.brand_id = "";
-        itemForm.value.grade_id = "";
-        itemForm.value.master_product_id = null;
-        itemForm.value.unit_id = "";
-        itemForm.value.imei1 = "";
-        itemForm.value.imei2 = "";
-        itemForm.value.barcode = "";
-        itemForm.value.qty = 1;
-    },
-);
-
-watch(
-    () => itemForm.value.brand_id,
-    () => {
-        itemForm.value.grade_id = "";
-        itemForm.value.master_product_id = null;
-        itemForm.value.unit_id = "";
-        itemForm.value.imei1 = "";
-        itemForm.value.imei2 = "";
-        itemForm.value.barcode = "";
-        itemForm.value.qty = 1;
-    },
-);
-
-watch(
-    () => itemForm.value.grade_id,
-    () => {
-        itemForm.value.master_product_id = null;
-        itemForm.value.unit_id = "";
-        itemForm.value.imei1 = "";
-        itemForm.value.imei2 = "";
-        itemForm.value.barcode = "";
-        itemForm.value.qty = 1;
-    },
 );
 
 function onMasterProductChange() {
@@ -191,8 +146,7 @@ const creatingMasterProduct = ref(false);
 const quickMasterError = ref("");
 const quickMasterForm = ref({
     nama: "",
-    unit_id: "",
-    identifier_type: "none",
+    brand_id: "",
     keterangan: "",
 });
 
@@ -438,6 +392,7 @@ async function quickSupplierCreated(result) {
 async function quickBrandCreated(result) {
     await loadDropdowns();
     itemForm.value.brand_id = result.data.id;
+    quickMasterForm.value.brand_id = result.data.id;
     toast.success("Merk berhasil ditambahkan");
 }
 async function quickCategoryCreated(result) {
@@ -456,21 +411,16 @@ function openQuickMasterProduct() {
     quickMasterError.value = "";
     quickMasterForm.value = {
         nama: "",
-        unit_id: "",
-        identifier_type: "none",
+        brand_id: "",
         keterangan: "",
     };
     showQuickMasterProduct.value = true;
 }
 
 async function submitQuickMasterProduct() {
-    if (
-        !itemForm.value.category_id ||
-        !itemForm.value.brand_id ||
-        !itemForm.value.grade_id
-    ) {
+    if (!quickMasterForm.value.brand_id) {
         quickMasterError.value =
-            "Pilih kategori, merk, dan grade sebelum menambahkan produk katalog.";
+            "Pilih merk sebelum menambahkan produk katalog.";
         return;
     }
 
@@ -480,11 +430,7 @@ async function submitQuickMasterProduct() {
     try {
         const payload = {
             nama: quickMasterForm.value.nama,
-            category_id: itemForm.value.category_id,
-            brand_id: itemForm.value.brand_id,
-            grade_id: itemForm.value.grade_id,
-            unit_id: quickMasterForm.value.unit_id,
-            identifier_type: quickMasterForm.value.identifier_type,
+            brand_id: quickMasterForm.value.brand_id,
             keterangan: quickMasterForm.value.keterangan || null,
         };
 
@@ -750,173 +696,18 @@ onMounted(() => {
                     <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >Kategori *</label
-                        >
-                        <div class="flex gap-1.5">
-                            <select
-                                v-model="itemForm.category_id"
-                                required
-                                class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
-                            >
-                                <option value="">Pilih Kategori</option>
-                                <option
-                                    v-for="c in categories"
-                                    :key="c.id"
-                                    :value="c.id"
-                                >
-                                    {{ c.nama }}
-                                </option>
-                            </select>
-                            <button
-                                type="button"
-                                @click="showQuickCategory = true"
-                                class="px-2.5 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
-                                title="Tambah cepat"
-                            >
-                                <svg
-                                    class="w-4 h-4 text-slate-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >Merk *</label
-                        >
-                        <div class="flex gap-1.5">
-                            <select
-                                v-model="itemForm.brand_id"
-                                required
-                                :disabled="!itemForm.category_id"
-                                class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
-                                :class="{
-                                    'opacity-60 cursor-not-allowed bg-slate-100':
-                                        !itemForm.category_id,
-                                }"
-                            >
-                                <option value="">Pilih Merk</option>
-                                <option
-                                    v-for="b in filteredBrands"
-                                    :key="b.id"
-                                    :value="b.id"
-                                >
-                                    {{ b.nama }}
-                                </option>
-                            </select>
-                            <button
-                                type="button"
-                                @click="showQuickBrand = true"
-                                :disabled="!itemForm.category_id"
-                                class="px-2.5 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
-                                title="Tambah cepat"
-                            >
-                                <svg
-                                    class="w-4 h-4 text-slate-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >Grade *</label
-                        >
-                        <div class="flex gap-1.5">
-                            <select
-                                v-model="itemForm.grade_id"
-                                required
-                                :disabled="!itemForm.brand_id"
-                                class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
-                                :class="{
-                                    'opacity-60 cursor-not-allowed bg-slate-100':
-                                        !itemForm.brand_id,
-                                }"
-                            >
-                                <option value="">Pilih Grade</option>
-                                <option
-                                    v-for="g in filteredGrades"
-                                    :key="g.id"
-                                    :value="g.id"
-                                >
-                                    {{ g.nama }}
-                                </option>
-                            </select>
-                            <button
-                                type="button"
-                                @click="showQuickGrade = true"
-                                :disabled="!itemForm.brand_id"
-                                class="px-2.5 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
-                                title="Tambah cepat"
-                            >
-                                <svg
-                                    class="w-4 h-4 text-slate-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-xs font-medium text-slate-500 mb-1.5"
                             >Nama Produk (Katalog) *</label
                         >
-                        <select
+                        <SearchableSelect
                             v-model="itemForm.master_product_id"
+                            :options="filteredMasterProducts"
+                            placeholder="Pilih Produk"
+                            :required="true"
                             @change="onMasterProductChange"
-                            required
-                            :disabled="!itemForm.grade_id"
-                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
-                            :class="{
-                                'opacity-60 cursor-not-allowed bg-slate-100':
-                                    !itemForm.grade_id,
-                            }"
-                        >
-                            <option value="">Pilih Produk</option>
-                            <option
-                                v-for="m in filteredMasterProducts"
-                                :key="m.id"
-                                :value="m.id"
-                            >
-                                {{ m.nama }}
-                            </option>
-                        </select>
+                        />
                         <button
                             type="button"
                             @click="openQuickMasterProduct"
-                            :disabled="!itemForm.grade_id"
                             class="mt-1.5 text-xs text-blue-600 hover:text-blue-700 disabled:text-slate-400 disabled:cursor-not-allowed"
                         >
                             + Tambah produk katalog baru
@@ -925,12 +716,32 @@ onMounted(() => {
                     <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >Satuan</label
+                            >Merk</label
+                        >
+                        <select
+                            v-model="itemForm.brand_id"
+                            disabled
+                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-100 opacity-75 transition"
+                        >
+                            <option value="">Pilih Merk</option>
+                            <option
+                                v-for="b in brands"
+                                :key="b.id"
+                                :value="b.id"
+                            >
+                                {{ b.nama }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-medium text-slate-500 mb-1.5"
+                            >Satuan *</label
                         >
                         <select
                             v-model="itemForm.unit_id"
-                            disabled
-                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-100 opacity-75 transition"
+                            required
+                            class="w-full px-3.5 py-2.5 border cursor-pointer border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
                         >
                             <option value="">Pilih Satuan</option>
                             <option
@@ -942,29 +753,38 @@ onMounted(() => {
                             </option>
                         </select>
                     </div>
-                    <div
-                        v-if="
-                            selectedIdentifierType === 'imei1' ||
-                            selectedIdentifierType === 'imei2'
-                        "
-                    >
+                    <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >IMEI 1
-                            <span class="text-red-500">*</span></label
+                            >Grade</label
+                        >
+                        <select
+                            v-model="itemForm.grade_id"
+                            class="w-full px-3.5 cursor-pointer py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition"
+                        >
+                            <option value="">Pilih Grade</option>
+                            <option
+                                v-for="g in grades"
+                                :key="g.id"
+                                :value="g.id"
+                            >
+                                {{ g.nama }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-xs font-medium text-slate-500 mb-1.5"
+                            >IMEI 1 (opsional)</label
                         >
                         <input
                             v-model="itemForm.imei1"
                             type="text"
-                            :required="
-                                selectedIdentifierType === 'imei1' ||
-                                selectedIdentifierType === 'imei2'
-                            "
                             class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition font-mono"
                             placeholder="15 digit"
                         />
                     </div>
-                    <div v-if="selectedIdentifierType === 'imei2'">
+                    <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
                             >IMEI 2 (opsional)</label
@@ -976,28 +796,7 @@ onMounted(() => {
                             placeholder="15 digit"
                         />
                     </div>
-                    <div>
-                        <label
-                            class="block text-xs font-medium text-slate-500 mb-1.5"
-                            >{{
-                                selectedIdentifierType === "serial"
-                                    ? "Serial Number *"
-                                    : "Barcode (opsional)"
-                            }}</label
-                        >
-                        <input
-                            v-model="itemForm.barcode"
-                            type="text"
-                            :required="selectedIdentifierType === 'serial'"
-                            class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition font-mono"
-                            :placeholder="
-                                selectedIdentifierType === 'serial'
-                                    ? 'Masukkan Serial Number'
-                                    : 'Opsional, kosongkan untuk auto barcode'
-                            "
-                        />
-                    </div>
-                    <div>
+                    <!-- <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
                             >Kuantitas (Qty) *</label
@@ -1015,7 +814,7 @@ onMounted(() => {
                             }"
                             placeholder="Jumlah barang"
                         />
-                    </div>
+                    </div> -->
                     <div>
                         <label
                             class="block text-xs font-medium text-slate-500 mb-1.5"
@@ -1024,6 +823,7 @@ onMounted(() => {
                         <CurrencyInput
                             v-model="itemForm.harga_beli"
                             :required="true"
+                            :allow-thousands="true"
                         />
                     </div>
                     <div>
@@ -1031,7 +831,10 @@ onMounted(() => {
                             class="block text-xs font-medium text-slate-500 mb-1.5"
                             >Harga Jual</label
                         >
-                        <CurrencyInput v-model="itemForm.harga_jual" />
+                        <CurrencyInput
+                            v-model="itemForm.harga_jual"
+                            :allow-thousands="true"
+                        />
                     </div>
                     <div class="md:col-span-2">
                         <label
@@ -1225,25 +1028,6 @@ onMounted(() => {
                             <div>
                                 <label
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
-                                    >Kategori</label
-                                >
-                                <select
-                                    v-model="editForm.category_id"
-                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 transition"
-                                >
-                                    <option value="">Pilih Kategori</option>
-                                    <option
-                                        v-for="c in categories"
-                                        :key="c.id"
-                                        :value="c.id"
-                                    >
-                                        {{ c.nama }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >Grade</label
                                 >
                                 <select
@@ -1260,6 +1044,7 @@ onMounted(() => {
                                     </option>
                                 </select>
                             </div>
+
                             <div>
                                 <label
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
@@ -1279,7 +1064,7 @@ onMounted(() => {
                                     </option>
                                 </select>
                             </div>
-                            <div v-if="!isEditNonGadget">
+                            <div>
                                 <label
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >IMEI 1</label
@@ -1290,7 +1075,18 @@ onMounted(() => {
                                     class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white font-mono focus:ring-2 focus:ring-blue-500 transition"
                                 />
                             </div>
-                            <div v-if="isEditNonGadget">
+                            <div>
+                                <label
+                                    class="block text-[11px] font-medium text-slate-500 mb-1"
+                                    >IMEI 2</label
+                                >
+                                <input
+                                    v-model="editForm.imei2"
+                                    type="text"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white font-mono focus:ring-2 focus:ring-blue-500 transition"
+                                />
+                            </div>
+                            <div>
                                 <label
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >Qty *</label
@@ -1308,7 +1104,11 @@ onMounted(() => {
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >Harga Beli</label
                                 >
-                                <CurrencyInput v-model="editForm.harga_beli" />
+                                <CurrencyInput
+                                    v-model="editForm.harga_beli"
+                                    :allow-thousands="true"
+                                    class="!rounded-xl"
+                                />
                             </div>
                             <div>
                                 <label
@@ -1466,83 +1266,47 @@ onMounted(() => {
                                     class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-slate-600 mb-1"
-                                        >Satuan *</label
-                                    >
+
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-600 mb-1"
+                                    >Merk *</label
+                                >
+                                <div class="flex gap-1.5">
                                     <select
-                                        v-model="quickMasterForm.unit_id"
+                                        v-model="quickMasterForm.brand_id"
                                         required
-                                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                        class="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
                                     >
-                                        <option value="">Pilih Satuan</option>
+                                        <option value="">Pilih Merk</option>
                                         <option
-                                            v-for="u in units"
-                                            :key="u.id"
-                                            :value="u.id"
+                                            v-for="b in brands"
+                                            :key="b.id"
+                                            :value="b.id"
                                         >
-                                            {{ u.nama }}
+                                            {{ b.nama }}
                                         </option>
                                     </select>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-slate-600 mb-1"
-                                        >Identifier *</label
+                                    <button
+                                        type="button"
+                                        @click="showQuickBrand = true"
+                                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                                        title="Tambah cepat"
                                     >
-                                    <select
-                                        v-model="quickMasterForm.identifier_type"
-                                        required
-                                        class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="none">
-                                            Tanpa IMEI/SN
-                                        </option>
-                                        <option value="imei1">
-                                            IMEI Tunggal
-                                        </option>
-                                        <option value="imei2">
-                                            Dual IMEI
-                                        </option>
-                                        <option value="serial">
-                                            Serial Number
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-2 text-xs">
-                                <div
-                                    class="px-2 py-1.5 bg-slate-50 rounded border border-slate-100"
-                                >
-                                    Kategori:
-                                    {{
-                                        categories.find(
-                                            (c) =>
-                                                c.id === itemForm.category_id,
-                                        )?.nama || "-"
-                                    }}
-                                </div>
-                                <div
-                                    class="px-2 py-1.5 bg-slate-50 rounded border border-slate-100"
-                                >
-                                    Merk:
-                                    {{
-                                        brands.find(
-                                            (b) => b.id === itemForm.brand_id,
-                                        )?.nama || "-"
-                                    }}
-                                </div>
-                                <div
-                                    class="px-2 py-1.5 bg-slate-50 rounded border border-slate-100"
-                                >
-                                    Grade:
-                                    {{
-                                        grades.find(
-                                            (g) => g.id === itemForm.grade_id,
-                                        )?.nama || "-"
-                                    }}
+                                        <svg
+                                            class="w-4 h-4 text-slate-500"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div>
@@ -1557,7 +1321,10 @@ onMounted(() => {
                                 ></textarea>
                             </div>
                         </div>
-                        <p v-if="quickMasterError" class="text-red-500 text-sm mt-2">
+                        <p
+                            v-if="quickMasterError"
+                            class="text-red-500 text-sm mt-2"
+                        >
                             {{ quickMasterError }}
                         </p>
                         <div class="flex gap-2 mt-4">

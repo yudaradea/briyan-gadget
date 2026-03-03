@@ -158,21 +158,29 @@ class SaleRepository
     public function generateInvoiceNumber(): string
     {
         $prefix = 'INV';
-        $date = now()->format('Ymd');
+        $date = date('ymd');
 
         $latest = $this->model->withTrashed()
-            ->where('no_invoice', 'like', "{$prefix}-{$date}-%")
+            ->where('no_invoice', 'like', "{$prefix}{$date}%")
+            ->whereRaw('LENGTH(no_invoice) <= 12')
             ->orderByDesc('no_invoice')
             ->value('no_invoice');
 
         if ($latest) {
-            $lastNum = (int) substr($latest, -4);
+            $lastNum = (int) substr($latest, 9);
             $nextNum = $lastNum + 1;
         } else {
             $nextNum = 1;
         }
 
-        return sprintf('%s-%s-%04d', $prefix, $date, $nextNum);
+        $invoice = sprintf('%s%s%03d', $prefix, $date, $nextNum);
+
+        while ($this->model->withTrashed()->where('no_invoice', $invoice)->exists()) {
+            $nextNum++;
+            $invoice = sprintf('%s%s%03d', $prefix, $date, $nextNum);
+        }
+
+        return $invoice;
     }
 
     /**

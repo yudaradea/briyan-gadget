@@ -400,7 +400,7 @@ function formatDate(dateStr) {
 </script>
 
 <template>
-    <div class="px-4 md:px-8 max-w-[1400px] mx-auto space-y-6 pb-20">
+    <div class="px-4 md:px-8 w-full mx-auto space-y-6 pb-20">
         <!-- Header -->
         <div
             class="flex flex-col justify-between gap-4 md:flex-row md:items-center"

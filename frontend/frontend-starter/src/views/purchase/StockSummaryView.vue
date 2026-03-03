@@ -18,7 +18,6 @@ async function printBarcode(purchaseId, productId) {
         query: { product_id: productId },
     });
 }
-const categories = ref([]);
 const brands = ref([]);
 const isLoading = ref(false);
 const searchQuery = ref("");
@@ -31,24 +30,13 @@ const pagination = ref({
 });
 
 const filters = ref({
-    category_id: "",
     brand_id: "",
 });
 
 onMounted(() => {
     fetchItems();
-    fetchCategories();
     fetchBrands();
 });
-
-async function fetchCategories() {
-    try {
-        const { data } = await api.get("/categories/all");
-        categories.value = data.data;
-    } catch (e) {
-        console.error("Gagal memuat kategori", e);
-    }
-}
 
 async function fetchBrands() {
     try {
@@ -62,12 +50,11 @@ async function fetchBrands() {
 async function fetchItems(page = 1) {
     isLoading.value = true;
     try {
-        const { data } = await api.get("/products", {
+        const { data } = await api.get("/products/summary", {
             params: {
                 page,
                 per_page: perPage.value,
                 search: searchQuery.value,
-                category_id: filters.value.category_id,
                 brand_id: filters.value.brand_id,
             },
         });
@@ -107,7 +94,7 @@ watch(
 );
 
 function resetFilters() {
-    filters.value = { category_id: "", brand_id: "" };
+    filters.value = { brand_id: "" };
     searchQuery.value = "";
     fetchItems(1);
 }
@@ -123,13 +110,11 @@ async function openDetail(item) {
     detailItems.value = [];
     detailHeader.value = {
         nama: item.nama,
-        grade: item.grade?.nama || "-",
     };
     try {
         const { data } = await api.get("/products/stock-details", {
             params: {
                 master_product_id: item.master_product_id,
-                grade_id: item.grade_id || undefined,
             },
         });
         detailItems.value = data.data || [];
@@ -195,44 +180,6 @@ function productIdentifier(item) {
                 <div
                     class="grid w-full grid-cols-2 gap-3 md:grid-cols-3 lg:flex md:w-auto"
                 >
-                    <div class="flex flex-col gap-1">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase"
-                            >Kategori</label
-                        >
-                        <div class="relative">
-                            <select
-                                v-model="filters.category_id"
-                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white pr-8"
-                            >
-                                <option value="">Semua Kategori</option>
-                                <option
-                                    v-for="c in categories"
-                                    :key="c.id"
-                                    :value="c.id"
-                                >
-                                    {{ c.nama }}
-                                </option>
-                            </select>
-                            <div
-                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
-                            >
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
                     <div class="flex flex-col gap-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
@@ -372,9 +319,8 @@ function productIdentifier(item) {
                 <table class="table-fixed-layout table-wide">
                     <thead class="table-header">
                         <tr class="">
-                            <th class="">Barang</th>
-                            <th class="text-center">Brand & Kategori</th>
-                            <th class="text-center">Grade</th>
+                            <th class="">Nama Produk</th>
+                            <th class="text-center">Merk</th>
                             <th class="text-center">Total Stok</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -410,58 +356,21 @@ function productIdentifier(item) {
                         >
                             <td class="table-cell">
                                 <div class="flex items-center gap-3">
-                                    <div
-                                        class="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 text-slate-400 shrink-0"
-                                    >
-                                        <svg
-                                            class="w-5 h-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                                            />
-                                        </svg>
-                                    </div>
                                     <div>
-                                        <div
-                                            class="font-bold capitalize text-slate-700"
+                                        <button
+                                            @click="openDetail(item)"
+                                            class="font-bold text-blue-600 hover:text-blue-800 hover:underline uppercase text-left transition-colors cursor-pointer"
                                         >
                                             {{ item.nama }}
-                                        </div>
-                                        <div
-                                            class="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider"
-                                        >
-                                            {{ item.unit?.nama || "Unit" }}
-                                        </div>
+                                        </button>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="table-cell text-center">
-                                <div class="flex flex-col items-center gap-1">
-                                    <span
-                                        class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase"
-                                        >{{
-                                            item.brand?.nama || "Generic"
-                                        }}</span
-                                    >
-                                    <span
-                                        class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase"
-                                        >{{ item.category?.nama }}</span
-                                    >
                                 </div>
                             </td>
                             <td class="table-cell text-center">
                                 <span
-                                    v-if="item.grade"
-                                    class="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-600 text-[10px] font-bold uppercase"
-                                    >{{ item.grade?.nama }}</span
+                                    class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase"
+                                    >{{ item.brand?.nama || "Generic" }}</span
                                 >
-                                <span v-else class="text-slate-300">—</span>
                             </td>
                             <td class="table-cell text-center">
                                 <span
@@ -566,8 +475,7 @@ function productIdentifier(item) {
                             Detail SKU
                         </h3>
                         <p class="mt-1 text-xs text-slate-500">
-                            {{ detailHeader.nama }} - Grade:
-                            {{ detailHeader.grade }}
+                            {{ detailHeader.nama }}
                         </p>
                     </div>
                     <button
@@ -611,6 +519,11 @@ function productIdentifier(item) {
                                 <th
                                     class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
                                 >
+                                    Satuan
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-xs font-bold text-left uppercase text-slate-500"
+                                >
                                     Grade
                                 </th>
                                 <th
@@ -638,7 +551,7 @@ function productIdentifier(item) {
                         <tbody class="divide-y divide-slate-100">
                             <tr v-if="detailLoading">
                                 <td
-                                    colspan="8"
+                                    colspan="9"
                                     class="px-4 py-8 text-center text-slate-500"
                                 >
                                     Memuat detail...
@@ -646,7 +559,7 @@ function productIdentifier(item) {
                             </tr>
                             <tr v-else-if="detailItems.length === 0">
                                 <td
-                                    colspan="8"
+                                    colspan="9"
                                     class="px-4 py-8 text-center text-slate-400"
                                 >
                                     Tidak ada data detail SKU.
@@ -673,6 +586,9 @@ function productIdentifier(item) {
                                 </td>
                                 <td class="px-4 py-3 text-slate-700">
                                     {{ row.supplier || "-" }}
+                                </td>
+                                <td class="px-4 py-3 text-slate-700 uppercase">
+                                    {{ row.satuan || "-" }}
                                 </td>
                                 <td class="px-4 py-3 text-slate-700">
                                     {{ row.grade || "-" }}
