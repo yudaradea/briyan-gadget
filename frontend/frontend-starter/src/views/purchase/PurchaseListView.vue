@@ -130,14 +130,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
             );
             filters.value.end_date = "";
             return;
         }
         fetchPurchases(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -176,7 +176,9 @@ async function doDelete() {
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
-        <div class="flex items-center justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Stok Barang (Masuk)
@@ -185,7 +187,7 @@ async function doDelete() {
                     Kelola stok barang masuk dari supplier
                 </p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <router-link
                     to="/dashboard/purchase-items"
                     class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
@@ -261,7 +263,7 @@ async function doDelete() {
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Supplier</label
@@ -299,7 +301,11 @@ async function doDelete() {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
+                        <label
+                            class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block"
+                            >Reset</label
+                        >
                         <button
                             @click="
                                 filters = {
@@ -308,11 +314,11 @@ async function doDelete() {
                                     supplier_id: '',
                                 }
                             "
-                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
+                            class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
                             <svg
-                                class="w-5 h-5"
+                                class="w-4 h-4 shrink-0"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -324,6 +330,7 @@ async function doDelete() {
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                                 />
                             </svg>
+                            <span class="md:hidden">Reset Filter</span>
                         </button>
                     </div>
                 </div>
@@ -449,7 +456,7 @@ async function doDelete() {
                                     v-if="editingPurchaseId === p.id"
                                     v-model="editForm.no_invoice"
                                     type="text"
-                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded outline-none focus:ring-2 focus:ring-blue-200"
                                 />
                                 <span
                                     v-else
@@ -465,7 +472,7 @@ async function doDelete() {
                                     v-if="editingPurchaseId === p.id"
                                     v-model="editForm.tanggal"
                                     type="date"
-                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded outline-none focus:ring-2 focus:ring-blue-200"
                                 />
                                 <span
                                     v-else
@@ -480,7 +487,7 @@ async function doDelete() {
                                 <select
                                     v-if="editingPurchaseId === p.id"
                                     v-model="editForm.supplier_id"
-                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded focus:ring-2 focus:ring-blue-200 outline-none"
+                                    class="w-full px-2 py-1 text-sm bg-white border border-blue-400 rounded outline-none focus:ring-2 focus:ring-blue-200"
                                 >
                                     <option value="" disabled>
                                         Pilih Supplier
@@ -628,7 +635,7 @@ async function doDelete() {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col items-start justify-between gap-3 px-6 py-3 border-t sm:flex-row sm:items-center border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan
@@ -639,7 +646,7 @@ async function doDelete() {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari

@@ -53,11 +53,11 @@ onMounted(fetchStoreProfile);
 
 <template>
     <div
-        class="flex flex-col justify-center min-h-screen py-12 font-sans bg-gradient-to-br from-blue-50 via-gray-50 to-white sm:px-6 lg:px-8"
+        class="flex flex-col justify-center min-h-screen py-12 font-sans bg-gradient-to-br from-blue-50 via-gray-50 to-white px-4 sm:px-6 lg:px-8"
     >
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div
-                class="relative px-4 py-12 bg-white border border-gray-100 shadow-2xl shadow-blue-900/5 sm:rounded-3xl sm:px-12"
+                class="relative px-4 py-8 bg-white border border-gray-100 shadow-2xl shadow-blue-900/5 rounded-3xl sm:py-12 sm:px-12"
             >
                 <div
                     class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-t-3xl"
@@ -92,7 +92,7 @@ onMounted(fetchStoreProfile);
                     </div>
 
                     <h2
-                        class="mt-6 text-3xl font-extrabold tracking-tight text-center text-gray-900"
+                        class="mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight text-center text-gray-900"
                     >
                         Selamat Datang
                     </h2>

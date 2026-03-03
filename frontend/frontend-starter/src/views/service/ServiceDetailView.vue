@@ -718,7 +718,7 @@ function formatDate(dateStr) {
                                 }}</span>
                             </p>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <p
                                     class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1"
@@ -1003,7 +1003,7 @@ function formatDate(dateStr) {
                                 >
                                     Pembayaran Service
                                 </h4>
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label
                                             class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1"
@@ -1412,7 +1412,7 @@ function formatDate(dateStr) {
                             </button>
                         </div>
                         <div
-                            class="grid grid-cols-2 gap-4 pt-4 border-t border-blue-100/50"
+                            class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-blue-100/50"
                         >
                             <div>
                                 <label

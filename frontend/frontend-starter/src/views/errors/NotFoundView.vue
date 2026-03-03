@@ -11,7 +11,7 @@
             <p class="text-slate-500 mb-8 max-w-md mx-auto">
                 Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan. Silakan kembali ke halaman utama.
             </p>
-            <div class="flex gap-3 justify-center">
+            <div class="flex flex-col gap-3 justify-center sm:flex-row">
                 <router-link to="/dashboard" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
                     Kembali ke Dashboard
                 </router-link>

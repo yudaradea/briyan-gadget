@@ -144,7 +144,7 @@ onMounted(fetchSummary);
         class="min-h-screen p-4 space-y-8 font-sans bg-slate-50 sm:p-6 lg:p-8"
     >
         <div
-            class="relative p-8 overflow-hidden text-white shadow-2xl rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-black shadow-slate-900/20"
+            class="relative p-5 sm:p-8 overflow-hidden text-white shadow-2xl rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-black shadow-slate-900/20"
         >
             <div class="relative z-10">
                 <p
@@ -153,7 +153,7 @@ onMounted(fetchSummary);
                     Ringkasan Bisnis
                 </p>
                 <h1
-                    class="mt-3 text-3xl font-extrabold tracking-tight text-transparent sm:text-4xl bg-clip-text bg-gradient-to-r from-white to-slate-400"
+                    class="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400"
                 >
                     Dashboard Operasional
                 </h1>
@@ -210,7 +210,7 @@ onMounted(fetchSummary);
                         ></span>
                         {{ section.title }}
                     </h2>
-                    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         <article
                             v-for="card in section.cards"
                             :key="card.label"
@@ -240,7 +240,7 @@ onMounted(fetchSummary);
                         ></span>
                         Metrik Pendukung
                     </h2>
-                    <div class="grid gap-5 sm:grid-cols-3 xl:grid-cols-6">
+                    <div class="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
                         <article
                             v-for="card in miniCards"
                             :key="card.label"
@@ -260,7 +260,7 @@ onMounted(fetchSummary);
                     </div>
                 </div>
 
-                <div class="grid gap-6 xl:grid-cols-2">
+                <div class="grid gap-6 lg:grid-cols-2">
                     <section
                         v-for="(chart, idx) in chartsData"
                         :key="idx"
@@ -302,7 +302,7 @@ onMounted(fetchSummary);
                             </div>
                         </header>
 
-                        <div class="flex h-[300px] w-full gap-2 mt-auto">
+                        <div class="flex h-45 sm:h-60 md:h-75 w-full gap-2 mt-auto">
                             <div
                                 class="flex flex-col justify-between pb-8 text-right text-[10px] font-semibold text-slate-400 w-10"
                             >

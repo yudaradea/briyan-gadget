@@ -132,7 +132,7 @@
             <!-- Pagination -->
             <div
                 v-if="pagination && pagination.last_page > 1"
-                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan

@@ -7,7 +7,7 @@
             class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100"
         >
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16 items-center">
+                <div class="flex flex-col gap-2 py-3 sm:flex-row sm:justify-between sm:h-16 sm:items-center sm:py-0">
                     <div class="flex-shrink-0 flex items-center">
                         <span
                             class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
@@ -63,7 +63,7 @@
                     TailwindCSS, and a robust backend architecture.
                 </p>
 
-                <div class="mt-10 flex justify-center gap-4">
+                <div class="mt-10 flex flex-wrap justify-center gap-4">
                     <router-link
                         to="/register"
                         class="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg hover:bg-blue-700 transition transform hover:-translate-y-1 shadow-xl shadow-blue-600/30"
@@ -79,7 +79,7 @@
                 </div>
 
                 <div
-                    class="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4 grayscale hover:grayscale-0 transition-all duration-500 opacity-70"
+                    class="mt-16 grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4 grayscale hover:grayscale-0 transition-all duration-500 opacity-70"
                 >
                     <!-- Icons or logos could go here -->
                     <div class="flex flex-col items-center">

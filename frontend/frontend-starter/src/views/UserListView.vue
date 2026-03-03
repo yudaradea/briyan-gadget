@@ -144,10 +144,10 @@ onMounted(() => {
     <div>
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div
-                class="p-6 border-b border-gray-200 flex justify-between items-center"
+                class="p-4 sm:p-6 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center"
             >
                 <h2 class="text-xl font-bold text-gray-800">Users List</h2>
-                <div class="flex items-end gap-4">
+                <div class="flex flex-wrap items-end gap-3">
                     <!-- Tampilkan -->
                     <div class="flex flex-col gap-1">
                         <label
@@ -194,7 +194,7 @@ onMounted(() => {
                                 v-model="searchQuery"
                                 type="text"
                                 placeholder="Nama atau email..."
-                                class="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm outline-none w-64"
+                                class="pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm outline-none w-full sm:w-64"
                             />
                             <div
                                 class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"

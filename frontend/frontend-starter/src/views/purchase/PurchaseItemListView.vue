@@ -274,7 +274,7 @@ const copyTotalJual = computed(() => {
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
         <div class="flex items-start justify-between">
             <div class="flex flex-col w-full">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-slate-800">
                             List Semua Barang
@@ -283,7 +283,7 @@ const copyTotalJual = computed(() => {
                             Daftar breakdown semua unit unit/imei yang masuk
                         </p>
                     </div>
-                    <div class="flex gap-2 pt-1">
+                    <div class="flex flex-wrap gap-2 pt-1">
                         <router-link
                             to="/dashboard/purchases"
                             class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
@@ -521,7 +521,7 @@ const copyTotalJual = computed(() => {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >No. Invoice</label
@@ -530,10 +530,11 @@ const copyTotalJual = computed(() => {
                             v-model="filters.no_invoice"
                             type="text"
                             placeholder="INV..."
-                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white w-32"
+                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white w-full sm:w-32"
                         />
                     </div>
-                    <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
                         <button
                             @click="
                                 filters = {
@@ -546,22 +547,13 @@ const copyTotalJual = computed(() => {
                                 };
                                 searchQuery = '';
                             "
-                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
+                            class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
+                            <span class="md:hidden">Reset Filter</span>
                         </button>
                     </div>
                 </div>
@@ -934,7 +926,7 @@ const copyTotalJual = computed(() => {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-[11px] text-slate-500">
                     Menampilkan

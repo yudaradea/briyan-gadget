@@ -504,7 +504,7 @@ onMounted(() => {
 
         <!-- Step 1: Invoice Header -->
         <div
-            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-5"
+            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-5"
         >
             <div class="flex items-center justify-between mb-5">
                 <div class="flex items-center gap-2.5">
@@ -681,7 +681,7 @@ onMounted(() => {
         <!-- Step 2: Add Items -->
         <div
             v-if="headerSaved"
-            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-5"
+            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-5"
         >
             <div class="flex items-center gap-2.5 mb-5">
                 <span
@@ -925,7 +925,7 @@ onMounted(() => {
             class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-5"
         >
             <div
-                class="px-6 py-4 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center border-b border-slate-100"
+                class="px-4 sm:px-6 py-4 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center border-b border-slate-100"
             >
                 <h3 class="font-semibold text-slate-800">
                     Daftar Barang
@@ -1159,7 +1159,7 @@ onMounted(() => {
         </div>
 
         <!-- Bottom Actions -->
-        <div v-if="headerSaved && items.length > 0" class="flex gap-3">
+        <div v-if="headerSaved && items.length > 0" class="flex flex-wrap gap-3">
             <router-link
                 :to="`/dashboard/purchases/${purchaseId}`"
                 class="px-5 py-2.5 bg-white text-slate-700 text-sm font-medium rounded-xl border border-slate-200 hover:bg-slate-50 transition flex items-center gap-2"

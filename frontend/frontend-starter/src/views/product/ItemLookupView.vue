@@ -73,7 +73,7 @@ function clearField() {
 </script>
 
 <template>
-    <div class="max-w-6xl py-2 mx-auto space-y-6">
+    <div class="max-w-6xl py-2 mx-auto space-y-6 px-4 sm:px-0">
         <section
             class="relative overflow-hidden border shadow-sm rounded-2xl border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50"
         >

@@ -223,7 +223,7 @@ function servicePartsSummary(sale) {
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 class="text-2xl font-bold text-slate-800">
                 {{ isServiceMode ? "Transaksi Service" : "Data Penjualan" }}
             </h1>
@@ -360,8 +360,8 @@ function servicePartsSummary(sale) {
                     :class="[
                         'grid w-full gap-3 lg:flex md:w-auto',
                         isServiceMode
-                            ? 'grid-cols-2 md:grid-cols-3'
-                            : 'grid-cols-2 md:grid-cols-4',
+                            ? 'grid-cols-2 md:grid-cols-4'
+                            : 'grid-cols-2 md:grid-cols-5',
                     ]"
                 >
                     <div class="flex flex-col gap-1">
@@ -387,7 +387,7 @@ function servicePartsSummary(sale) {
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Kasir</label
@@ -425,7 +425,7 @@ function servicePartsSummary(sale) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1" v-if="!isServiceMode">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1" v-if="!isServiceMode">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sales</label
@@ -463,7 +463,8 @@ function servicePartsSummary(sale) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
                         <button
                             @click="
                                 filters = {
@@ -473,22 +474,13 @@ function servicePartsSummary(sale) {
                                     sales_rep_id: '',
                                 }
                             "
-                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
+                            class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
+                            <span class="md:hidden">Reset Filter</span>
                         </button>
                     </div>
                 </div>
@@ -776,7 +768,7 @@ function servicePartsSummary(sale) {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan

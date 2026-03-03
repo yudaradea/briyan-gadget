@@ -176,7 +176,7 @@ const changePassword = async () => {
 
                 <form @submit.prevent="updateProfile" class="space-y-6">
                     <!-- Avatar Section -->
-                    <div class="flex items-center space-x-6">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:space-x-6">
                         <div class="shrink-0">
                             <img
                                 v-if="previewUrl"

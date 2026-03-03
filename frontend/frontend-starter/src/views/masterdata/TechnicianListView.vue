@@ -76,7 +76,7 @@ async function doDelete() {
 
 <template>
     <div>
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Teknisi</h1>
                 <p class="mt-1 text-sm text-gray-500">

@@ -92,9 +92,9 @@ onMounted(loadPurchase);
         <div v-else-if="purchase">
             <!-- Invoice Info Card -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-5"
+                class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-5"
             >
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <p class="text-xs font-medium text-slate-400 mb-1">
                             No. Invoice
@@ -147,7 +147,7 @@ onMounted(loadPurchase);
             >
                 <!-- Header -->
                 <div
-                    class="px-5 py-3.5 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center border-b border-slate-100"
+                    class="px-4 sm:px-5 py-3.5 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center border-b border-slate-100"
                 >
                     <h3 class="font-semibold text-slate-800 text-sm">
                         Daftar Barang
@@ -203,7 +203,7 @@ onMounted(loadPurchase);
                     <div
                         v-for="(item, idx) in purchase.items"
                         :key="item.id"
-                        class="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60 transition"
+                        class="flex flex-wrap items-start sm:items-center gap-3 px-4 sm:px-5 py-3 hover:bg-slate-50/60 transition"
                     >
                         <!-- Row Number -->
                         <span
@@ -289,7 +289,7 @@ onMounted(loadPurchase);
                         </div>
 
                         <!-- Fixed-width columns for alignment -->
-                        <div class="flex items-center gap-3 shrink-0">
+                        <div class="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto">
                             <!-- IMEI 1 -->
                             <div class="text-right w-32">
                                 <p class="text-[10px] text-slate-400 mb-0.5">
@@ -363,7 +363,7 @@ onMounted(loadPurchase);
 
                 <!-- Total Footer -->
                 <div
-                    class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center"
+                    class="px-4 sm:px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center"
                 >
                     <span
                         class="text-xs font-semibold text-slate-400 uppercase tracking-wider"

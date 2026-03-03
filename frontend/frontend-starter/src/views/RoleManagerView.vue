@@ -178,7 +178,7 @@ const submitPermission = async () => {
     <div>
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div
-                class="p-6 border-b border-gray-200 flex justify-between items-center"
+                class="p-6 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">

@@ -158,7 +158,7 @@ function productIdentifier(item) {
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Stok Barang (Ready)
@@ -178,9 +178,9 @@ function productIdentifier(item) {
             >
                 <!-- Left: Filters -->
                 <div
-                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-3 lg:flex md:w-auto"
+                    class="grid w-full grid-cols-2 gap-3 md:grid-cols-2 lg:flex md:w-auto"
                 >
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Merk</label
@@ -218,29 +218,17 @@ function productIdentifier(item) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 lg:justify-end pb-0.5">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase invisible"
-                            >Reset</label
-                        >
+                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
                         <button
                             @click="resetFilters"
-                            class="p-2 transition-colors text-slate-400 hover:text-rose-500"
+                            class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg
-                                class="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
+                            <span class="md:hidden">Reset Filter</span>
                         </button>
                     </div>
                 </div>
@@ -417,7 +405,7 @@ function productIdentifier(item) {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="flex items-center justify-between px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-3 border-t border-slate-200 bg-slate-50"
             >
                 <div class="text-sm text-slate-500">
                     Menampilkan
@@ -466,7 +454,7 @@ function productIdentifier(item) {
                 class="w-full max-w-6xl overflow-hidden bg-white border shadow-xl rounded-2xl border-slate-100"
             >
                 <div
-                    class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50"
+                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50"
                 >
                     <div>
                         <h3
@@ -497,7 +485,7 @@ function productIdentifier(item) {
                         </svg>
                     </button>
                 </div>
-                <div class="p-6 overflow-x-auto">
+                <div class="p-4 sm:p-6 overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="bg-slate-50">
                             <tr>

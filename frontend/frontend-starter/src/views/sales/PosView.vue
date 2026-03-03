@@ -466,7 +466,7 @@ function cancelTransaction() {
     >
         <!-- Title Header -->
         <div
-            class="flex items-end justify-between pb-3 mx-6 mt-4 border-b-2 border-slate-200"
+            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3 mx-3 sm:mx-6 mt-4 border-b-2 border-slate-200"
         >
             <h1
                 class="flex items-center gap-2 text-xl font-bold text-slate-700"
@@ -485,10 +485,10 @@ function cancelTransaction() {
         </div>
 
         <!-- Top Information Blocks -->
-        <div class="relative z-10 grid grid-cols-1 gap-4 px-6 lg:grid-cols-4">
+        <div class="relative z-10 grid grid-cols-1 gap-4 px-3 sm:px-6 lg:grid-cols-4">
             <!-- Blue Top Line Decoration -->
             <div
-                class="absolute -top-[1.2rem] left-6 right-6 h-[3px] bg-cyan-400 rounded-t-sm shadow-sm"
+                class="absolute -top-[1.2rem] left-3 right-3 sm:left-6 sm:right-6 h-[3px] bg-cyan-400 rounded-t-sm shadow-sm"
             ></div>
 
             <div
@@ -563,7 +563,7 @@ function cancelTransaction() {
         </div>
 
         <!-- Main Body (Form + Table) -->
-        <div class="flex flex-col gap-6 px-6 lg:flex-row">
+        <div class="flex flex-col gap-6 px-3 sm:px-6 lg:flex-row">
             <!-- Left Side: Tambah Pembelian (300px width) -->
             <div
                 class="w-full lg:w-[400px] bg-white rounded shadow-sm border border-slate-100 shrink-0 self-start"

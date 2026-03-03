@@ -28,7 +28,7 @@ const createUser = async () => {
 </script>
 
 <template>
-    <div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
+    <div class="w-full px-4 sm:px-0 bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
         <h2 class="text-2xl font-bold mb-6">Create New User</h2>
 
         <div v-if="error" class="mb-4 bg-red-100 text-red-700 p-3 rounded">

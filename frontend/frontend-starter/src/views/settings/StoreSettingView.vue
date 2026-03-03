@@ -106,8 +106,8 @@ const submitForm = async () => {
 </script>
 
 <template>
-    <div class="max-w-4xl py-6 mx-auto">
-        <div class="flex items-center justify-between mb-8">
+    <div class="max-w-4xl py-6 mx-auto px-4 sm:px-0">
+        <div class="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">
                     Informasi Toko
