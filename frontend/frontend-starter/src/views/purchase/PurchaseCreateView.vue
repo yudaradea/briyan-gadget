@@ -10,10 +10,13 @@ import ImageModal from "../../components/ImageModal.vue";
 import PurchaseItemRow from "../../components/PurchaseItemRow.vue";
 import { useToast } from "../../composables/useToast";
 import { storageUrl } from "../../utils/storage";
+import { useAuthStore } from "../../stores/auth";
 
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
+const authStore = useAuthStore();
+const canDelete = computed(() => !authStore.isKasir);
 
 const isEditMode = computed(() => !!route.params.id);
 
@@ -953,6 +956,7 @@ onMounted(() => {
                         :item="item"
                         :index="idx + 1"
                         :show-actions="true"
+                        :can-remove="canDelete"
                         @edit="startEdit"
                         @remove="confirmRemoveItem"
                         @image-click="openModal"

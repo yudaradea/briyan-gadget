@@ -6,6 +6,8 @@ import { useToast } from "../composables/useToast";
 const toast = useToast();
 const loading = ref(true);
 const summary = ref(null);
+const isKasir = computed(() => Boolean(summary.value?.is_kasir));
+const kasirName = computed(() => summary.value?.current_user_name || "Kasir");
 
 const colors = {
     sales: "from-sky-500 to-blue-600 shadow-sky-500/30",
@@ -58,12 +60,11 @@ const purchaseCards = computed(() => {
 const miniCards = computed(() => {
     const c = summary.value?.cards?.summary || {};
     return [
-        { label: "Invoice Pembelian", value: c.purchase_invoices || 0 },
-        { label: "Produk Katalog", value: c.catalog_products || 0 },
-        { label: "Kategori Produk", value: c.categories || 0 },
-        { label: "Grade Produk", value: c.grades || 0 },
-        { label: "Sales Rep", value: c.sales_reps || 0 },
-        { label: "Mitra Supplier", value: c.suppliers || 0 },
+        { label: "Jumlah Invoice Pembelian", value: c.purchase_invoices || 0 },
+        { label: "Jumlah Produk Tersedia", value: c.available_products || 0 },
+        { label: "Jumlah Invoice Penjualan", value: c.sales_invoices || 0 },
+        { label: "Jumlah Sales", value: c.kasir_users || 0 },
+        { label: "Jumlah Mitra", value: c.suppliers || 0 },
     ];
 });
 
@@ -88,12 +89,16 @@ const dailyRows = computed(() => {
 
 const monthlyRows = computed(() => chartRows(monthlyChart.value));
 
-function maxValue(rows) {
+function maxValue(rows, includeProfit = true, includePurchases = true) {
     if (!rows || rows.length === 0) return 1;
     return Math.max(
         1,
         ...rows.map((r) =>
-            Math.max(r.sales || 0, r.purchases || 0, r.profit || 0)
+            Math.max(
+                r.sales || 0,
+                includePurchases ? r.purchases || 0 : 0,
+                includeProfit ? r.profit || 0 : 0
+            )
         )
     );
 }
@@ -103,12 +108,12 @@ const chartsData = computed(() => [
     {
         title: "Grafik 7 Hari Terakhir",
         rows: dailyRows.value,
-        max: maxValue(dailyRows.value),
+        max: maxValue(dailyRows.value, !isKasir.value, !isKasir.value),
     },
     {
         title: `Grafik Bulanan (${new Date().getFullYear()})`,
         rows: monthlyRows.value,
-        max: maxValue(monthlyRows.value),
+        max: maxValue(monthlyRows.value, !isKasir.value, !isKasir.value),
     },
 ]);
 
@@ -144,7 +149,7 @@ onMounted(fetchSummary);
         class="min-h-screen p-4 space-y-8 font-sans bg-slate-50 sm:p-6 lg:p-8"
     >
         <div
-            class="relative p-5 sm:p-8 overflow-hidden text-white shadow-2xl rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-black shadow-slate-900/20"
+            class="relative p-5 overflow-hidden text-white shadow-2xl sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-black shadow-slate-900/20"
         >
             <div class="relative z-10">
                 <p
@@ -153,7 +158,7 @@ onMounted(fetchSummary);
                     Ringkasan Bisnis
                 </p>
                 <h1
-                    class="mt-3 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400"
+                    class="mt-3 text-2xl font-extrabold tracking-tight text-transparent sm:text-3xl lg:text-4xl bg-clip-text bg-gradient-to-r from-white to-slate-400"
                 >
                     Dashboard Operasional
                 </h1>
@@ -184,21 +189,28 @@ onMounted(fetchSummary);
                 <div
                     v-for="(section, idx) in [
                         {
-                            title: 'Penjualan',
+                            title: isKasir
+                                ? `Penjualan ${kasirName}`
+                                : 'Penjualan',
                             cards: salesCards,
                             color: colors.sales,
                         },
-                        {
-                            title: 'Laba Bersih',
-                            cards: profitCards,
-                            color: colors.profit,
-                        },
-                        {
-                            title: 'Pembelian',
-                            cards: purchaseCards,
-                            color: colors.purchases,
-                        },
-                    ]"
+                    ].concat(
+                        isKasir
+                            ? []
+                            : [
+                                  {
+                                      title: 'Pembelian',
+                                      cards: purchaseCards,
+                                      color: colors.purchases,
+                                  },
+                                  {
+                                      title: 'Laba Bersih',
+                                      cards: profitCards,
+                                      color: colors.profit,
+                                  },
+                              ]
+                    )"
                     :key="idx"
                     class="space-y-4"
                 >
@@ -231,7 +243,7 @@ onMounted(fetchSummary);
                     </div>
                 </div>
 
-                <div class="space-y-4">
+                <div v-if="!isKasir" class="space-y-4">
                     <h2
                         class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400"
                     >
@@ -240,7 +252,9 @@ onMounted(fetchSummary);
                         ></span>
                         Metrik Pendukung
                     </h2>
-                    <div class="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+                    <div
+                        class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5"
+                    >
                         <article
                             v-for="card in miniCards"
                             :key="card.label"
@@ -284,6 +298,7 @@ onMounted(fetchSummary);
                                     Penjualan
                                 </span>
                                 <span
+                                    v-if="!isKasir"
                                     class="flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-100 px-3 py-1.5 text-amber-600"
                                 >
                                     <span
@@ -292,6 +307,7 @@ onMounted(fetchSummary);
                                     Laba
                                 </span>
                                 <span
+                                    v-if="!isKasir"
                                     class="flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-100 px-3 py-1.5 text-rose-600"
                                 >
                                     <span
@@ -302,7 +318,9 @@ onMounted(fetchSummary);
                             </div>
                         </header>
 
-                        <div class="flex h-45 sm:h-60 md:h-75 w-full gap-2 mt-auto">
+                        <div
+                            class="flex w-full gap-2 mt-auto h-45 sm:h-60 md:h-75"
+                        >
                             <div
                                 class="flex flex-col justify-between pb-8 text-right text-[10px] font-semibold text-slate-400 w-10"
                             >
@@ -357,7 +375,10 @@ onMounted(fetchSummary);
                                                         )}`"
                                                     ></div>
                                                     <div
-                                                        v-if="item.profit > 0"
+                                                        v-if="
+                                                            !isKasir &&
+                                                            item.profit > 0
+                                                        "
                                                         class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-amber-500 to-amber-300 transition-opacity hover:opacity-80 cursor-pointer"
                                                         :style="{
                                                             height: barHeight(
@@ -371,6 +392,7 @@ onMounted(fetchSummary);
                                                     ></div>
                                                     <div
                                                         v-if="
+                                                            !isKasir &&
                                                             item.purchases > 0
                                                         "
                                                         class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-rose-600 to-rose-400 transition-opacity hover:opacity-80 cursor-pointer"

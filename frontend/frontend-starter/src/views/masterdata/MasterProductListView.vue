@@ -1,11 +1,14 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import api from "../../api";
 import DataTable from "../../components/DataTable.vue";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import QuickAddModal from "../../components/QuickAddModal.vue";
+import { useAuthStore } from "../../stores/auth";
 
 const dataTable = ref(null);
+const authStore = useAuthStore();
+const canDelete = computed(() => !authStore.isKasir);
 const showForm = ref(false);
 const showDelete = ref(false);
 const editId = ref(null);
@@ -165,6 +168,7 @@ async function doDelete() {
                         </svg>
                     </button>
                     <button
+                        v-if="canDelete"
                         @click="confirmDelete(row)"
                         class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                         title="Hapus"

@@ -68,8 +68,23 @@ export const useAuthStore = defineStore("auth", {
             return false;
         },
         canViewPurchases: (state) => {
+            // If user has kasir role, allow stock pages
+            if (state.user?.roles?.some(role => role.name === 'kasir')) {
+                return true;
+            }
             // If user has admin roles, return true
             if (state.user?.roles?.some(role => 
+                role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
+            )) {
+                return true;
+            }
+            return false;
+        },
+        canViewMasterData: (state) => {
+            if (state.user?.roles?.some(role => role.name === 'kasir')) {
+                return true;
+            }
+            if (state.user?.roles?.some(role =>
                 role.name === 'admin' || role.name === 'super-admin' || role.name === 'owner'
             )) {
                 return true;

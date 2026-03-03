@@ -3,18 +3,14 @@
 namespace App\Repositories;
 
 use App\Helpers\ResponseHelper;
-use App\Models\Brand;
-use App\Models\Category;
-use App\Models\Grade;
-use App\Models\MasterProduct;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\SaleItem;
-use App\Models\SalesRep;
 use App\Models\SalesTransaction;
-use App\Models\ServiceOrder;
 use App\Models\Supplier;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardRepository
 {
@@ -24,31 +20,43 @@ class DashboardRepository
         $monthStart = Carbon::now()->startOfMonth();
         $yearStart = Carbon::now()->startOfYear();
 
-        $salesToday = (float) SalesTransaction::whereDate('tanggal', $today)->sum('grand_total');
-        $salesMonth = (float) SalesTransaction::whereDate('tanggal', '>=', $monthStart)->sum('grand_total');
-        $salesYear = (float) SalesTransaction::whereDate('tanggal', '>=', $yearStart)->sum('grand_total');
-        $salesTotal = (float) SalesTransaction::sum('grand_total');
+        $user = Auth::user();
+        $isKasir = $user->hasRole('kasir');
+        $userId = $isKasir ? $user->id : null;
 
-        $hppToday = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', $today))->sum('hpp_total');
-        $hppMonth = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $monthStart))->sum('hpp_total');
-        $hppYear = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $yearStart))->sum('hpp_total');
-        $hppTotal = (float) SaleItem::sum('hpp_total');
+        $salesQuery = fn() => $isKasir
+            ? SalesTransaction::where('user_id', $userId)
+            : SalesTransaction::query();
 
-        $purchaseToday = (float) Purchase::whereDate('tanggal', $today)->sum('total');
-        $purchaseMonth = (float) Purchase::whereDate('tanggal', '>=', $monthStart)->sum('total');
-        $purchaseYear = (float) Purchase::whereDate('tanggal', '>=', $yearStart)->sum('total');
-        $purchaseTotal = (float) Purchase::sum('total');
+        $purchaseQuery = fn() => $isKasir
+            ? Purchase::where('user_id', $userId)
+            : Purchase::query();
+
+        $salesToday = (float) $salesQuery()->whereDate('tanggal', $today)->sum('grand_total');
+        $salesMonth = (float) $salesQuery()->whereDate('tanggal', '>=', $monthStart)->sum('grand_total');
+        $salesYear  = (float) $salesQuery()->whereDate('tanggal', '>=', $yearStart)->sum('grand_total');
+        $salesTotal = (float) $salesQuery()->sum('grand_total');
+
+        $hppToday = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', $today)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
+        $hppMonth = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $monthStart)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
+        $hppYear  = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $yearStart)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
+        $hppTotal = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
+
+        $purchaseToday = (float) $purchaseQuery()->whereDate('tanggal', $today)->sum('total');
+        $purchaseMonth = (float) $purchaseQuery()->whereDate('tanggal', '>=', $monthStart)->sum('total');
+        $purchaseYear  = (float) $purchaseQuery()->whereDate('tanggal', '>=', $yearStart)->sum('total');
+        $purchaseTotal = (float) $purchaseQuery()->sum('total');
 
         $dailyDays = collect(range(13, 0))->map(fn($i) => Carbon::today()->subDays($i))->values();
         $dailyLabels = $dailyDays->map(fn($d) => $d->format('d M'))->values();
 
-        $salesDailyMap = SalesTransaction::query()
+        $salesDailyMap = $salesQuery()
             ->selectRaw('DATE(tanggal) as tgl, SUM(grand_total) as total')
             ->whereDate('tanggal', '>=', Carbon::today()->subDays(13))
             ->groupBy('tgl')
             ->pluck('total', 'tgl');
 
-        $purchaseDailyMap = Purchase::query()
+        $purchaseDailyMap = $purchaseQuery()
             ->selectRaw('DATE(tanggal) as tgl, SUM(total) as total')
             ->whereDate('tanggal', '>=', Carbon::today()->subDays(13))
             ->groupBy('tgl')
@@ -58,6 +66,7 @@ class DashboardRepository
             ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
             ->selectRaw('DATE(sales_transactions.tanggal) as tgl, SUM(sale_items.hpp_total) as total')
             ->whereDate('sales_transactions.tanggal', '>=', Carbon::today()->subDays(13))
+            ->when($isKasir, fn($q) => $q->where('sales_transactions.user_id', $userId))
             ->groupBy('tgl')
             ->pluck('total', 'tgl');
 
@@ -71,13 +80,13 @@ class DashboardRepository
         $monthNumbers = collect(range(1, 12));
         $monthLabels = collect(['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']);
 
-        $salesMonthlyMap = SalesTransaction::query()
+        $salesMonthlyMap = $salesQuery()
             ->selectRaw('MONTH(tanggal) as bulan, SUM(grand_total) as total')
             ->whereYear('tanggal', now()->year)
             ->groupBy('bulan')
             ->pluck('total', 'bulan');
 
-        $purchaseMonthlyMap = Purchase::query()
+        $purchaseMonthlyMap = $purchaseQuery()
             ->selectRaw('MONTH(tanggal) as bulan, SUM(total) as total')
             ->whereYear('tanggal', now()->year)
             ->groupBy('bulan')
@@ -87,6 +96,7 @@ class DashboardRepository
             ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
             ->selectRaw('MONTH(sales_transactions.tanggal) as bulan, SUM(sale_items.hpp_total) as total')
             ->whereYear('sales_transactions.tanggal', now()->year)
+            ->when($isKasir, fn($q) => $q->where('sales_transactions.user_id', $userId))
             ->groupBy('bulan')
             ->pluck('total', 'bulan');
 
@@ -95,6 +105,8 @@ class DashboardRepository
         $monthlyProfit = $monthNumbers->map(fn($m) => (float) (($salesMonthlyMap[$m] ?? 0) - ($hppMonthlyMap[$m] ?? 0)))->values();
 
         $data = [
+            'is_kasir' => $isKasir,
+            'current_user_name' => $user?->name,
             'cards' => [
                 'sales' => [
                     'today' => $salesToday,
@@ -116,14 +128,10 @@ class DashboardRepository
                 ],
                 'summary' => [
                     'purchase_invoices' => Purchase::count(),
-                    'catalog_products' => MasterProduct::count(),
-                    'stock_products' => Product::count(),
-                    'categories' => Category::count(),
-                    'grades' => Grade::count(),
-                    'brands' => Brand::count(),
-                    'sales_reps' => SalesRep::count(),
+                    'available_products' => Product::where('stok', '>', 0)->count(),
+                    'sales_invoices' => SalesTransaction::count(),
+                    'kasir_users' => User::role('kasir')->count(),
                     'suppliers' => Supplier::count(),
-                    'services' => ServiceOrder::count(),
                 ],
             ],
             'charts' => [

@@ -11,6 +11,8 @@ const toast = useToast();
 const authStore = useAuthStore();
 const route = useRoute();
 const isServiceMode = computed(() => route.name === "service-transaction-list");
+const isKasir = computed(() => authStore.isKasir);
+const kasirName = computed(() => authStore.user?.name || "Kasir");
 const transactionType = computed(() =>
     isServiceMode.value ? "service" : "penjualan",
 );
@@ -36,6 +38,9 @@ const users = ref([]);
 const salesReps = ref([]);
 
 onMounted(() => {
+    if (isKasir.value && authStore.user?.id) {
+        filters.value.user_id = authStore.user.id;
+    }
     fetchSales();
     fetchStats();
     loadFilterOptions();
@@ -43,13 +48,21 @@ onMounted(() => {
 
 const loadFilterOptions = async () => {
     try {
-        const requests = [api.get("/user/all?role=kasir")];
+        const requests = [];
+        if (!isKasir.value) {
+            requests.push(api.get("/user/all?role=kasir"));
+        }
         if (!isServiceMode.value) {
             requests.push(api.get("/sales-reps/all"));
         }
-        const [uRes, sRes] = await Promise.all(requests);
-        users.value = uRes.data.data;
-        salesReps.value = sRes?.data?.data || [];
+        const responses = await Promise.all(requests);
+        if (!isKasir.value) {
+            users.value = responses[0]?.data?.data || [];
+            salesReps.value = responses[1]?.data?.data || [];
+        } else {
+            users.value = [];
+            salesReps.value = responses[0]?.data?.data || [];
+        }
     } catch (e) {
         console.error("Gagal memuat opsi filter", e);
     }
@@ -76,7 +89,9 @@ const fetchSales = async (page = 1) => {
                 search: searchQuery.value,
                 start_date: filters.value.start_date,
                 end_date: filters.value.end_date,
-                user_id: filters.value.user_id,
+                user_id: isKasir.value
+                    ? authStore.user?.id
+                    : filters.value.user_id,
                 sales_rep_id: isServiceMode.value
                     ? undefined
                     : filters.value.sales_rep_id,
@@ -225,7 +240,13 @@ function servicePartsSummary(sale) {
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 class="text-2xl font-bold text-slate-800">
-                {{ isServiceMode ? "Transaksi Service" : "Data Penjualan" }}
+                {{
+                    isServiceMode
+                        ? "Transaksi Service"
+                        : isKasir
+                          ? `Data Penjualan ${kasirName}`
+                          : "Data Penjualan"
+                }}
             </h1>
             <router-link
                 v-if="!isServiceMode"
@@ -387,7 +408,10 @@ function servicePartsSummary(sale) {
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
+                    <div
+                        v-if="!isKasir"
+                        class="flex flex-col gap-1 col-span-2 md:col-span-1"
+                    >
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Kasir</label
@@ -470,7 +494,7 @@ function servicePartsSummary(sale) {
                                 filters = {
                                     start_date: '',
                                     end_date: '',
-                                    user_id: '',
+                                    user_id: isKasir ? authStore.user?.id : '',
                                     sales_rep_id: '',
                                 }
                             "

@@ -23,6 +23,9 @@ class SaleRepository
      */
     public function index($perPage, $search, $startDate = null, $endDate = null, $tipe = null, $userId = null, $salesRepId = null)
     {
+        $authUser = Auth::user();
+        $isKasir = $authUser?->hasRole('kasir');
+
         $query = $this->model->newQuery()
             ->with(['user', 'salesRep', 'salesUser', 'tax', 'serviceOrder.technician', 'serviceOrder.parts.product.masterProduct'])
             ->withCount('items')
@@ -31,6 +34,7 @@ class SaleRepository
             ->dateRange($startDate, $endDate)
             ->tipe($tipe)
             ->user($userId)
+            ->when($isKasir, fn($q) => $q->where('user_id', $authUser->id))
             ->salesRep($salesRepId)
             ->latest('tanggal')
             ->latest('created_at');
@@ -52,7 +56,12 @@ class SaleRepository
         $thisMonth = now()->startOfMonth();
         $thisYear = now()->startOfYear();
 
-        $baseQuery = $this->model->newQuery()->when($tipe, fn($q) => $q->where('tipe', $tipe));
+        $authUser = Auth::user();
+        $isKasir = $authUser?->hasRole('kasir');
+
+        $baseQuery = $this->model->newQuery()
+            ->when($tipe, fn($q) => $q->where('tipe', $tipe))
+            ->when($isKasir, fn($q) => $q->where('user_id', $authUser->id));
 
         $stats = [
             'today' => (float) (clone $baseQuery)->where('tanggal', '>=', $today)->sum('grand_total'),
@@ -69,7 +78,10 @@ class SaleRepository
      */
     public function show($id)
     {
-        $sale = $this->model->with([
+        $authUser = Auth::user();
+        $isKasir = $authUser?->hasRole('kasir');
+
+        $sale = $this->model->newQuery()->with([
             'user',
             'salesRep',
             'salesUser',
@@ -80,7 +92,8 @@ class SaleRepository
             'items.product.masterProduct.category',
             'items.product.masterProduct.unit',
             'items.product.grade',
-        ])->findOrFail($id);
+        ])->when($isKasir, fn($q) => $q->where('user_id', $authUser->id))
+            ->findOrFail($id);
 
         return ResponseHelper::success(new SaleResource($sale), 'Sale retrieved successfully');
     }

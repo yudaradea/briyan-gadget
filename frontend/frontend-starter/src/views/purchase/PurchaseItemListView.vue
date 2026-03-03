@@ -1,14 +1,17 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import api from "../../api";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import CurrencyInput from "../../components/CurrencyInput.vue";
 import { useRouter } from "vue-router";
 import { useToast } from "../../composables/useToast";
+import { useAuthStore } from "../../stores/auth";
 import debounce from "lodash-es/debounce";
 
 const router = useRouter();
 const toast = useToast();
+const authStore = useAuthStore();
+const canDelete = computed(() => !authStore.isKasir);
 
 const items = ref([]);
 const suppliers = ref([]);
@@ -247,8 +250,6 @@ async function saveEdit() {
         savingEdit.value = false;
     }
 }
-
-import { computed } from "vue";
 
 const copyAmountStok = computed(() => {
     return items.value.reduce(
@@ -870,6 +871,7 @@ const copyTotalJual = computed(() => {
                                         </svg>
                                     </router-link>
                                     <button
+                                        v-if="canDelete"
                                         @click="
                                             confirmDelete(
                                                 item.id,

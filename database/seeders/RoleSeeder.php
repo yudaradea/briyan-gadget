@@ -145,8 +145,16 @@ class RoleSeeder extends Seeder
             // Profile
             'view own profile',
             'edit own profile',
-            // Products (view only)
+            // Master data (read-only for stock forms)
+            'view master-data',
+            'create master-data',
+            'edit master-data',
+            // Products
             'view products',
+            // Purchases (view, create, edit - no delete)
+            'view purchases',
+            'create purchases',
+            'edit purchases',
             // Sales (create & view)
             'view sales',
             'create sales',

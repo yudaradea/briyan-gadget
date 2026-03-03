@@ -148,7 +148,7 @@ onUnmounted(() => {
 
                     <!-- Gudang & Stok Dropdown (if admin) -->
                     <div
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        v-if="authStore.canViewPurchases"
                         class="relative group"
                     >
                         <button
@@ -323,9 +323,9 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <!-- Master Data Dropdown (if admin) -->
+                    <!-- Master Data Dropdown -->
                     <div
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        v-if="authStore.canViewMasterData"
                         class="relative group"
                     >
                         <button
@@ -364,8 +364,7 @@ onUnmounted(() => {
                             <!-- <router-link
                                 to="/dashboard/master/service-brands"
                                 class="dropdown-item"
-                                >Merk HP Servis</router-link
-                            > -->
+                                >Merk HP Servis</router-link> -->
 
                             <router-link
                                 to="/dashboard/master/grades"
@@ -380,13 +379,11 @@ onUnmounted(() => {
                             <!-- <router-link
                                 to="/dashboard/master/sales-reps"
                                 class="dropdown-item"
-                                >Sales</router-link
-                            > -->
-                            <!-- <router-link
+                                >Sales</router-link>
+                            <router-link
                                 to="/dashboard/master/technicians"
                                 class="dropdown-item"
-                                >Teknisi</router-link
-                            > -->
+                                >Teknisi</router-link> -->
                             <router-link
                                 to="/dashboard/master/suppliers"
                                 class="dropdown-item"
@@ -401,7 +398,7 @@ onUnmounted(() => {
                     </div>
                     <!-- Cari Barang -->
                     <router-link
-                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        v-if="authStore.canViewPurchases"
                         to="/dashboard/item-lookup"
                         class="nav-link"
                         :class="{
@@ -450,9 +447,10 @@ onUnmounted(() => {
                                 >Tambah User</router-link
                             >
                             <router-link
+                                v-if="authStore.isSuperAdmin"
                                 to="/dashboard/management/roles"
                                 class="dropdown-item"
-                                >Role</router-link
+                                >Role & Permission</router-link
                             >
                         </div>
                     </div>
@@ -672,12 +670,13 @@ onUnmounted(() => {
                             to="/dashboard"
                             class="mobile-link"
                             :class="{
-                                'mobile-link-active': $route.name === 'dashboard',
+                                'mobile-link-active':
+                                    $route.name === 'dashboard',
                             }"
                             >Dashboard</router-link
                         >
 
-                        <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
+                        <div v-if="authStore.canViewPurchases">
                             <p class="section-badge">Manajemen Stok</p>
                             <div class="mt-2 space-y-1">
                                 <router-link
@@ -767,7 +766,7 @@ onUnmounted(() => {
                             </div>
                         </div> -->
 
-                        <div v-if="authStore.isAdmin || authStore.isSuperAdmin">
+                        <div v-if="authStore.canViewMasterData">
                             <p class="section-badge">Master Data</p>
                             <div class="grid grid-cols-1 mt-2 space-y-1">
                                 <router-link
@@ -794,6 +793,18 @@ onUnmounted(() => {
                                     }"
                                     >Merk</router-link
                                 >
+                                <!-- <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/service-brands"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/service-brands'
+                                            ),
+                                    }"
+                                    >Merk HP Servis</router-link
+                                > -->
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/master/grades"
@@ -818,6 +829,30 @@ onUnmounted(() => {
                                     }"
                                     >Satuan</router-link
                                 >
+                                <!-- <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/sales-reps"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/sales-reps'
+                                            ),
+                                    }"
+                                    >Sales</router-link
+                                > -->
+                                <!-- <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/technicians"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/technicians'
+                                            ),
+                                    }"
+                                    >Teknisi</router-link
+                                > -->
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/master/suppliers"
@@ -894,7 +929,7 @@ onUnmounted(() => {
                         </div>
 
                         <router-link
-                            v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                            v-if="authStore.canViewPurchases"
                             @click="mobileMenuOpen = false"
                             to="/dashboard/item-lookup"
                             class="mobile-link"

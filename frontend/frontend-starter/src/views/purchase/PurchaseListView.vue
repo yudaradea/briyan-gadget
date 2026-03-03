@@ -1,13 +1,16 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import api from "../../api";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import { useRouter } from "vue-router";
 import { useToast } from "../../composables/useToast";
+import { useAuthStore } from "../../stores/auth";
 import debounce from "lodash-es/debounce";
 
 const router = useRouter();
 const toast = useToast();
+const authStore = useAuthStore();
+const canDelete = computed(() => !authStore.isKasir);
 
 const purchases = ref([]);
 const suppliers = ref([]);
@@ -607,6 +610,7 @@ async function doDelete() {
                                         </svg>
                                     </router-link>
                                     <button
+                                        v-if="canDelete"
                                         @click="confirmDelete(p.id)"
                                         class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg inline-flex"
                                         title="Hapus"
