@@ -123,14 +123,14 @@ watch(
             filters.value.end_date < filters.value.start_date
         ) {
             toast.error(
-                "Tanggal akhir tidak boleh lebih awal dari tanggal awal",
+                "Tanggal akhir tidak boleh lebih awal dari tanggal awal"
             );
             filters.value.end_date = "";
             return;
         }
         fetchItems(1);
     },
-    { deep: true },
+    { deep: true }
 );
 
 function formatCurrency(val) {
@@ -145,6 +145,10 @@ function formatDate(dateStr) {
     if (!dateStr) return "-";
     const [y, m, d] = dateStr.split("-");
     return `${d}-${m}-${y}`;
+}
+
+function formatNumber(value) {
+    return new Intl.NumberFormat("id-ID").format(Number(value || 0));
 }
 
 async function printBarcode(purchaseId, itemId = null) {
@@ -208,7 +212,7 @@ function openEditModal(type, item) {
     } else if (type === "harga_jual") {
         editModal.value.title = "Update Harga Jual";
         editModal.value.oldValueDisplay = formatCurrency(
-            item.product?.harga_jual,
+            item.product?.harga_jual
         );
         editModal.value.newValue = item.product?.harga_jual || 0;
     }
@@ -232,7 +236,7 @@ async function saveEdit() {
 
         await api.put(
             `/purchases/${item.purchase_id}/items/${item.id}`,
-            payload,
+            payload
         );
         toast.success("Berhasil diupdate!");
         editModal.value.show = false;
@@ -249,54 +253,128 @@ import { computed } from "vue";
 const copyAmountStok = computed(() => {
     return items.value.reduce(
         (acc, curr) => acc + (curr.qty || curr.product?.stok || 0),
-        0,
+        0
     );
 });
 const copyTotalModal = computed(() => {
     return items.value.reduce(
         (acc, curr) => acc + (curr.harga_beli || 0) * (curr.qty || 1),
-        0,
+        0
     );
 });
 const copyTotalJual = computed(() => {
     return items.value.reduce(
         (acc, curr) => acc + (curr.product?.harga_jual || 0) * (curr.qty || 1),
-        0,
+        0
     );
 });
 </script>
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">
-                    List Semua Barang
-                </h1>
-                <p class="mt-1 text-sm text-slate-400">
-                    Daftar breakdown semua unit unit/imei yang masuk
-                </p>
-            </div>
-            <div class="flex gap-2">
-                <router-link
-                    to="/dashboard/purchases"
-                    class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
+        <div class="flex items-start justify-between">
+            <div class="flex flex-col w-full">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-800">
+                            List Semua Barang
+                        </h1>
+                        <p class="mt-1 text-sm text-slate-400">
+                            Daftar breakdown semua unit unit/imei yang masuk
+                        </p>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <router-link
+                            to="/dashboard/purchases"
+                            class="flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all bg-white border text-slate-600 rounded-xl border-slate-200 hover:bg-slate-50"
+                        >
+                            <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                                />
+                            </svg>
+                            Stok per Supplier
+                        </router-link>
+                    </div>
+                </div>
+                <div
+                    class="grid w-full max-w-2xl grid-cols-1 gap-3 mt-4 md:grid-cols-2"
                 >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <div
+                        class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-blue-500/20"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                        />
-                    </svg>
-                    Stok per Supplier
-                </router-link>
+                        <div class="relative z-10">
+                            <div class="text-xl font-black tracking-wide">
+                                {{ formatNumber(copyAmountStok) }}
+                            </div>
+                            <div
+                                class="mt-1 text-sm font-semibold/5 opacity-95"
+                            >
+                                Total Item
+                            </div>
+                        </div>
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-60"
+                        >
+                            <span
+                                class="w-2 h-3 rounded-sm bg-blue-900/25"
+                            ></span>
+                            <span
+                                class="w-2 h-6 rounded-sm bg-blue-900/25"
+                            ></span>
+                            <span
+                                class="w-2 h-10 rounded-sm bg-blue-900/25"
+                            ></span>
+                            <span
+                                class="w-2 h-5 rounded-sm bg-blue-900/25"
+                            ></span>
+                            <span
+                                class="w-2 h-8 rounded-sm bg-blue-900/25"
+                            ></span>
+                        </div>
+                    </div>
+                    <div
+                        class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white shadow-amber-500/20"
+                    >
+                        <div class="relative z-10">
+                            <div class="text-xl font-black tracking-wide">
+                                {{ formatCurrency(copyTotalModal) }}
+                            </div>
+                            <div
+                                class="mt-1 text-sm font-semibold/5 opacity-95"
+                            >
+                                Total Modal
+                            </div>
+                        </div>
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-60"
+                        >
+                            <span
+                                class="w-2 h-3 rounded-sm bg-orange-900/20"
+                            ></span>
+                            <span
+                                class="w-2 h-6 rounded-sm bg-orange-900/20"
+                            ></span>
+                            <span
+                                class="w-2 h-10 rounded-sm bg-orange-900/20"
+                            ></span>
+                            <span
+                                class="w-2 h-5 rounded-sm bg-orange-900/20"
+                            ></span>
+                            <span
+                                class="w-2 h-8 rounded-sm bg-orange-900/20"
+                            ></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -535,7 +613,7 @@ const copyTotalJual = computed(() => {
                             <input
                                 type="text"
                                 v-model="searchQuery"
-                                placeholder="Cari barang/IMEI..."
+                                placeholder="Cari barang/IMEI/No.Invoice..."
                                 class="block w-full md:w-64 pl-10 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
                             />
                             <div
@@ -566,7 +644,7 @@ const copyTotalJual = computed(() => {
             >
                 <table class="min-w-full leading-normal">
                     <thead
-                        class="bg-slate-100/70 border-b border-slate-200 uppercase text-slate-500 font-bold whitespace-nowrap"
+                        class="font-bold uppercase border-b bg-slate-100/70 border-slate-200 text-slate-500 whitespace-nowrap"
                     >
                         <tr>
                             <th class="px-2 py-2 text-center">No</th>
@@ -757,10 +835,10 @@ const copyTotalJual = computed(() => {
                                         @click="
                                             printBarcode(
                                                 item.purchase_id,
-                                                item.id,
+                                                item.id
                                             )
                                         "
-                                        class="p-1 text-purple-500 hover:bg-purple-100 rounded transition"
+                                        class="p-1 text-purple-500 transition rounded hover:bg-purple-100"
                                         title="Cetak Barcode"
                                     >
                                         <svg
@@ -782,7 +860,7 @@ const copyTotalJual = computed(() => {
                                             name: 'purchase-edit',
                                             params: { id: item.purchase_id },
                                         }"
-                                        class="p-1 text-amber-500 hover:bg-amber-100 rounded transition"
+                                        class="p-1 transition rounded text-amber-500 hover:bg-amber-100"
                                         title="Edit Transaksi"
                                     >
                                         <svg
@@ -803,10 +881,10 @@ const copyTotalJual = computed(() => {
                                         @click="
                                             confirmDelete(
                                                 item.id,
-                                                item.purchase_id,
+                                                item.purchase_id
                                             )
                                         "
-                                        class="p-1 text-rose-500 hover:bg-rose-100 rounded transition"
+                                        class="p-1 transition rounded text-rose-500 hover:bg-rose-100"
                                         title="Hapus"
                                     >
                                         <svg
@@ -829,12 +907,12 @@ const copyTotalJual = computed(() => {
                     </tbody>
                     <tfoot
                         v-if="items.length > 0"
-                        class="bg-blue-50/50 font-bold border-t border-slate-200"
+                        class="font-bold border-t bg-blue-50/50 border-slate-200"
                     >
                         <tr>
                             <td
                                 colspan="8"
-                                class="px-2 py-3 text-center tracking-wider text-slate-800 uppercase"
+                                class="px-2 py-3 tracking-wider text-center uppercase text-slate-800"
                             >
                                 TOTAL
                             </td>
@@ -867,7 +945,7 @@ const copyTotalJual = computed(() => {
                     <span class="font-medium">{{
                         Math.min(
                             pagination.current_page * pagination.per_page,
-                            pagination.total,
+                            pagination.total
                         )
                     }}</span>
                     dari
@@ -908,12 +986,12 @@ const copyTotalJual = computed(() => {
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
         >
             <div
-                class="w-full max-w-md bg-white rounded-lg shadow-2xl overflow-hidden"
+                class="w-full max-w-md overflow-hidden bg-white rounded-lg shadow-2xl"
             >
                 <div
-                    class="flex items-center justify-between px-4 py-3 bg-blue-600 text-white"
+                    class="flex items-center justify-between px-4 py-3 text-white bg-blue-600"
                 >
-                    <h3 class="font-bold text-sm">{{ editModal.title }}</h3>
+                    <h3 class="text-sm font-bold">{{ editModal.title }}</h3>
                     <button
                         @click="editModal.show = false"
                         class="text-white hover:text-rose-300"
@@ -940,12 +1018,12 @@ const copyTotalJual = computed(() => {
                         v-if="editModal.type === 'unit'"
                         class="flex items-center gap-3"
                     >
-                        <label class="font-bold text-sm text-slate-700 w-24"
+                        <label class="w-24 text-sm font-bold text-slate-700"
                             >Satuan :</label
                         >
                         <select
                             v-model="editModal.newValue"
-                            class="flex-1 px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            class="flex-1 px-3 py-2 text-sm border rounded border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
                             <option value="">Pilih Satuan</option>
                             <option
@@ -967,7 +1045,7 @@ const copyTotalJual = computed(() => {
                         class="flex flex-col gap-2"
                     >
                         <label
-                            class="font-bold text-sm text-slate-700 uppercase"
+                            class="text-sm font-bold uppercase text-slate-700"
                             >{{
                                 editModal.type === "imei1" ? "IMEI 1" : "IMEI 2"
                             }}</label
@@ -975,7 +1053,7 @@ const copyTotalJual = computed(() => {
                         <input
                             type="text"
                             v-model="editModal.newValue"
-                            class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            class="w-full px-3 py-2 border rounded border-slate-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
 
@@ -987,7 +1065,7 @@ const copyTotalJual = computed(() => {
                         "
                         class="flex flex-col gap-2"
                     >
-                        <div class="font-bold text-slate-700 text-sm mb-2">
+                        <div class="mb-2 text-sm font-bold text-slate-700">
                             {{
                                 editModal.type === "harga_beli"
                                     ? "Harga Modal Lama"
@@ -995,7 +1073,7 @@ const copyTotalJual = computed(() => {
                             }}
                             : {{ editModal.oldValueDisplay }}
                         </div>
-                        <label class="font-bold text-sm text-slate-700">{{
+                        <label class="text-sm font-bold text-slate-700">{{
                             editModal.type === "harga_beli"
                                 ? "Harga Modal"
                                 : "Harga Jual"
@@ -1008,7 +1086,7 @@ const copyTotalJual = computed(() => {
                 </div>
 
                 <div
-                    class="flex items-center justify-end px-5 py-4 border-t border-slate-100 bg-slate-50 gap-2"
+                    class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50"
                 >
                     <button
                         @click="editModal.show = false"

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import debounce from "lodash-es/debounce";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
@@ -29,6 +29,40 @@ const summary = ref({
     items_count: 0,
     total: 0,
 });
+const detailModal = ref({
+    show: false,
+    loading: false,
+    data: null,
+});
+const detailPerPage = ref(10);
+const detailPage = ref(1);
+
+const detailItems = computed(() => detailModal.value.data?.items || []);
+
+const detailPageCount = computed(() =>
+    Math.max(1, Math.ceil(detailItems.value.length / detailPerPage.value))
+);
+
+const detailItemsPaged = computed(() => {
+    const start = (detailPage.value - 1) * detailPerPage.value;
+    return detailItems.value.slice(start, start + detailPerPage.value);
+});
+
+const detailTotals = computed(() =>
+    detailItems.value.reduce(
+        (acc, item) => {
+            const qty = Number(item.qty || 0);
+            const modal = qty * Number(item.harga_beli || 0);
+            const hargaJual = qty * Number(item.product?.harga_jual || 0);
+
+            acc.qty += qty;
+            acc.modal += modal;
+            acc.harga_jual += hargaJual;
+            return acc;
+        },
+        { qty: 0, modal: 0, harga_jual: 0 }
+    )
+);
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("id-ID", {
@@ -43,6 +77,27 @@ function formatDate(dateStr) {
     const [y, m, d] = String(dateStr).split("-");
     return `${d}-${m}-${y}`;
 }
+
+const statCards = computed(() => [
+    {
+        key: "items_count",
+        label: "Total Barang",
+        value: Number(summary.value.items_count || 0),
+        isCurrency: false,
+        wrapClass:
+            "from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-blue-500/20",
+        accentClass: "bg-blue-900/25",
+    },
+    {
+        key: "total_modal",
+        label: "Total Modal",
+        value: Number(summary.value.total || 0),
+        isCurrency: true,
+        wrapClass:
+            "from-amber-500 via-orange-500 to-amber-600 text-white shadow-amber-500/20",
+        accentClass: "bg-orange-900/20",
+    },
+]);
 
 function fileSafeDate(value) {
     return value ? value.replaceAll("-", "") : "all";
@@ -111,6 +166,36 @@ async function fetchReport(page = 1) {
         isLoading.value = false;
     }
 }
+
+async function openInvoiceDetail(row) {
+    detailModal.value.show = true;
+    detailModal.value.loading = true;
+    detailModal.value.data = null;
+    detailPerPage.value = 10;
+    detailPage.value = 1;
+    try {
+        const { data } = await api.get(`/purchases/${row.id}`);
+        detailModal.value.data = data.data;
+    } catch (error) {
+        toast.error("Gagal memuat detail invoice");
+        detailModal.value.show = false;
+    } finally {
+        detailModal.value.loading = false;
+    }
+}
+
+function closeInvoiceDetail() {
+    detailModal.value.show = false;
+}
+
+function changeDetailPage(page) {
+    if (page < 1 || page > detailPageCount.value) return;
+    detailPage.value = page;
+}
+
+watch(detailPerPage, () => {
+    detailPage.value = 1;
+});
 
 const debouncedSearch = debounce(() => fetchReport(1), 400);
 watch(search, debouncedSearch);
@@ -204,7 +289,7 @@ function buildPdfHtml(dataRows, footerSummary) {
                         <th>Supplier</th>
                         <th>Item</th>
                         <th>Keterangan</th>
-                        <th>Total</th>
+                        <th>Modal</th>
                     </tr>
                 </thead>
                 <tbody>${bodyRows}</tbody>
@@ -264,13 +349,64 @@ onMounted(() => {
 
 <template>
     <div class="space-y-6">
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-            <h1 class="text-2xl font-black text-slate-800">
-                Laporan Pembelian
-            </h1>
-            <p class="mt-1 text-sm text-slate-500">
-                Ringkasan invoice supplier per periode.
-            </p>
+        <div class="flex flex-col gap-4">
+            <div
+                class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200"
+            >
+                <h1 class="text-2xl font-black text-slate-800">
+                    Laporan Pembelian
+                </h1>
+                <p class="mt-1 text-sm text-slate-500">
+                    Ringkasan invoice supplier per periode.
+                </p>
+            </div>
+            <div class="grid w-full max-w-2xl grid-cols-1 gap-3 md:grid-cols-2">
+                <div
+                    v-for="card in statCards"
+                    :key="card.key"
+                    class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br"
+                    :class="card.wrapClass"
+                >
+                    <div class="relative z-10">
+                        <div class="text-xl font-black tracking-wide">
+                            {{
+                                card.isCurrency
+                                    ? formatCurrency(card.value)
+                                    : new Intl.NumberFormat("id-ID").format(
+                                          card.value
+                                      )
+                            }}
+                        </div>
+                        <div class="mt-1 text-sm font-semibold/5 opacity-95">
+                            {{ card.label }}
+                        </div>
+                    </div>
+                    <div
+                        class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-60"
+                    >
+                        <span
+                            class="w-2 h-3 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-6 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-10 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-5 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-8 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div
@@ -465,7 +601,7 @@ onMounted(() => {
                             <th class="">Supplier</th>
                             <th class="text-center">Item</th>
                             <th class="">Keterangan</th>
-                            <th class="text-right">Total</th>
+                            <th class="text-right">Modal</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -500,7 +636,13 @@ onMounted(() => {
                                 }}
                             </td>
                             <td class="table-cell font-bold text-blue-600">
-                                {{ row.no_invoice }}
+                                <button
+                                    type="button"
+                                    class="text-blue-600 underline-offset-2 hover:underline"
+                                    @click="openInvoiceDetail(row)"
+                                >
+                                    {{ row.no_invoice }}
+                                </button>
                             </td>
                             <td class="table-cell">
                                 {{ formatDate(row.tanggal) }}
@@ -585,5 +727,345 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
+        <Teleport to="body">
+            <div
+                v-if="detailModal.show"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                @click.self="closeInvoiceDetail"
+            >
+                <div
+                    class="w-full max-w-[95vw] xl:max-w-[1400px] overflow-hidden bg-white shadow-2xl rounded-2xl"
+                >
+                    <div
+                        class="flex items-center justify-between px-5 py-4 border-b bg-slate-50 border-slate-200"
+                    >
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">
+                                Detail Invoice Pembelian
+                            </h3>
+                            <p
+                                v-if="detailModal.data"
+                                class="text-xs text-slate-500"
+                            >
+                                {{ detailModal.data.no_invoice }} -
+                                {{ formatDate(detailModal.data.tanggal) }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <label
+                                    class="text-[11px] font-bold tracking-wider uppercase text-slate-500"
+                                    >Tampilkan</label
+                                >
+                                <select
+                                    v-model.number="detailPerPage"
+                                    class="px-2 py-1 text-xs bg-white border rounded border-slate-300 text-slate-700"
+                                >
+                                    <option :value="10">10</option>
+                                    <option :value="50">50</option>
+                                    <option :value="100">100</option>
+                                </select>
+                            </div>
+                            <button
+                                type="button"
+                                class="text-slate-400 hover:text-rose-500"
+                                @click="closeInvoiceDetail"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-5 max-h-[88vh] overflow-hidden">
+                        <div
+                            v-if="detailModal.loading"
+                            class="py-12 text-center text-slate-500"
+                        >
+                            Memuat detail...
+                        </div>
+                        <div
+                            v-else-if="!detailModal.data"
+                            class="py-12 text-center text-slate-500"
+                        >
+                            Detail tidak tersedia.
+                        </div>
+                        <div v-else>
+                            <div
+                                class="grid grid-cols-1 gap-3 mb-4 text-xs md:grid-cols-3"
+                            >
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Supplier</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{
+                                            detailModal.data.supplier?.nama ||
+                                            "-"
+                                        }}
+                                    </div>
+                                </div>
+
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Keterangan</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{ detailModal.data.keterangan || "-" }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="overflow-auto border rounded-lg max-h-[52vh] custom-scrollbar border-slate-200 lg:overflow-x-hidden"
+                            >
+                                <table class="w-full table-fixed text-[11px]">
+                                    <thead
+                                        class="sticky top-0 bg-slate-50 text-slate-600"
+                                    >
+                                        <tr>
+                                            <th
+                                                class="w-[20%] px-2 py-1.5 text-left"
+                                            >
+                                                Produk
+                                            </th>
+                                            <th
+                                                class="w-[11%] px-2 py-1.5 text-left"
+                                            >
+                                                Kode
+                                            </th>
+                                            <th
+                                                class="w-[10%] px-2 py-1.5 text-left"
+                                            >
+                                                Merk
+                                            </th>
+                                            <th
+                                                class="w-[9%] px-2 py-1.5 text-left"
+                                            >
+                                                IMEI 1
+                                            </th>
+                                            <th
+                                                class="w-[9%] px-2 py-1.5 text-left"
+                                            >
+                                                IMEI 2
+                                            </th>
+                                            <th
+                                                class="w-[9%] px-2 py-1.5 text-left"
+                                            >
+                                                Satuan
+                                            </th>
+                                            <th
+                                                class="w-[8%] px-2 py-1.5 text-left"
+                                            >
+                                                Grade
+                                            </th>
+
+                                            <th
+                                                class="w-[5%] px-2 py-1.5 text-center"
+                                            >
+                                                Qty
+                                            </th>
+                                            <th
+                                                class="w-[10%] px-2 py-1.5 text-right"
+                                            >
+                                                Modal
+                                            </th>
+                                            <th
+                                                class="w-[9%] px-2 py-1.5 text-right"
+                                            >
+                                                Harga Jual
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr
+                                            v-for="item in detailItemsPaged"
+                                            :key="item.id"
+                                            class="border-t border-slate-100"
+                                        >
+                                            <td
+                                                class="px-2 py-1.5 font-medium text-slate-800 truncate"
+                                                :title="
+                                                    item.product?.nama || '-'
+                                                "
+                                            >
+                                                {{ item.product?.nama || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-mono text-slate-600 truncate"
+                                                :title="
+                                                    item.product?.barcode || '-'
+                                                "
+                                            >
+                                                {{
+                                                    item.product?.barcode || "-"
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 text-slate-700 truncate"
+                                                :title="
+                                                    item.product?.brand || '-'
+                                                "
+                                            >
+                                                {{ item.product?.brand || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-mono text-slate-700 truncate"
+                                                :title="
+                                                    item.product?.imei1 || '-'
+                                                "
+                                            >
+                                                {{ item.product?.imei1 || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-mono text-slate-700 truncate"
+                                                :title="
+                                                    item.product?.imei2 || '-'
+                                                "
+                                            >
+                                                {{ item.product?.imei2 || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 text-slate-700 truncate"
+                                                :title="
+                                                    item.product?.unit || '-'
+                                                "
+                                            >
+                                                {{ item.product?.unit || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 text-slate-700 truncate"
+                                                :title="
+                                                    item.product?.grade || '-'
+                                                "
+                                            >
+                                                {{ item.product?.grade || "-" }}
+                                            </td>
+
+                                            <td
+                                                class="px-2 py-1.5 font-bold text-center text-slate-700"
+                                            >
+                                                {{ item.qty || 0 }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 text-right text-blue-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        item.harga_beli || 0
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 text-right text-emerald-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        item.product
+                                                            ?.harga_jual || 0
+                                                    )
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot
+                                        class="border-t bg-slate-50 border-slate-200"
+                                    >
+                                        <tr>
+                                            <td
+                                                colspan="7"
+                                                class="px-2 py-1.5 font-bold text-right text-slate-700"
+                                            >
+                                                Total
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-black text-center text-slate-800"
+                                            >
+                                                {{ detailTotals.qty }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-black text-right text-blue-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        detailTotals.modal
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-2 py-1.5 font-black text-right text-emerald-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        detailTotals.harga_jual
+                                                    )
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between mt-3 text-xs text-slate-500"
+                            >
+                                <span>
+                                    Menampilkan
+                                    {{
+                                        detailItems.length
+                                            ? (detailPage - 1) * detailPerPage +
+                                              1
+                                            : 0
+                                    }}
+                                    s/d
+                                    {{
+                                        Math.min(
+                                            detailPage * detailPerPage,
+                                            detailItems.length
+                                        )
+                                    }}
+                                    dari {{ detailItems.length }} item
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        class="px-2 py-1 bg-white border rounded border-slate-300 disabled:opacity-50"
+                                        :disabled="detailPage <= 1"
+                                        @click="
+                                            changeDetailPage(detailPage - 1)
+                                        "
+                                    >
+                                        Sebelumnya
+                                    </button>
+                                    <span class="font-bold text-slate-700">
+                                        {{ detailPage }} / {{ detailPageCount }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="px-2 py-1 bg-white border rounded border-slate-300 disabled:opacity-50"
+                                        :disabled="
+                                            detailPage >= detailPageCount
+                                        "
+                                        @click="
+                                            changeDetailPage(detailPage + 1)
+                                        "
+                                    >
+                                        Selanjutnya
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>

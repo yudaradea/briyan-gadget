@@ -335,7 +335,7 @@ onUnmounted(() => {
                                     $route.path.includes('/master'),
                             }"
                         >
-                            Master
+                            Master Data
                             <svg
                                 class="w-3.5 h-3.5 opacity-60"
                                 fill="none"
@@ -350,7 +350,7 @@ onUnmounted(() => {
                                 />
                             </svg>
                         </button>
-                        <div class="dropdown-menu grid grid-cols-2 w-[400px]">
+                        <div class="w-64 dropdown-menu">
                             <router-link
                                 to="/dashboard/master/products"
                                 class="dropdown-item"
@@ -399,6 +399,18 @@ onUnmounted(() => {
                             >
                         </div>
                     </div>
+                    <!-- Cari Barang -->
+                    <router-link
+                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                        to="/dashboard/item-lookup"
+                        class="nav-link"
+                        :class="{
+                            'nav-link-active': $route.path.includes(
+                                '/dashboard/item-lookup'
+                            ),
+                        }"
+                        >Cari Barang</router-link
+                    >
                     <!-- user management -->
                     <div
                         v-if="authStore.isSuperAdmin || authStore.isAdmin"
@@ -426,7 +438,7 @@ onUnmounted(() => {
                                 />
                             </svg>
                         </button>
-                        <div class="dropdown-menu grid grid-cols-2 w-[400px]">
+                        <div class="w-56 dropdown-menu">
                             <router-link
                                 to="/dashboard/management/users"
                                 class="dropdown-item"
@@ -659,28 +671,49 @@ onUnmounted(() => {
                             @click="mobileMenuOpen = false"
                             to="/dashboard"
                             class="mobile-link"
+                            :class="{
+                                'mobile-link-active': $route.name === 'dashboard',
+                            }"
                             >Dashboard</router-link
                         >
 
-                        <div>
+                        <div v-if="authStore.isSuperAdmin || authStore.isAdmin">
                             <p class="section-badge">Manajemen Stok</p>
                             <div class="mt-2 space-y-1">
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/purchases"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/purchases'
+                                            ),
+                                    }"
                                     >Pembelian (Invoice)</router-link
                                 >
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/stock-summary"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/stock-summary'
+                                            ),
+                                    }"
                                     >Stok Barang</router-link
                                 >
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/purchase-items"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/purchase-items'
+                                            ),
+                                    }"
                                     >Mutasi Stok</router-link
                                 >
                             </div>
@@ -692,13 +725,25 @@ onUnmounted(() => {
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/pos"
-                                    class="font-bold text-blue-600 mobile-sublink"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/pos'
+                                            ),
+                                    }"
                                     >POS Kasir</router-link
                                 >
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/sales"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/sales'
+                                            ),
+                                    }"
                                     >Riwayat Transaksi</router-link
                                 >
                             </div>
@@ -729,20 +774,176 @@ onUnmounted(() => {
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/master/products"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/products'
+                                            ),
+                                    }"
                                     >Katalog Produk</router-link
                                 >
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/master/brands"
                                     class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/brands'
+                                            ),
+                                    }"
                                     >Merk</router-link
                                 >
-
                                 <router-link
                                     @click="mobileMenuOpen = false"
-                                    to="/dashboard/users"
+                                    to="/dashboard/master/grades"
                                     class="mobile-sublink"
-                                    >User Management</router-link
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/grades'
+                                            ),
+                                    }"
+                                    >Grade</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/units"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/units'
+                                            ),
+                                    }"
+                                    >Satuan</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/suppliers"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/suppliers'
+                                            ),
+                                    }"
+                                    >Supplier</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/master/taxes"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/master/taxes'
+                                            ),
+                                    }"
+                                    >Pajak</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="
+                                authStore.isSuperAdmin ||
+                                authStore.isAdmin ||
+                                authStore.canViewReports
+                            "
+                        >
+                            <p class="section-badge">Laporan</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/sales"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/sales'
+                                            ),
+                                    }"
+                                    >Laporan Penjualan</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/purchases"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/purchases'
+                                            ),
+                                    }"
+                                    >Laporan Pembelian</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/profit"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/profit'
+                                            ),
+                                    }"
+                                    >Laba Rugi</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <router-link
+                            v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                            @click="mobileMenuOpen = false"
+                            to="/dashboard/item-lookup"
+                            class="mobile-link"
+                            :class="{
+                                'mobile-link-active': $route.path.includes(
+                                    '/dashboard/item-lookup'
+                                ),
+                            }"
+                            >Cari Barang</router-link
+                        >
+
+                        <div v-if="authStore.isAdmin || authStore.isSuperAdmin">
+                            <p class="section-badge">User Management</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/management/users"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/management/users'
+                                            ),
+                                    }"
+                                    >User List</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/management/user/create"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/management/user/create'
+                                            ),
+                                    }"
+                                    >Tambah User</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/management/roles"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/management/roles'
+                                            ),
+                                    }"
+                                    >Role</router-link
                                 >
                             </div>
                         </div>
@@ -791,10 +992,16 @@ onUnmounted(() => {
     @apply px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50/70 transition-all duration-150 flex items-center;
 }
 .mobile-link {
-    @apply block text-lg font-bold text-slate-800 hover:text-blue-600 transition-colors;
+    @apply block py-1.5 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors;
+}
+.mobile-link-active {
+    @apply text-blue-600;
 }
 .mobile-sublink {
     @apply block py-1.5 text-sm font-medium text-slate-600 hover:text-blue-600;
+}
+.mobile-sublink-active {
+    @apply text-blue-600 font-semibold;
 }
 .section-badge {
     @apply text-[10px] font-black text-slate-400 uppercase tracking-[0.2em];

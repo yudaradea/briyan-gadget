@@ -338,7 +338,7 @@ onMounted(fetchSummary);
                                             class="flex flex-col items-center flex-1 h-full group"
                                         >
                                             <div
-                                                class="relative flex-1 w-full transition-transform group-hover:-translate-y-1"
+                                                class="relative flex-1 w-full transition-transform"
                                             >
                                                 <div
                                                     class="absolute inset-x-0 bottom-0 flex h-full items-end justify-center gap-[1px] sm:gap-[2px]"

@@ -132,6 +132,13 @@ const router = createRouter({
                     meta: { requiresAdmin: true },
                 },
                 {
+                    path: "item-lookup",
+                    name: "item-lookup",
+                    component: () =>
+                        import("../views/product/ItemLookupView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
                     path: "purchases",
                     name: "purchase-list",
                     component: () =>

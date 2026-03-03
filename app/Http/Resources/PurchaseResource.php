@@ -35,6 +35,7 @@ class PurchaseResource extends JsonResource
                         'nama' => $item->product->masterProduct?->nama,
                         'imei1' => $item->product->imei1,
                         'imei2' => $item->product->imei2,
+                        'keterangan' => $item->product->keterangan,
                         'brand' => $item->product->masterProduct?->brand?->nama,
                         'brand_id' => $item->product->masterProduct?->brand_id,
                         'category' => $item->product->masterProduct?->category?->nama,

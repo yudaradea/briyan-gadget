@@ -31,6 +31,48 @@ const summary = ref({
     hpp_total: 0,
     laba_kotor: 0,
 });
+const salesStats = ref({
+    today: 0,
+    month: 0,
+    year: 0,
+    total: 0,
+});
+const detailModal = ref({
+    show: false,
+    loading: false,
+    data: null,
+});
+const detailPerPage = ref(10);
+const detailPage = ref(1);
+
+const detailItems = computed(() => detailModal.value.data?.items || []);
+
+const detailPageCount = computed(() =>
+    Math.max(1, Math.ceil(detailItems.value.length / detailPerPage.value))
+);
+
+const detailItemsPaged = computed(() => {
+    const start = (detailPage.value - 1) * detailPerPage.value;
+    return detailItems.value.slice(start, start + detailPerPage.value);
+});
+
+const detailTotals = computed(() =>
+    detailItems.value.reduce(
+        (acc, item) => {
+            const qty = Number(item.qty || 0);
+            const modal = Number(item.hpp_total || 0);
+            const hargaJual = Number(item.subtotal || 0);
+            const laba = hargaJual - modal;
+
+            acc.qty += qty;
+            acc.modal += modal;
+            acc.harga_jual += hargaJual;
+            acc.laba += laba;
+            return acc;
+        },
+        { qty: 0, modal: 0, harga_jual: 0, laba: 0 }
+    )
+);
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("id-ID", {
@@ -66,6 +108,40 @@ function saveBlob(blob, filename) {
 }
 
 const title = computed(() => "Laporan Penjualan");
+const statCards = computed(() => [
+    {
+        key: "today",
+        label: "Penjualan Hari Ini",
+        value: salesStats.value.today,
+        wrapClass:
+            "from-red-500 via-rose-500 to-red-600 text-white shadow-red-500/20",
+        accentClass: "bg-red-700/30",
+    },
+    {
+        key: "month",
+        label: "Penjualan Bulan Ini",
+        value: salesStats.value.month,
+        wrapClass:
+            "from-sky-600 via-blue-600 to-cyan-600 text-white shadow-blue-500/20",
+        accentClass: "bg-sky-900/25",
+    },
+    {
+        key: "year",
+        label: "Penjualan Tahun Ini",
+        value: salesStats.value.year,
+        wrapClass:
+            "from-amber-500 via-orange-500 to-amber-600 text-white shadow-amber-500/20",
+        accentClass: "bg-orange-900/20",
+    },
+    {
+        key: "total",
+        label: "Total Seluruh Penjualan",
+        value: salesStats.value.total,
+        wrapClass:
+            "from-slate-900 via-slate-800 to-slate-900 text-white shadow-slate-700/30",
+        accentClass: "bg-slate-700/25",
+    },
+]);
 
 async function fetchSalesReps() {
     try {
@@ -73,6 +149,22 @@ async function fetchSalesReps() {
         salesReps.value = data.data || [];
     } catch (error) {
         salesReps.value = [];
+    }
+}
+
+async function fetchSalesStats() {
+    try {
+        const { data } = await api.get("/sales/stats", {
+            params: { tipe: "penjualan" },
+        });
+        salesStats.value = {
+            today: Number(data.data?.today || 0),
+            month: Number(data.data?.month || 0),
+            year: Number(data.data?.year || 0),
+            total: Number(data.data?.total || 0),
+        };
+    } catch (error) {
+        salesStats.value = { today: 0, month: 0, year: 0, total: 0 };
     }
 }
 
@@ -126,6 +218,43 @@ async function fetchReport(page = 1) {
         isLoading.value = false;
     }
 }
+
+async function openInvoiceDetail(row) {
+    detailModal.value.show = true;
+    detailModal.value.loading = true;
+    detailModal.value.data = null;
+    detailPerPage.value = 10;
+    detailPage.value = 1;
+    try {
+        const { data } = await api.get(`/sales/${row.id}`);
+        detailModal.value.data = data.data;
+    } catch (error) {
+        toast.error("Gagal memuat detail invoice");
+        detailModal.value.show = false;
+    } finally {
+        detailModal.value.loading = false;
+    }
+}
+
+function closeInvoiceDetail() {
+    detailModal.value.show = false;
+}
+
+function changeDetailPage(page) {
+    if (page < 1 || page > detailPageCount.value) return;
+    detailPage.value = page;
+}
+
+function formatImei(product) {
+    const imeis = [product?.imei1, product?.imei2]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean);
+    return imeis.length ? imeis.join(" / ") : "-";
+}
+
+watch(detailPerPage, () => {
+    detailPage.value = 1;
+});
 
 const debouncedSearch = debounce(() => fetchReport(1), 400);
 watch(search, debouncedSearch);
@@ -280,6 +409,7 @@ async function exportPdf() {
 }
 
 onMounted(() => {
+    fetchSalesStats();
     fetchSalesReps();
     fetchReport(1);
 });
@@ -287,11 +417,58 @@ onMounted(() => {
 
 <template>
     <div class="space-y-6">
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-            <h1 class="text-2xl font-black text-slate-800">{{ title }}</h1>
-            <p class="mt-1 text-sm text-slate-500">
-                Menampilkan transaksi penjualan.
-            </p>
+        <div class="flex flex-col gap-4">
+            <div
+                class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200"
+            >
+                <h1 class="text-2xl font-black text-slate-800">{{ title }}</h1>
+                <p class="mt-1 text-sm text-slate-500">
+                    Menampilkan transaksi penjualan.
+                </p>
+            </div>
+            <div
+                class="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4"
+            >
+                <div
+                    v-for="card in statCards"
+                    :key="card.key"
+                    class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br"
+                    :class="card.wrapClass"
+                >
+                    <div class="relative z-10">
+                        <div class="text-xl font-black tracking-wide">
+                            {{ formatCurrency(card.value) }}
+                        </div>
+                        <div class="mt-1 text-sm font-semibold/5 opacity-95">
+                            {{ card.label }}
+                        </div>
+                    </div>
+                    <div
+                        class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-60"
+                    >
+                        <span
+                            class="w-2 h-3 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-6 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-10 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-5 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                        <span
+                            class="w-2 h-8 rounded-sm"
+                            :class="card.accentClass"
+                        ></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div
@@ -530,7 +707,13 @@ onMounted(() => {
                                 }}
                             </td>
                             <td class="table-cell font-bold text-blue-600">
-                                {{ row.no_invoice }}
+                                <button
+                                    type="button"
+                                    class="text-blue-600 underline-offset-2 hover:underline"
+                                    @click="openInvoiceDetail(row)"
+                                >
+                                    {{ row.no_invoice }}
+                                </button>
                             </td>
                             <td class="table-cell">
                                 {{ formatDate(row.tanggal) }}
@@ -640,5 +823,350 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
+        <Teleport to="body">
+            <div
+                v-if="detailModal.show"
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+                @click.self="closeInvoiceDetail"
+            >
+                <div
+                    class="w-full max-w-[95vw] xl:max-w-[1400px] overflow-hidden bg-white shadow-2xl rounded-2xl"
+                >
+                    <div
+                        class="flex items-center justify-between px-5 py-4 border-b bg-slate-50 border-slate-200"
+                    >
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">
+                                Detail Invoice Penjualan
+                            </h3>
+                            <p
+                                v-if="detailModal.data"
+                                class="text-xs text-slate-500"
+                            >
+                                {{ detailModal.data.no_invoice }} -
+                                {{ formatDate(detailModal.data.tanggal) }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <label
+                                    class="text-[11px] font-bold tracking-wider uppercase text-slate-500"
+                                    >Tampilkan</label
+                                >
+                                <select
+                                    v-model.number="detailPerPage"
+                                    class="px-2 py-1 text-xs bg-white border rounded border-slate-300 text-slate-700"
+                                >
+                                    <option :value="10">10</option>
+                                    <option :value="50">50</option>
+                                    <option :value="100">100</option>
+                                </select>
+                            </div>
+                            <button
+                                type="button"
+                                class="text-slate-400 hover:text-rose-500"
+                                @click="closeInvoiceDetail"
+                            >
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-5 max-h-[88vh] overflow-hidden">
+                        <div
+                            v-if="detailModal.loading"
+                            class="py-12 text-center text-slate-500"
+                        >
+                            Memuat detail...
+                        </div>
+                        <div
+                            v-else-if="!detailModal.data"
+                            class="py-12 text-center text-slate-500"
+                        >
+                            Detail tidak tersedia.
+                        </div>
+                        <div v-else>
+                            <div
+                                class="grid grid-cols-1 gap-3 mb-4 text-xs md:grid-cols-4"
+                            >
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Pelanggan</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{ detailModal.data.pelanggan || "-" }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Kasir</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{ detailModal.data.user?.name || "-" }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Sales</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{
+                                            detailModal.data.sales_rep?.nama ||
+                                            "-"
+                                        }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Metode</div>
+                                    <div
+                                        class="font-bold uppercase text-slate-800"
+                                    >
+                                        {{
+                                            detailModal.data
+                                                .metode_pembayaran || "-"
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                class="overflow-auto border rounded-lg max-h-[52vh] custom-scrollbar border-slate-200"
+                            >
+                                <table class="w-full text-xs min-w-[1200px]">
+                                    <thead
+                                        class="sticky top-0 bg-slate-50 text-slate-600"
+                                    >
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">
+                                                Produk
+                                            </th>
+                                            <th class="px-3 py-2 text-left">
+                                                Kode
+                                            </th>
+                                            <th class="px-3 py-2 text-left">
+                                                IMEI
+                                            </th>
+                                            <th class="px-3 py-2 text-left">
+                                                Satuan
+                                            </th>
+                                            <th class="px-3 py-2 text-left">
+                                                Grade
+                                            </th>
+                                            <th class="px-3 py-2 text-center">
+                                                Qty
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Modal
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Harga Jual
+                                            </th>
+                                            <th class="px-3 py-2 text-right">
+                                                Laba
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr
+                                            v-for="item in detailItemsPaged"
+                                            :key="item.id"
+                                            class="border-t border-slate-100"
+                                        >
+                                            <td
+                                                class="px-3 py-2 font-medium text-slate-800"
+                                            >
+                                                {{ item.product?.nama || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-mono text-slate-600"
+                                            >
+                                                {{
+                                                    item.product?.barcode || "-"
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-mono text-slate-600"
+                                            >
+                                                {{ formatImei(item.product) }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-slate-700"
+                                            >
+                                                {{ item.product?.unit || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-slate-700"
+                                            >
+                                                {{ item.product?.grade || "-" }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-bold text-center text-slate-700"
+                                            >
+                                                {{ item.qty || 0 }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-right text-amber-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        item.hpp_total || 0
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 text-right text-blue-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        item.subtotal || 0
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-bold text-right"
+                                                :style="{
+                                                    color:
+                                                        Number(
+                                                            item.subtotal || 0
+                                                        ) -
+                                                            Number(
+                                                                item.hpp_total ||
+                                                                    0
+                                                            ) <
+                                                        0
+                                                            ? '#dc2626'
+                                                            : '#16a34a',
+                                                }"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        Number(
+                                                            item.subtotal || 0
+                                                        ) -
+                                                            Number(
+                                                                item.hpp_total ||
+                                                                    0
+                                                            )
+                                                    )
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot
+                                        class="border-t bg-slate-50 border-slate-200"
+                                    >
+                                        <tr>
+                                            <td
+                                                colspan="5"
+                                                class="px-3 py-2 font-bold text-right text-slate-700"
+                                            >
+                                                Total
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-black text-center text-slate-800"
+                                            >
+                                                {{ detailTotals.qty }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-black text-right text-amber-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        detailTotals.modal
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-black text-right text-blue-700"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        detailTotals.harga_jual
+                                                    )
+                                                }}
+                                            </td>
+                                            <td
+                                                class="px-3 py-2 font-black text-right"
+                                                :style="{
+                                                    color:
+                                                        Number(
+                                                            detailTotals.laba ||
+                                                                0
+                                                        ) < 0
+                                                            ? '#dc2626'
+                                                            : '#15803d',
+                                                }"
+                                            >
+                                                {{
+                                                    formatCurrency(
+                                                        detailTotals.laba
+                                                    )
+                                                }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <div
+                                class="flex items-center justify-between mt-3 text-xs text-slate-500"
+                            >
+                                <span>
+                                    Menampilkan
+                                    {{
+                                        detailItems.length
+                                            ? (detailPage - 1) * detailPerPage +
+                                              1
+                                            : 0
+                                    }}
+                                    s/d
+                                    {{
+                                        Math.min(
+                                            detailPage * detailPerPage,
+                                            detailItems.length
+                                        )
+                                    }}
+                                    dari {{ detailItems.length }} item
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        class="px-2 py-1 bg-white border rounded border-slate-300 disabled:opacity-50"
+                                        :disabled="detailPage <= 1"
+                                        @click="
+                                            changeDetailPage(detailPage - 1)
+                                        "
+                                    >
+                                        Sebelumnya
+                                    </button>
+                                    <span class="font-bold text-slate-700">
+                                        {{ detailPage }} / {{ detailPageCount }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="px-2 py-1 bg-white border rounded border-slate-300 disabled:opacity-50"
+                                        :disabled="
+                                            detailPage >= detailPageCount
+                                        "
+                                        @click="
+                                            changeDetailPage(detailPage + 1)
+                                        "
+                                    >
+                                        Selanjutnya
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>

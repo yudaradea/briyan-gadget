@@ -60,15 +60,20 @@ class PurchaseRepository
                     ->when($supplierId, fn($sq) => $sq->where('supplier_id', $supplierId))
                     ->when($invoiceNo, fn($sq) => $sq->where('no_invoice', 'like', "%{$invoiceNo}%"));
             })
-            ->whereHas('product', function ($q) use ($search, $status, $brandId) {
-                $q->search($search)
-                    ->when($brandId, fn($sq) => $sq->whereHas('masterProduct', fn($mq) => $mq->where('brand_id', $brandId)));
+            ->whereHas('product', function ($q) use ($status, $brandId) {
+                $q->when($brandId, fn($sq) => $sq->whereHas('masterProduct', fn($mq) => $mq->where('brand_id', $brandId)));
 
                 if ($status === 'sold') {
                     $q->has('saleItems');
                 } elseif ($status === 'available') {
                     $q->doesntHave('saleItems');
                 }
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sq) use ($search) {
+                    $sq->whereHas('product', fn($pq) => $pq->search($search))
+                        ->orWhereHas('purchase', fn($pq) => $pq->where('no_invoice', 'like', "%{$search}%"));
+                });
             })
             ->latest();
 

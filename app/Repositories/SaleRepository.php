@@ -79,6 +79,7 @@ class SaleRepository
             'items.product.masterProduct.brand',
             'items.product.masterProduct.category',
             'items.product.masterProduct.unit',
+            'items.product.grade',
         ])->findOrFail($id);
 
         return ResponseHelper::success(new SaleResource($sale), 'Sale retrieved successfully');

@@ -82,6 +82,7 @@ class SaleResource extends JsonResource
                         'brand' => $item->product->masterProduct?->brand?->nama,
                         'category' => $item->product->masterProduct?->category?->nama,
                         'unit' => $item->product->masterProduct?->unit?->nama,
+                        'grade' => $item->product->grade?->nama,
                         'identifier_type' => $item->product->masterProduct?->identifier_type ?? 'none',
                         'foto' => $item->product->foto,
                     ] : null,
