@@ -142,8 +142,7 @@ async function fetchOptions() {
         taxOptions.value = resTax.data.data.data;
         users.value = resUsers.data.data || [];
         salesReps.value = users.value.filter(
-            (user) =>
-                !user.roles?.some((role) => role.name === "super-admin")
+            (user) => !user.roles?.some((role) => role.name === "super-admin")
         );
 
         if (!isEditing.value) {
@@ -489,7 +488,7 @@ function cancelTransaction() {
     >
         <!-- Title Header -->
         <div
-            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3 mx-3 sm:mx-6 mt-4 border-b-2 border-slate-200"
+            class="flex flex-col gap-3 pb-3 mx-3 mt-4 border-b-2 sm:flex-row sm:items-center sm:justify-between sm:mx-6 border-slate-200"
         >
             <h1
                 class="flex items-center gap-2 text-xl font-bold text-slate-700"
@@ -508,7 +507,9 @@ function cancelTransaction() {
         </div>
 
         <!-- Top Information Blocks -->
-        <div class="relative z-10 grid grid-cols-1 gap-4 px-3 sm:px-6 lg:grid-cols-4">
+        <div
+            class="relative z-10 grid grid-cols-1 gap-4 px-3 sm:px-6 lg:grid-cols-4"
+        >
             <!-- Blue Top Line Decoration -->
             <div
                 class="absolute -top-[1.2rem] left-3 right-3 sm:left-6 sm:right-6 h-[3px] bg-cyan-400 rounded-t-sm shadow-sm"
@@ -520,7 +521,7 @@ function cancelTransaction() {
                 <label class="text-[10px] uppercase font-bold text-slate-400"
                     >Kasir</label
                 >
-                <DateInput
+                <input
                     type="text"
                     :value="
                         authStore.isKasir
@@ -1274,7 +1275,3 @@ input[readonly] {
     opacity: 0.9;
 }
 </style>
-
-
-
-
