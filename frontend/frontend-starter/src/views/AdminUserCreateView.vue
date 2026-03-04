@@ -2,26 +2,24 @@
 import { ref } from "vue";
 import api from "../api";
 import { useRouter } from "vue-router";
+import { useToast } from "../composables/useToast";
 
 const router = useRouter();
-const form = ref({
-    name: "",
-    email: "",
-    password: "",
-    role: "kasir",
-});
+const toast = useToast();
+
+const initialForm = () => ({ name: "", email: "", password: "", role: "kasir" });
+const form = ref(initialForm());
 const loading = ref(false);
-const error = ref(null);
 const showPassword = ref(false);
 
 const createUser = async () => {
     loading.value = true;
-    error.value = null;
     try {
         await api.post("/user", form.value);
-        router.push("/dashboard");
+        toast.success("Pengguna berhasil dibuat");
+        form.value = initialForm();
     } catch (err) {
-        error.value = err.response?.data?.message || "Gagal membuat pengguna";
+        toast.error(err.response?.data?.message || "Gagal membuat pengguna");
     } finally {
         loading.value = false;
     }
@@ -38,14 +36,6 @@ const createUser = async () => {
 
         <!-- Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
-            <!-- Error -->
-            <div v-if="error" class="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-600 text-sm p-3.5 rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ error }}
-            </div>
-
             <!-- Nama -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Nama Lengkap</label>

@@ -6,6 +6,7 @@ use App\Helpers\ResponseHelper;
 use App\Http\Resources\PaginateResource;
 use App\Http\Resources\UserResource;
 use App\Interfaces\UserRepositoryInterface;
+use App\Models\SalesRep;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -95,10 +96,18 @@ class UserRepository implements UserRepositoryInterface
         $user = User::create($data);
 
         // Assign role if provided
-        if (isset($data['role'])) {
-            $user->assignRole($data['role']);
-        } else {
-            $user->assignRole('user');
+        $role = $data['role'] ?? 'user';
+        $user->assignRole($role);
+
+        // Auto-create SalesRep for non super-admin users
+        if ($role !== 'super-admin') {
+            $salesRep = SalesRep::withTrashed()->find($user->id);
+            if (!$salesRep) {
+                $salesRep = new SalesRep();
+                $salesRep->id = $user->id;
+            }
+            $salesRep->nama = $user->name;
+            $salesRep->save();
         }
 
         return ResponseHelper::success(

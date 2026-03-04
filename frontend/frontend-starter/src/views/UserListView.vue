@@ -2,8 +2,11 @@
 import { ref, onMounted, watch } from "vue";
 import api from "../api";
 import { useAuthStore } from "../stores/auth";
+import { useToast } from "../composables/useToast";
+import ConfirmDialog from "../components/ConfirmDialog.vue";
 
 const authStore = useAuthStore();
+const toast = useToast();
 const users = ref([]);
 const loading = ref(false);
 const error = ref(null);
@@ -21,6 +24,11 @@ const editForm = ref({
 const editLoading = ref(false);
 const editError = ref("");
 const editSuccess = ref("");
+
+// Delete confirmation
+const showDeleteDialog = ref(false);
+const deleteTarget = ref(null);
+const deleteLoading = ref(false);
 
 const fetchUsers = async (page = 1) => {
     loading.value = true;
@@ -101,14 +109,29 @@ const updateUser = async () => {
     }
 };
 
-const deleteUser = async (id) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+const confirmDelete = (user) => {
+    deleteTarget.value = user;
+    showDeleteDialog.value = true;
+};
 
+const cancelDelete = () => {
+    showDeleteDialog.value = false;
+    deleteTarget.value = null;
+};
+
+const deleteUser = async () => {
+    if (!deleteTarget.value) return;
+    deleteLoading.value = true;
     try {
-        await api.delete(`/user/${id}`);
-        fetchUsers(pagination.value.current_page); // Refresh list
+        await api.delete(`/user/${deleteTarget.value.id}`);
+        toast.success("Pengguna berhasil dihapus");
+        showDeleteDialog.value = false;
+        deleteTarget.value = null;
+        fetchUsers(pagination.value.current_page);
     } catch (err) {
-        alert("Failed to delete user");
+        toast.error(err.response?.data?.message || "Gagal menghapus pengguna");
+    } finally {
+        deleteLoading.value = false;
     }
 };
 
@@ -268,7 +291,7 @@ onMounted(() => {
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
                         <tr
-                            v-for="(user, index) in users"
+                            v-for="(user, index) in users.filter(u => !u.roles?.some(r => r.name === 'super-admin'))"
                             :key="user.id"
                             class="table-row group"
                         >
@@ -353,7 +376,7 @@ onMounted(() => {
                                         </svg>
                                     </button>
                                     <button
-                                        @click="deleteUser(user.id)"
+                                        @click="confirmDelete(user)"
                                         class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                                         title="Hapus"
                                     >
@@ -445,6 +468,16 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Delete Confirmation -->
+        <ConfirmDialog
+            :show="showDeleteDialog"
+            title="Hapus Pengguna"
+            :message="`Apakah Anda yakin ingin menghapus pengguna &quot;${deleteTarget?.name}&quot;? Tindakan ini tidak dapat dibatalkan.`"
+            :loading="deleteLoading"
+            @confirm="deleteUser"
+            @cancel="cancelDelete"
+        />
 
         <!-- Edit User Modal -->
         <div
