@@ -23,6 +23,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:50|unique:users,username,' . $this->user()->id . '|alpha_num',
             'email' => 'nullable|email|unique:users,email,' . $this->user()->id,
             'bio' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
@@ -40,6 +41,9 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name.max' => 'Nama tidak boleh lebih dari 255 karakter',
+            'username.max' => 'Username tidak boleh lebih dari 50 karakter',
+            'username.unique' => 'Username sudah digunakan',
+            'username.alpha_num' => 'Username hanya boleh berisi huruf dan angka',
             'phone.max' => 'Nomor telepon tidak boleh lebih dari 20 karakter',
             'address.max' => 'Alamat tidak boleh lebih dari 500 karakter',
             'avatar.image' => 'File harus berupa gambar',

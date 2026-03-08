@@ -8,7 +8,7 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 const form = ref({
-    email: "",
+    login: "",
     password: "",
 });
 
@@ -30,7 +30,7 @@ const handleLogin = async () => {
     if (success) {
         router.push("/dashboard");
     } else {
-        loginError.value = authStore.error || "Email atau password salah";
+        loginError.value = authStore.error || "Username/Email atau password salah";
     }
 };
 
@@ -122,9 +122,9 @@ onMounted(fetchStoreProfile);
                 <form class="space-y-6" @submit.prevent="handleLogin">
                     <div>
                         <label
-                            for="email"
+                            for="login"
                             class="block text-sm font-semibold text-gray-700"
-                            >Email</label
+                            >Username atau Email</label
                         >
                         <div class="relative mt-2">
                             <div
@@ -140,19 +140,19 @@ onMounted(fetchStoreProfile);
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2"
-                                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                                     />
                                 </svg>
                             </div>
                             <input
-                                v-model="form.email"
-                                id="email"
-                                name="email"
-                                type="email"
-                                autocomplete="email"
+                                v-model="form.login"
+                                id="login"
+                                name="login"
+                                type="text"
+                                autocomplete="username"
                                 required
                                 class="block w-full py-3 pl-10 pr-3 text-sm text-gray-900 transition duration-200 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
-                                placeholder="nama@contoh.com"
+                                placeholder="username atau nama@contoh.com"
                             />
                         </div>
                     </div>

@@ -18,10 +18,15 @@ class AuthRepository implements AuthRepositoryInterface
     public function login(array $credentials)
     {
         try {
+            $login = $credentials['login'];
+            $password = $credentials['password'];
 
-            if (!Auth::attempt($credentials)) {
+            // Tentukan apakah input adalah email atau username
+            $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+            if (!Auth::attempt([$field => $login, 'password' => $password])) {
                 return ResponseHelper::error(
-                    'Email atau Password salah',
+                    'Username/Email atau Password salah',
                     'invalid_credentials',
                     401
                 );

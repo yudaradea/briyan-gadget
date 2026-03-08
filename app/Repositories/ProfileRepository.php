@@ -18,6 +18,7 @@ class ProfileRepository implements ProfileRepositoryInterface
         $data = [
             'id' => $user->id,
             'name' => $user->name,
+            'username' => $user->username,
             'email' => $user->email,
             'avatar_url' => $user->profile?->avatar ? asset('storage/' . $user->profile->avatar) : null,
             'bio' => $user->profile?->bio,
@@ -37,6 +38,7 @@ class ProfileRepository implements ProfileRepositoryInterface
             // Update User Table
             $userData = [];
             if (isset($data['name'])) $userData['name'] = $data['name'];
+            if (isset($data['username'])) $userData['username'] = $data['username'];
             if (isset($data['email'])) $userData['email'] = $data['email'];
 
             if (!empty($userData)) {

@@ -63,6 +63,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
     ];
@@ -105,6 +106,7 @@ class User extends Authenticatable
 
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', '%' . $search . '%')
+                ->orWhere('username', 'like', '%' . $search . '%')
                 ->orWhere('email', 'like', '%' . $search . '%');
         });
     }

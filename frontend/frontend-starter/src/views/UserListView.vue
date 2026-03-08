@@ -18,6 +18,7 @@ const showEditModal = ref(false);
 const editingUser = ref(null);
 const editForm = ref({
     name: "",
+    username: "",
     email: "",
     role: "",
 });
@@ -65,6 +66,7 @@ const openEditModal = (user) => {
     editingUser.value = user;
     editForm.value = {
         name: user.name,
+        username: user.username || "",
         email: user.email,
         role: user.roles && user.roles.length > 0 ? user.roles[0].name : "",
     };
@@ -78,6 +80,7 @@ const closeEditModal = () => {
     editingUser.value = null;
     editForm.value = {
         name: "",
+        username: "",
         email: "",
         role: "",
     };
@@ -278,6 +281,7 @@ onMounted(() => {
                         <tr>
                             <th class="w-12 text-center">No</th>
                             <th class="w-64">Nama</th>
+                            <th class="w-40">Username</th>
                             <th class="w-64">Email</th>
                             <th class="w-48">Role</th>
                             <th class="w-40">Joined</th>
@@ -326,6 +330,9 @@ onMounted(() => {
                                         </div>
                                     </div>
                                 </div>
+                            </td>
+                            <td class="table-cell text-slate-600 font-mono text-xs">
+                                {{ user.username || '-' }}
                             </td>
                             <td class="table-cell text-slate-600">
                                 {{ user.email }}
@@ -537,13 +544,27 @@ onMounted(() => {
                                         <div>
                                             <label
                                                 class="block text-sm font-medium text-gray-700"
-                                                >Name</label
+                                                >Nama</label
                                             >
                                             <input
                                                 v-model="editForm.name"
                                                 type="text"
                                                 required
                                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700"
+                                                >Username</label
+                                            >
+                                            <input
+                                                v-model="editForm.username"
+                                                type="text"
+                                                required
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                placeholder="Hanya huruf dan angka"
                                             />
                                         </div>
 

@@ -23,6 +23,7 @@ class UserStoreRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:50|unique:users,username|alpha_num',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'role' => 'sometimes|string|exists:roles,name',
@@ -39,6 +40,10 @@ class UserStoreRequest extends FormRequest
         return [
             'name.required' => 'Nama harus diisi',
             'name.max' => 'Nama maksimal 255 karakter',
+            'username.required' => 'Username harus diisi',
+            'username.max' => 'Username maksimal 50 karakter',
+            'username.unique' => 'Username sudah digunakan',
+            'username.alpha_num' => 'Username hanya boleh berisi huruf dan angka',
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',

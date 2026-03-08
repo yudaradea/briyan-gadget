@@ -7,7 +7,7 @@ import { useToast } from "../composables/useToast";
 const router = useRouter();
 const toast = useToast();
 
-const initialForm = () => ({ name: "", email: "", password: "", role: "kasir" });
+const initialForm = () => ({ name: "", username: "", email: "", password: "", role: "kasir" });
 const form = ref(initialForm());
 const loading = ref(false);
 const showPassword = ref(false);
@@ -46,6 +46,19 @@ const createUser = async () => {
                     placeholder="Masukkan nama lengkap"
                     class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 />
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                <input
+                    v-model="form.username"
+                    type="text"
+                    required
+                    placeholder="Contoh: johndoe123"
+                    class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+                <p class="mt-1 text-xs text-gray-400">Hanya huruf dan angka, tanpa spasi</p>
             </div>
 
             <!-- Email -->

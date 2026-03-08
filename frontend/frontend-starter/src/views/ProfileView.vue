@@ -6,6 +6,7 @@ const authStore = useAuthStore();
 
 const form = ref({
     name: "",
+    username: "",
     email: "",
     phone: "",
     address: "",
@@ -43,6 +44,7 @@ onMounted(async () => {
 const loadFormData = () => {
     if (authStore.user) {
         form.value.name = authStore.user.name || "";
+        form.value.username = authStore.user.username || "";
         form.value.email = authStore.user.email || "";
 
         if (authStore.user.profile) {
@@ -72,6 +74,7 @@ const updateProfile = async () => {
     // Using FormData for file upload
     const formData = new FormData();
     formData.append("name", form.value.name);
+    formData.append("username", form.value.username);
     formData.append("email", form.value.email);
     formData.append("phone", form.value.phone);
     formData.append("address", form.value.address);
@@ -217,7 +220,7 @@ const changePassword = async () => {
                         <div>
                             <label
                                 class="block text-sm font-medium text-gray-700"
-                                >Name</label
+                                >Nama</label
                             >
                             <input
                                 v-model="form.name"
@@ -225,6 +228,20 @@ const changePassword = async () => {
                                 required
                                 class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             />
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700"
+                                >Username</label
+                            >
+                            <input
+                                v-model="form.username"
+                                type="text"
+                                required
+                                class="block w-full p-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                placeholder="Hanya huruf dan angka"
+                            />
+                            <p class="mt-1 text-xs text-gray-400">Digunakan untuk login selain email</p>
                         </div>
                         <div>
                             <label
