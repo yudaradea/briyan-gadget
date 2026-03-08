@@ -18,20 +18,14 @@ class ProductResource extends JsonResource
                 'id' => $this->masterProduct->id,
                 'nama' => $this->masterProduct->nama,
                 'brand_id' => $this->masterProduct->brand_id,
-                'category_id' => $this->masterProduct->category_id,
-                'unit_id' => $this->masterProduct->unit_id,
             ]),
             'brand' => $this->masterProduct?->brand ? [
                 'id' => $this->masterProduct->brand->id,
                 'nama' => $this->masterProduct->brand->nama,
             ] : null,
-            'category' => $this->masterProduct?->category ? [
-                'id' => $this->masterProduct->category->id,
-                'nama' => $this->masterProduct->category->nama,
-            ] : null,
-            'unit' => $this->masterProduct?->unit ? [
-                'id' => $this->masterProduct->unit->id,
-                'nama' => $this->masterProduct->unit->nama,
+            'unit' => $this->unit ? [
+                'id' => $this->unit->id,
+                'nama' => $this->unit->nama,
             ] : null,
             'grade' => $this->whenLoaded('grade', fn() => $this->grade ? [
                 'id' => $this->grade->id,

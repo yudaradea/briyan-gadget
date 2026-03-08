@@ -31,18 +31,12 @@ class MasterProductController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'brand_id' => 'required|uuid|exists:brands,id',
-            'category_id' => 'nullable|uuid|exists:categories,id',
-            'unit_id' => 'nullable|uuid|exists:units,id',
-            'grade_id' => 'nullable|uuid|exists:grades,id',
-            'identifier_type' => 'nullable|in:none,imei1,imei2,serial',
-            'foto' => 'nullable|string',
-            'keterangan' => 'nullable|string',
         ]);
 
-        $item = $this->repository->store($request->all());
+        $item = $this->repository->store($validated);
         return ResponseHelper::success(new MasterProductResource($item), 'Master product created successfully', 201);
     }
 
@@ -53,18 +47,12 @@ class MasterProductController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'brand_id' => 'required|uuid|exists:brands,id',
-            'category_id' => 'nullable|uuid|exists:categories,id',
-            'unit_id' => 'nullable|uuid|exists:units,id',
-            'grade_id' => 'nullable|uuid|exists:grades,id',
-            'identifier_type' => 'nullable|in:none,imei1,imei2,serial',
-            'foto' => 'nullable|string',
-            'keterangan' => 'nullable|string',
         ]);
 
-        $item = $this->repository->update($id, $request->all());
+        $item = $this->repository->update($id, $validated);
         return ResponseHelper::success(new MasterProductResource($item), 'Master product updated successfully');
     }
 

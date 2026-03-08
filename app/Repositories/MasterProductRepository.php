@@ -11,12 +11,12 @@ class MasterProductRepository
 
     public function all()
     {
-        return $this->model->with(['brand', 'category', 'unit', 'grade'])->orderBy('nama')->get();
+        return $this->model->with(['brand'])->orderBy('nama')->get();
     }
 
     public function paginate($perPage = 10, $search = null)
     {
-        return $this->model->with(['brand', 'category', 'unit', 'grade'])
+        return $this->model->with(['brand'])
             ->when($search, function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%");
             })
@@ -44,12 +44,12 @@ class MasterProductRepository
 
     public function find($id)
     {
-        return $this->model->with(['brand', 'category', 'unit', 'grade'])->findOrFail($id);
+        return $this->model->with(['brand'])->findOrFail($id);
     }
 
     public function search($keyword)
     {
-        return $this->model->with(['brand', 'category', 'unit', 'grade'])
+        return $this->model->with(['brand'])
             ->where('nama', 'like', "%{$keyword}%")
             ->limit(10)
             ->get();

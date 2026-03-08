@@ -89,8 +89,7 @@ class SaleRepository
             'serviceOrder.technician',
             'serviceOrder.parts.product.masterProduct',
             'items.product.masterProduct.brand',
-            'items.product.masterProduct.category',
-            'items.product.masterProduct.unit',
+            'items.product.unit',
             'items.product.grade',
         ])->when($isKasir, fn($q) => $q->where('user_id', $authUser->id))
             ->findOrFail($id);

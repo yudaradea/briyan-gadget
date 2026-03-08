@@ -52,8 +52,7 @@ class PurchaseRepository
             ->with([
                 'purchase.supplier',
                 'product.masterProduct.brand',
-                'product.masterProduct.category',
-                'product.masterProduct.unit',
+                'product.unit',
                 'product.grade',
                 'product.saleItems.salesTransaction'
             ])
@@ -96,8 +95,7 @@ class PurchaseRepository
             'supplier',
             'user',
             'items.product.masterProduct.brand',
-            'items.product.masterProduct.category',
-            'items.product.masterProduct.unit',
+            'items.product.unit',
             'items.product.grade',
             'items.product.saleItems.salesTransaction',
         ])->findOrFail($id);
@@ -152,12 +150,11 @@ class PurchaseRepository
                 if (isset($data['harga_jual'])) {
                     $productUpdateData['harga_jual'] = $data['harga_jual'];
                 }
+                if (array_key_exists('unit_id', $data)) {
+                    $productUpdateData['unit_id'] = $data['unit_id'] ?: null;
+                }
 
                 $product->update($productUpdateData);
-
-                if (!empty($data['unit_id'])) {
-                    $product->masterProduct()->update(['unit_id' => $data['unit_id']]);
-                }
             } else {
                 // Use provided barcode or generate for NEW product
                 $barcode = $data['barcode'] ?? $this->barcodeService->generate();
@@ -167,6 +164,7 @@ class PurchaseRepository
                     'master_product_id' => $data['master_product_id'],
                     'barcode' => $barcode,
                     'grade_id' => $data['grade_id'] ?? null,
+                    'unit_id' => $data['unit_id'] ?? null,
                     'imei1' => $data['imei1'] ?? null,
                     'imei2' => $data['imei2'] ?? null,
                     'harga_modal' => $data['harga_beli'],
@@ -176,9 +174,6 @@ class PurchaseRepository
                     'foto' => $data['foto'] ?? null,
                 ]);
 
-                if (!empty($data['unit_id'])) {
-                    \App\Models\MasterProduct::where('id', $data['master_product_id'])->update(['unit_id' => $data['unit_id']]);
-                }
             }
 
             // Create purchase item
@@ -198,7 +193,7 @@ class PurchaseRepository
             $purchase->recalculateTotal();
 
             // Load product with relations for response
-            $product->load(['masterProduct.brand', 'masterProduct.category', 'masterProduct.unit', 'grade']);
+            $product->load(['masterProduct.brand', 'unit', 'grade']);
 
             return ResponseHelper::success([
                 'item' => [
@@ -212,13 +207,10 @@ class PurchaseRepository
                         'imei2' => $product->imei2,
                         'brand' => $product->masterProduct?->brand?->nama,
                         'brand_id' => $product->masterProduct?->brand_id,
-                        'category' => $product->masterProduct?->category?->nama,
-                        'category_id' => $product->masterProduct?->category_id,
                         'grade' => $product->grade?->nama,
                         'grade_id' => $product->grade_id,
-                        'unit' => $product->masterProduct?->unit?->nama,
-                        'unit_id' => $product->masterProduct?->unit_id,
-                        'identifier_type' => $product->masterProduct?->identifier_type ?? 'none',
+                        'unit' => $product->unit?->nama,
+                        'unit_id' => $product->unit_id,
                         'harga_jual' => (float) $product->harga_jual,
                         'foto' => $product->foto,
                     ],
@@ -243,7 +235,7 @@ class PurchaseRepository
 
             // Update product fields
             $productData = [];
-            foreach (['master_product_id', 'grade_id', 'imei1', 'imei2', 'foto'] as $field) {
+            foreach (['master_product_id', 'grade_id', 'unit_id', 'imei1', 'imei2', 'foto'] as $field) {
                 if (array_key_exists($field, $data)) {
                     // Jika ada upload foto baru dan foto lama sudah ada, hapus foto lamanya
                     if ($field === 'foto' && $data['foto'] && $product->foto) {
@@ -260,10 +252,6 @@ class PurchaseRepository
             }
             if (!empty($productData)) {
                 $product->update($productData);
-            }
-
-            if (!empty($data['unit_id'])) {
-                $product->masterProduct()->update(['unit_id' => $data['unit_id']]);
             }
 
             // Sync hpp_total on sale items when harga_beli changes
@@ -301,7 +289,7 @@ class PurchaseRepository
             // Recalculate total
             $purchase->recalculateTotal();
 
-            $product->load(['masterProduct.brand', 'masterProduct.category', 'masterProduct.unit', 'grade']);
+            $product->load(['masterProduct.brand', 'unit', 'grade']);
 
             return ResponseHelper::success([
                 'item' => [
@@ -315,13 +303,10 @@ class PurchaseRepository
                         'imei2' => $product->imei2,
                         'brand' => $product->masterProduct?->brand?->nama,
                         'brand_id' => $product->masterProduct?->brand_id,
-                        'category' => $product->masterProduct?->category?->nama,
-                        'category_id' => $product->masterProduct?->category_id,
                         'grade' => $product->grade?->nama,
                         'grade_id' => $product->grade_id,
-                        'unit' => $product->masterProduct?->unit?->nama,
-                        'unit_id' => $product->masterProduct?->unit_id,
-                        'identifier_type' => $product->masterProduct?->identifier_type ?? 'none',
+                        'unit' => $product->unit?->nama,
+                        'unit_id' => $product->unit_id,
                         'harga_jual' => (float) $product->harga_jual,
                         'foto' => $product->foto,
                     ],

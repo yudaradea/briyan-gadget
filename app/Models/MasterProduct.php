@@ -17,21 +17,6 @@ class MasterProduct extends Model
         return $this->belongsTo(Brand::class);
     }
 
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
-
-    public function grade()
-    {
-        return $this->belongsTo(Grade::class);
-    }
-
     public function stocks()
     {
         return $this->hasMany(Product::class, 'master_product_id');

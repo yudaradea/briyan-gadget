@@ -15,7 +15,7 @@ class ProductRepository
      */
     public function scan($code)
     {
-        $product = $this->model->with(['masterProduct.brand', 'masterProduct.category', 'masterProduct.unit', 'grade'])
+        $product = $this->model->with(['masterProduct.brand', 'unit', 'grade'])
             ->inStock()
             ->scan($code)
             ->first();
@@ -36,8 +36,7 @@ class ProductRepository
             'harga_modal' => (float) $product->harga_modal,
             'stok' => $availableStock,
             'brand' => $product->masterProduct->brand?->nama,
-            'category' => $product->masterProduct->category?->nama,
-            'unit' => $product->masterProduct->unit ? ['nama' => $product->masterProduct->unit->nama] : null,
+            'unit' => $product->unit ? ['nama' => $product->unit->nama] : null,
             'grade' => $product->grade ? ['nama' => $product->grade->nama] : null,
             'foto' => $product->foto,
         ], 'Product found');
@@ -48,15 +47,9 @@ class ProductRepository
      */
     public function search($keyword, $category = null, $includeOutStock = false)
     {
-        $query = $this->model->with(['masterProduct.brand', 'masterProduct.category', 'masterProduct.unit', 'grade'])
+        $query = $this->model->with(['masterProduct.brand', 'unit', 'grade'])
             ->when(!$includeOutStock, fn($q) => $q->inStock())
             ->search($keyword);
-
-        if ($category) {
-            $query->whereHas('masterProduct.category', function ($q) use ($category) {
-                $q->where('nama', 'like', '%' . $category . '%');
-            });
-        }
 
         $products = $query->take(10) // Limit results for autocomplete
             ->get()
@@ -72,11 +65,9 @@ class ProductRepository
                     'harga_modal' => (float) $product->harga_modal,
                     'stok' => $this->resolveAvailableStock($product),
                     'brand_id' => $product->masterProduct->brand_id,
-                    'category_id' => $product->masterProduct->category_id,
-                    'unit_id' => $product->masterProduct->unit_id,
+                    'unit_id' => $product->unit_id,
                     'brand' => $product->masterProduct->brand?->nama,
-                    'category' => $product->masterProduct->category?->nama,
-                    'unit' => $product->masterProduct->unit ? ['nama' => $product->masterProduct->unit->nama] : null,
+                    'unit' => $product->unit ? ['nama' => $product->unit->nama] : null,
                     'grade' => $product->grade ? ['nama' => $product->grade->nama] : null,
                     'foto' => $product->foto,
                 ];
@@ -90,20 +81,17 @@ class ProductRepository
         $query = Product::query()
             ->join('master_products', 'products.master_product_id', '=', 'master_products.id')
             ->leftJoin('brands', 'master_products.brand_id', '=', 'brands.id')
-            ->leftJoin('categories', 'master_products.category_id', '=', 'categories.id')
             ->leftJoin('grades', 'products.grade_id', '=', 'grades.id')
-            ->leftJoin('units', 'master_products.unit_id', '=', 'units.id')
+            ->leftJoin('units', 'products.unit_id', '=', 'units.id')
             ->select(
                 'products.master_product_id',
                 'master_products.nama',
                 'master_products.brand_id',
-                'master_products.category_id',
                 'products.grade_id',
-                'master_products.unit_id',
+                'products.unit_id',
                 DB::raw('MAX(products.harga_jual) as harga_jual'),
                 DB::raw('SUM(products.stok) as total_stok'),
                 'brands.nama as brand_nama',
-                'categories.nama as category_nama',
                 'grades.nama as grade_nama',
                 'units.nama as unit_nama'
             )
@@ -111,11 +99,9 @@ class ProductRepository
                 'products.master_product_id',
                 'master_products.nama',
                 'master_products.brand_id',
-                'master_products.category_id',
                 'products.grade_id',
-                'master_products.unit_id',
+                'products.unit_id',
                 'brands.nama',
-                'categories.nama',
                 'grades.nama',
                 'units.nama'
             )
@@ -123,7 +109,6 @@ class ProductRepository
             ->when($search, function ($q) use ($search) {
                 $q->where('master_products.nama', 'like', "%{$search}%");
             })
-            ->when($categoryId, fn($q) => $q->where('master_products.category_id', $categoryId))
             ->when($brandId, fn($q) => $q->where('master_products.brand_id', $brandId))
             ->orderBy('master_products.nama');
 
@@ -138,9 +123,8 @@ class ProductRepository
                 'total_stok' => (int) $item->total_stok,
                 'harga_jual' => (float) $item->harga_jual,
                 'brand' => ['nama' => $item->brand_nama],
-                'category' => ['nama' => $item->category_nama],
                 'grade' => $item->grade_nama ? ['nama' => $item->grade_nama] : null,
-                'unit' => ['nama' => $item->unit_nama],
+                'unit' => $item->unit_nama ? ['nama' => $item->unit_nama] : null,
             ];
         });
 
@@ -152,23 +136,18 @@ class ProductRepository
         $query = \App\Models\MasterProduct::query()
             ->leftJoin('products', 'master_products.id', '=', 'products.master_product_id')
             ->leftJoin('brands', 'master_products.brand_id', '=', 'brands.id')
-            ->leftJoin('units', 'master_products.unit_id', '=', 'units.id')
             ->select(
                 'master_products.id as master_product_id',
                 'master_products.nama',
                 'master_products.brand_id',
-                'master_products.unit_id',
                 DB::raw('COALESCE(SUM(products.stok), 0) as total_stok'),
-                'brands.nama as brand_nama',
-                'units.nama as unit_nama'
+                'brands.nama as brand_nama'
             )
             ->groupBy(
                 'master_products.id',
                 'master_products.nama',
                 'master_products.brand_id',
-                'master_products.unit_id',
-                'brands.nama',
-                'units.nama'
+                'brands.nama'
             )
             ->when($search, function ($q) use ($search) {
                 $q->where('master_products.nama', 'like', "%{$search}%");
@@ -185,7 +164,7 @@ class ProductRepository
                 'nama' => $item->nama,
                 'total_stok' => (int) $item->total_stok,
                 'brand' => ['nama' => $item->brand_nama],
-                'unit' => ['nama' => $item->unit_nama],
+                'unit' => null,
             ];
         });
 
@@ -197,8 +176,7 @@ class ProductRepository
         $products = Product::query()
             ->with([
                 'masterProduct.brand',
-                'masterProduct.category',
-                'masterProduct.unit',
+                'unit',
                 'grade',
                 'purchaseItems.purchase.supplier',
             ])
@@ -225,7 +203,7 @@ class ProductRepository
                     'invoice_pembelian' => $purchase?->no_invoice,
                     'supplier' => $purchase?->supplier?->nama,
                     'tanggal_pembelian' => optional($purchase?->tanggal)->format('Y-m-d'),
-                    'satuan' => $product->masterProduct?->unit?->nama,
+                    'satuan' => $product->unit?->nama,
                 ];
             })
             ->values();

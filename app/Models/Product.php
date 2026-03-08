@@ -15,6 +15,7 @@ class Product extends Model
         'master_product_id',
         'barcode',
         'grade_id',
+        'unit_id',
         'imei1',
         'imei2',
         'harga_modal',
@@ -80,6 +81,11 @@ class Product extends Model
     public function grade()
     {
         return $this->belongsTo(Grade::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function purchaseItems()
