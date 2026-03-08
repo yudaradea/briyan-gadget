@@ -153,6 +153,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/sales/{id}', [SaleController::class, 'update']);
     Route::get('/sales/{id}', [SaleController::class, 'show']);
     Route::delete('/sales/{id}', [SaleController::class, 'destroy']);
+    Route::put('/sales/{saleId}/items/{itemId}', [SaleController::class, 'updateItem']);
 
     // ============================================
     // Report Routes

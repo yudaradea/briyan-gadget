@@ -26,8 +26,8 @@ class UserUpdateRequest extends FormRequest
         return [
             'name' => 'sometimes|required|string|max:255',
             'username' => 'sometimes|required|string|max:50|unique:users,username,' . $userId . '|alpha_num',
-            'email' => 'sometimes|required|email|unique:users,email,' . $userId,
-            'password' => 'sometimes|nullable|string|min:6',
+            'email' => 'nullable|required|email|unique:users,email,' . $userId,
+            'password' => 'sometimes|nullable|string|min:3',
             'role' => 'sometimes|string|exists:roles,name',
         ];
     }
@@ -49,7 +49,7 @@ class UserUpdateRequest extends FormRequest
             'email.required' => 'Email harus diisi',
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
-            'password.min' => 'Password minimal 6 karakter',
+            'password.min' => 'Password minimal 3 karakter',
             'role.exists' => 'Role tidak valid',
         ];
     }

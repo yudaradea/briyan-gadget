@@ -28,7 +28,7 @@ const handleLogin = async () => {
     form.value.password = "";
 
     if (success) {
-        router.push("/dashboard");
+        router.push("/");
     } else {
         loginError.value = authStore.error || "Username/Email atau password salah";
     }

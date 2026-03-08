@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import DateInput from "../../components/DateInput.vue";
+import CurrencyInput from "../../components/CurrencyInput.vue";
 import debounce from "lodash-es/debounce";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
@@ -239,6 +240,52 @@ async function openInvoiceDetail(row) {
 
 function closeInvoiceDetail() {
     detailModal.value.show = false;
+}
+
+// Edit HPP modal
+const editModal = ref({
+    show: false,
+    item: null,
+    saleId: null,
+    oldValueDisplay: "",
+    newValue: 0,
+});
+const savingEdit = ref(false);
+
+function openEditModal(item) {
+    editModal.value.item = item;
+    editModal.value.saleId = detailModal.value.data?.id;
+    editModal.value.oldValueDisplay = formatCurrency(item.hpp_total);
+    editModal.value.newValue = Number(item.hpp_total || 0);
+    editModal.value.show = true;
+}
+
+async function saveEdit() {
+    if (!editModal.value.item) return;
+    const item = editModal.value.item;
+    savingEdit.value = true;
+    try {
+        await api.put(`/sales/${editModal.value.saleId}/items/${item.id}`, {
+            hpp_total: editModal.value.newValue,
+        });
+        item.hpp_total = editModal.value.newValue;
+        editModal.value.show = false;
+        toast.success("Harga modal berhasil diubah");
+        // Update main table row immediately
+        const row = rows.value.find((r) => r.id === editModal.value.saleId);
+        if (row) {
+            const newHpp = detailItems.value.reduce(
+                (sum, i) => sum + Number(i.hpp_total || 0),
+                0
+            );
+            row.hpp_total = newHpp;
+            row.laba_kotor = Number(row.grand_total) - newHpp;
+        }
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
+    } finally {
+        savingEdit.value = false;
+    }
 }
 
 function changeDetailPage(page) {
@@ -685,7 +732,8 @@ onMounted(() => {
                             v-else
                             v-for="(row, idx) in rows"
                             :key="row.id"
-                            class="table-row"
+                            class="table-row cursor-pointer hover:bg-blue-50"
+                            @click="openInvoiceDetail(row)"
                         >
                             <td class="table-cell text-center text-slate-500">
                                 {{
@@ -696,13 +744,7 @@ onMounted(() => {
                                 }}
                             </td>
                             <td class="table-cell font-bold text-blue-600">
-                                <button
-                                    type="button"
-                                    class="text-blue-600 underline-offset-2 hover:underline"
-                                    @click="openInvoiceDetail(row)"
-                                >
-                                    {{ row.no_invoice }}
-                                </button>
+                                {{ row.no_invoice }}
                             </td>
                             <td class="table-cell">
                                 {{ formatDate(row.tanggal) }}
@@ -1003,11 +1045,18 @@ onMounted(() => {
                                             <td
                                                 class="px-3 py-2 text-right text-amber-700"
                                             >
-                                                {{
-                                                    formatCurrency(
-                                                        item.hpp_total || 0
-                                                    )
-                                                }}
+                                                <a
+                                                    href="javascript:void(0)"
+                                                    @click="openEditModal(item)"
+                                                    class="hover:underline underline-offset-2 cursor-pointer"
+                                                    title="Klik untuk ubah harga modal"
+                                                >
+                                                    {{
+                                                        formatCurrency(
+                                                            item.hpp_total || 0
+                                                        )
+                                                    }}
+                                                </a>
                                             </td>
                                             <td
                                                 class="px-3 py-2 text-right text-blue-700"
@@ -1153,6 +1202,47 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Edit Harga Modal -->
+            <div
+                v-if="editModal.show"
+                class="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+                style="z-index: 9999"
+                @click.self="editModal.show = false"
+            >
+                <div class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl">
+                    <div class="flex items-center justify-between px-4 py-3 text-white bg-amber-600">
+                        <h3 class="text-sm font-bold">Update Harga Modal</h3>
+                        <button @click="editModal.show = false" class="text-white hover:text-rose-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="px-5 py-5 flex flex-col gap-3">
+                        <div class="text-sm text-slate-600">
+                            <span class="font-semibold text-slate-800">{{ editModal.item?.product?.nama }}</span>
+                        </div>
+                        <div class="text-xs text-slate-500">
+                            Harga lama: <span class="font-bold text-amber-600">{{ editModal.oldValueDisplay }}</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Harga Modal Baru</label>
+                            <CurrencyInput v-model="editModal.newValue" :allowThousands="true" />
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                        <button
+                            @click="editModal.show = false"
+                            class="px-4 py-1.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded transition"
+                        >Batal</button>
+                        <button
+                            @click="saveEdit"
+                            :disabled="savingEdit"
+                            class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition disabled:opacity-50"
+                        >{{ savingEdit ? "Menyimpan..." : "Simpan" }}</button>
                     </div>
                 </div>
             </div>

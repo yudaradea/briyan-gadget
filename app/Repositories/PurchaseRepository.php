@@ -8,6 +8,8 @@ use App\Http\Resources\PurchaseResource;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\SaleItem;
+use App\Models\SaleItemAllocation;
 use App\Services\BarcodeService;
 use Illuminate\Support\Facades\DB;
 
@@ -97,6 +99,7 @@ class PurchaseRepository
             'items.product.masterProduct.category',
             'items.product.masterProduct.unit',
             'items.product.grade',
+            'items.product.saleItems.salesTransaction',
         ])->findOrFail($id);
 
         return ResponseHelper::success(
@@ -263,6 +266,27 @@ class PurchaseRepository
                 $product->masterProduct()->update(['unit_id' => $data['unit_id']]);
             }
 
+            // Sync hpp_total on sale items when harga_beli changes
+            if (isset($data['harga_beli'])) {
+                $newHargaBeli = (float) $data['harga_beli'];
+                $allocations = SaleItemAllocation::where('product_id', $product->id)->get();
+                foreach ($allocations as $allocation) {
+                    $allocation->update([
+                        'harga_modal' => $newHargaBeli,
+                        'subtotal_hpp' => $newHargaBeli * $allocation->qty,
+                    ]);
+                }
+                $affectedSaleItemIds = $allocations->pluck('sale_item_id')->unique();
+                foreach ($affectedSaleItemIds as $saleItemId) {
+                    $saleItem = SaleItem::find($saleItemId);
+                    if ($saleItem) {
+                        $saleItem->update([
+                            'hpp_total' => $saleItem->allocations()->sum('subtotal_hpp'),
+                        ]);
+                    }
+                }
+            }
+
             // Update purchase item
             $qty = $data['qty'] ?? $item->qty;
             $hargaBeli = $data['harga_beli'] ?? $item->harga_beli;
@@ -325,6 +349,8 @@ class PurchaseRepository
                 if ($product->saleItems()->exists()) {
                     throw new \Exception("Barang tidak bisa dihapus karena sudah terjual.");
                 }
+                // Reduce stock back
+                $product->update(['stok' => max(0, $product->stok - $item->qty)]);
             }
 
             // Delete item
@@ -382,6 +408,8 @@ class PurchaseRepository
             foreach ($purchase->items as $item) {
                 if ($item->product) {
                     $productsToClean[$item->product->id] = $item->product;
+                    // Reduce stock back
+                    $item->product->update(['stok' => max(0, $item->product->stok - $item->qty)]);
                 }
                 $item->delete();
             }

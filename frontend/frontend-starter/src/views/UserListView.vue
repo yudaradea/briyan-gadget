@@ -19,8 +19,8 @@ const editingUser = ref(null);
 const editForm = ref({
     name: "",
     username: "",
-    email: "",
     role: "",
+    password: "",
 });
 const editLoading = ref(false);
 const editError = ref("");
@@ -67,8 +67,8 @@ const openEditModal = (user) => {
     editForm.value = {
         name: user.name,
         username: user.username || "",
-        email: user.email,
         role: user.roles && user.roles.length > 0 ? user.roles[0].name : "",
+        password: "",
     };
     editError.value = "";
     editSuccess.value = "";
@@ -81,8 +81,8 @@ const closeEditModal = () => {
     editForm.value = {
         name: "",
         username: "",
-        email: "",
         role: "",
+        password: "",
     };
     editError.value = "";
     editSuccess.value = "";
@@ -94,7 +94,9 @@ const updateUser = async () => {
     editSuccess.value = "";
 
     try {
-        await api.put(`/user/${editingUser.value.id}`, editForm.value);
+        const payload = { ...editForm.value };
+        if (!payload.password) delete payload.password;
+        await api.put(`/user/${editingUser.value.id}`, payload);
         editSuccess.value = "User updated successfully!";
 
         // Refresh user list
@@ -282,7 +284,6 @@ onMounted(() => {
                             <th class="w-12 text-center">No</th>
                             <th class="w-64">Nama</th>
                             <th class="w-40">Username</th>
-                            <th class="w-64">Email</th>
                             <th class="w-48">Role</th>
                             <th class="w-40">Joined</th>
                             <th
@@ -333,9 +334,6 @@ onMounted(() => {
                             </td>
                             <td class="table-cell text-slate-600 font-mono text-xs">
                                 {{ user.username || '-' }}
-                            </td>
-                            <td class="table-cell text-slate-600">
-                                {{ user.email }}
                             </td>
                             <td class="table-cell">
                                 <div class="flex flex-wrap gap-1">
@@ -571,13 +569,14 @@ onMounted(() => {
                                         <div>
                                             <label
                                                 class="block text-sm font-medium text-gray-700"
-                                                >Email</label
+                                                >Password Baru <span class="text-gray-400 font-normal">(kosongkan jika tidak diubah)</span></label
                                             >
                                             <input
-                                                v-model="editForm.email"
-                                                type="email"
-                                                required
+                                                v-model="editForm.password"
+                                                type="password"
                                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                                                placeholder="Minimal 3 karakter"
+                                                autocomplete="new-password"
                                             />
                                         </div>
 

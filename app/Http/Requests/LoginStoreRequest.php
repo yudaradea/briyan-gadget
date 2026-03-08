@@ -23,7 +23,7 @@ class LoginStoreRequest extends FormRequest
     {
         return [
             'login' => 'required|string',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:3',
         ];
     }
 
@@ -35,9 +35,9 @@ class LoginStoreRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'login.required' => 'Username atau email harus diisi',
+            'login.required' => 'Username harus diisi',
             'password.required' => 'Password harus diisi',
-            'password.min' => 'Password minimal 6 karakter',
+            'password.min' => 'Password minimal 3 karakter',
         ];
     }
 }

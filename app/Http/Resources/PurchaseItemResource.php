@@ -9,6 +9,17 @@ class PurchaseItemResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $latestSaleItem = null;
+        if (
+            $this->relationLoaded('product') &&
+            $this->product &&
+            $this->product->relationLoaded('saleItems')
+        ) {
+            $latestSaleItem = $this->product->saleItems
+                ->sortByDesc('created_at')
+                ->first();
+        }
+
         return [
             'id' => $this->id,
             'purchase_id' => $this->purchase_id,
@@ -47,10 +58,11 @@ class PurchaseItemResource extends JsonResource
                 'unit' => $this->product->masterProduct?->unit?->nama,
                 'unit_id' => $this->product->masterProduct?->unit_id,
                 'foto' => $this->product->foto,
-                'is_sold' => $this->product->saleItems()->exists(),
-                'sale' => $this->product->saleItems()->with('salesTransaction')->first()?->salesTransaction ? [
-                    'no_invoice' => $this->product->saleItems->first()->salesTransaction->no_invoice,
-                    'tanggal' => $this->product->saleItems->first()->salesTransaction->tanggal?->format('Y-m-d'),
+                'is_sold' => $this->product->saleItems?->isNotEmpty() ?? false,
+                'harga_jual_transaksi' => (float) ($latestSaleItem?->harga_satuan ?? 0),
+                'sale' => $latestSaleItem?->salesTransaction ? [
+                    'no_invoice' => $latestSaleItem->salesTransaction->no_invoice,
+                    'tanggal' => $latestSaleItem->salesTransaction->tanggal?->format('Y-m-d'),
                 ] : null,
             ]),
         ];

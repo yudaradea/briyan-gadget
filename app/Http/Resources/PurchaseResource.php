@@ -26,31 +26,47 @@ class PurchaseResource extends JsonResource
             'items' => $this->whenLoaded(
                 'items',
                 fn() =>
-                $this->items->map(fn($item) => [
-                    'id' => $item->id,
-                    'product_id' => $item->product_id,
-                    'product' => $item->product ? [
-                        'id' => $item->product->id,
-                        'barcode' => $item->product->barcode,
-                        'nama' => $item->product->masterProduct?->nama,
-                        'imei1' => $item->product->imei1,
-                        'imei2' => $item->product->imei2,
-                        'keterangan' => $item->product->keterangan,
-                        'brand' => $item->product->masterProduct?->brand?->nama,
-                        'brand_id' => $item->product->masterProduct?->brand_id,
-                        'category' => $item->product->masterProduct?->category?->nama,
-                        'category_id' => $item->product->masterProduct?->category_id,
-                        'grade' => $item->product->grade?->nama,
-                        'grade_id' => $item->product->grade_id,
-                        'unit' => $item->product->masterProduct?->unit?->nama,
-                        'unit_id' => $item->product->masterProduct?->unit_id,
-                        'harga_jual' => (float) $item->product->harga_jual,
-                        'foto' => $item->product->foto,
-                    ] : null,
-                    'qty' => $item->qty,
-                    'harga_beli' => (float) $item->harga_beli,
-                    'subtotal' => (float) $item->subtotal,
-                ])
+                $this->items->map(function ($item) {
+                    $latestSaleItem = null;
+                    if ($item->product && $item->product->relationLoaded('saleItems')) {
+                        $latestSaleItem = $item->product->saleItems
+                            ->sortByDesc('created_at')
+                            ->first();
+                    }
+
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'product' => $item->product ? [
+                            'id' => $item->product->id,
+                            'barcode' => $item->product->barcode,
+                            'nama' => $item->product->masterProduct?->nama,
+                            'imei1' => $item->product->imei1,
+                            'imei2' => $item->product->imei2,
+                            'keterangan' => $item->product->keterangan,
+                            'brand' => $item->product->masterProduct?->brand?->nama,
+                            'brand_id' => $item->product->masterProduct?->brand_id,
+                            'category' => $item->product->masterProduct?->category?->nama,
+                            'category_id' => $item->product->masterProduct?->category_id,
+                            'grade' => $item->product->grade?->nama,
+                            'grade_id' => $item->product->grade_id,
+                            'unit' => $item->product->masterProduct?->unit?->nama,
+                            'unit_id' => $item->product->masterProduct?->unit_id,
+                            'harga_jual' => (float) $item->product->harga_jual,
+                            'harga_jual_transaksi' => (float) ($latestSaleItem?->harga_satuan ?? 0),
+                            'is_sold' => $item->product->saleItems?->isNotEmpty() ?? false,
+                            'sale' => $latestSaleItem?->salesTransaction ? [
+                                'no_invoice' => $latestSaleItem->salesTransaction->no_invoice,
+                                'tanggal' => $latestSaleItem->salesTransaction->tanggal?->format('Y-m-d'),
+                            ] : null,
+                            'stok' => (int) $item->product->stok,
+                            'foto' => $item->product->foto,
+                        ] : null,
+                        'qty' => $item->qty,
+                        'harga_beli' => (float) $item->harga_beli,
+                        'subtotal' => (float) $item->subtotal,
+                    ];
+                })
             ),
             'items_count' => $this->whenCounted('items'),
             'total_qty' => (float) $this->items_sum_qty,

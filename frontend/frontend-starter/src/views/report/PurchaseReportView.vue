@@ -219,6 +219,15 @@ async function saveEdit() {
         item.harga_beli = editModal.value.newValue;
         editModal.value.show = false;
         toast.success("Harga modal berhasil diubah");
+        // Update main table row immediately
+        const row = rows.value.find((r) => r.id === editModal.value.purchaseId);
+        if (row) {
+            const newTotal = detailItems.value.reduce(
+                (sum, i) => sum + Number(i.qty || 0) * Number(i.harga_beli || 0),
+                0
+            );
+            row.total = newTotal;
+        }
     } catch (err) {
         toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
     } finally {
@@ -651,7 +660,8 @@ onMounted(() => {
                             v-else
                             v-for="(row, idx) in rows"
                             :key="row.id"
-                            class="table-row group"
+                            class="table-row cursor-pointer hover:bg-blue-50"
+                            @click="openInvoiceDetail(row)"
                         >
                             <td class="table-cell text-center text-slate-500">
                                 {{
@@ -662,13 +672,7 @@ onMounted(() => {
                                 }}
                             </td>
                             <td class="table-cell font-bold text-blue-600">
-                                <button
-                                    type="button"
-                                    class="text-blue-600 underline-offset-2 hover:underline"
-                                    @click="openInvoiceDetail(row)"
-                                >
-                                    {{ row.no_invoice }}
-                                </button>
+                                {{ row.no_invoice }}
                             </td>
                             <td class="table-cell">
                                 {{ formatDate(row.tanggal) }}

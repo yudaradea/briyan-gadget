@@ -5,14 +5,11 @@ import LoginView from "../views/LoginView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import DashboardHome from "../views/DashboardHome.vue";
 import ProfileView from "../views/ProfileView.vue";
+import HomeView from "@/views/HomeView.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
-        {
-            path: "/",
-            redirect: "/dashboard",
-        },
         {
             path: "/login",
             name: "login",
@@ -30,7 +27,12 @@ const router = createRouter({
             meta: { requiresAuth: true },
             children: [
                 {
-                    path: "",
+                    path: "/",
+                    name: "home",
+                    component: HomeView,
+                },
+                {
+                    path: "/dashboard",
                     name: "dashboard",
                     component: DashboardHome,
                 },
@@ -93,7 +95,7 @@ const router = createRouter({
                     name: "unit-list",
                     component: () =>
                         import("../views/masterdata/UnitListView.vue"),
-                    meta: { requiresMasterDataView: true },
+                    meta: { requiresSuperAdmin: true },
                 },
                 {
                     path: "master/sales-reps",
@@ -290,7 +292,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (to.meta.guest && isAuthenticated) {
-        return next("/dashboard");
+        return next("/");
     }
 
     if (to.meta.requiresAdmin && !authStore.isAdmin) {

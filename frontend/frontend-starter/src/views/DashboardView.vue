@@ -96,10 +96,7 @@ onUnmounted(() => {
                 class="flex items-center justify-between w-full h-16 gap-4 px-4 mx-auto sm:px-6 lg:px-8 xl:px-10 2xl:px-12"
             >
                 <!-- Left: Logo -->
-                <router-link
-                    to="/dashboard"
-                    class="flex items-center gap-3 shrink-0"
-                >
+                <router-link to="/" class="flex items-center gap-3 shrink-0">
                     <div
                         class="flex items-center justify-center shadow-lg w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-blue-500/20"
                     >
@@ -190,7 +187,7 @@ onUnmounted(() => {
                             <router-link
                                 to="/dashboard/purchase-items"
                                 class="dropdown-item"
-                                >Mutasi Stok</router-link
+                                >Keseluruhan Barang</router-link
                             >
                         </div>
                     </div>
@@ -372,6 +369,7 @@ onUnmounted(() => {
                                 >Grade</router-link
                             >
                             <router-link
+                                v-if="authStore.isSuperAdmin"
                                 to="/dashboard/master/units"
                                 class="dropdown-item"
                                 >Satuan</router-link
@@ -818,6 +816,7 @@ onUnmounted(() => {
                                     >Grade</router-link
                                 >
                                 <router-link
+                                    v-if="authStore.isSuperAdmin"
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/master/units"
                                     class="mobile-sublink"

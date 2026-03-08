@@ -66,7 +66,8 @@ const inputForm = ref({
     kode: "",
     nama: "",
     satuan: "",
-    imei: "",
+    imei1: "",
+    imei2: "",
     harga_modal: 0,
     harga_jual: 0,
     maxStok: 0,
@@ -474,7 +475,8 @@ function cancelTransaction() {
         kode: "",
         nama: "",
         satuan: "",
-        imei: "",
+        imei1: "",
+        imei2: "",
         harga_modal: 0,
         harga_jual: 0,
         maxStok: 0,
@@ -665,11 +667,24 @@ function cancelTransaction() {
                     <div class="flex flex-col gap-1">
                         <label
                             class="text-[11px] font-extrabold uppercase text-slate-600"
-                            >IMEI</label
+                            >IMEI 1</label
                         >
                         <input
                             type="text"
-                            :value="inputForm.imei"
+                            :value="inputForm.imei1"
+                            readonly
+                            class="px-3 py-2 text-sm font-medium border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
+                        />
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label
+                            class="text-[11px] font-extrabold uppercase text-slate-600"
+                            >IMEI 2</label
+                        >
+                        <input
+                            type="text"
+                            :value="inputForm.imei2"
                             readonly
                             class="px-3 py-2 text-sm font-medium border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />

@@ -345,6 +345,7 @@ function productIdentifier(item) {
                         <tr class="">
                             <th class="">Nama Produk</th>
                             <th class="text-center">Merk</th>
+                            <th class="text-right">Harga Jual</th>
                             <th class="text-center">Total Stok</th>
                             <th class="text-center">Aksi</th>
                         </tr>
@@ -395,6 +396,9 @@ function productIdentifier(item) {
                                     class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase"
                                     >{{ item.brand?.nama || "Generic" }}</span
                                 >
+                            </td>
+                            <td class="table-cell text-right font-semibold text-blue-700">
+                                {{ formatCurrency(item.harga_jual) }}
                             </td>
                             <td class="table-cell text-center">
                                 <span

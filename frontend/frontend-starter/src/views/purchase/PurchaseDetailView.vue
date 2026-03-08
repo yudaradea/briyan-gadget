@@ -27,6 +27,25 @@ function formatCurrency(val) {
     }).format(val || 0);
 }
 
+function getEffectiveSalePrice(item) {
+    const basePrice = Number(item?.product?.harga_jual || 0);
+    const transactionPrice = Number(item?.product?.harga_jual_transaksi || 0);
+    const isSold = (item?.product?.stok || 0) <= 0;
+
+    if (isSold && transactionPrice > 0) {
+        return transactionPrice;
+    }
+
+    return basePrice;
+}
+
+function totalPenjualan(items) {
+    return (items || []).reduce((sum, item) => {
+        const terjual = (item.qty || 0) - (item.product?.stok || 0);
+        return sum + Math.max(0, terjual) * getEffectiveSalePrice(item);
+    }, 0);
+}
+
 async function loadPurchase() {
     loading.value = true;
     try {
@@ -85,26 +104,28 @@ onMounted(loadPurchase);
 
         <div v-if="loading" class="flex justify-center py-12">
             <div
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                class="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"
             ></div>
         </div>
 
         <div v-else-if="purchase">
             <!-- Invoice Info Card -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 mb-5"
+                class="p-4 mb-5 bg-white border shadow-sm rounded-2xl border-slate-100 sm:p-6"
             >
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div
+                    class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
+                >
                     <div>
-                        <p class="text-xs font-medium text-slate-400 mb-1">
+                        <p class="mb-1 text-xs font-medium text-slate-400">
                             No. Invoice
                         </p>
-                        <p class="font-semibold text-slate-800 font-mono">
+                        <p class="font-mono font-semibold text-slate-800">
                             {{ purchase.no_invoice }}
                         </p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-400 mb-1">
+                        <p class="mb-1 text-xs font-medium text-slate-400">
                             Tanggal
                         </p>
                         <p class="font-semibold text-slate-800">
@@ -112,7 +133,7 @@ onMounted(loadPurchase);
                         </p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-400 mb-1">
+                        <p class="mb-1 text-xs font-medium text-slate-400">
                             Supplier
                         </p>
                         <p class="font-semibold text-slate-800">
@@ -120,7 +141,7 @@ onMounted(loadPurchase);
                         </p>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-400 mb-1">
+                        <p class="mb-1 text-xs font-medium text-slate-400">
                             Total Pembelian
                         </p>
                         <p class="font-bold text-emerald-600">
@@ -130,9 +151,9 @@ onMounted(loadPurchase);
                 </div>
                 <div
                     v-if="purchase.keterangan"
-                    class="mt-4 pt-4 border-t border-slate-100"
+                    class="pt-4 mt-4 border-t border-slate-100"
                 >
-                    <p class="text-xs font-medium text-slate-400 mb-1">
+                    <p class="mb-1 text-xs font-medium text-slate-400">
                         Keterangan
                     </p>
                     <p class="text-sm text-slate-600">
@@ -143,13 +164,13 @@ onMounted(loadPurchase);
 
             <!-- Items List -->
             <div
-                class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-5"
+                class="mb-5 overflow-hidden bg-white border shadow-sm rounded-2xl border-slate-100"
             >
                 <!-- Header -->
                 <div
                     class="px-4 sm:px-5 py-3.5 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between items-start sm:items-center border-b border-slate-100"
                 >
-                    <h3 class="font-semibold text-slate-800 text-sm">
+                    <h3 class="text-sm font-semibold text-slate-800">
                         Daftar Barang
                         <span
                             class="ml-1.5 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
@@ -203,17 +224,17 @@ onMounted(loadPurchase);
                     <div
                         v-for="(item, idx) in purchase.items"
                         :key="item.id"
-                        class="flex flex-wrap items-start sm:items-center gap-3 px-4 sm:px-5 py-3 hover:bg-slate-50/60 transition"
+                        class="flex flex-wrap items-start gap-3 px-4 py-3 transition sm:items-center sm:px-5 hover:bg-slate-50/60"
                     >
                         <!-- Row Number -->
                         <span
-                            class="text-xs text-slate-300 font-bold w-5 text-center shrink-0"
+                            class="w-5 text-xs font-bold text-center text-slate-300 shrink-0"
                             >{{ idx + 1 }}</span
                         >
 
                         <!-- Photo (clickable) -->
                         <div
-                            class="w-11 h-11 rounded-xl bg-slate-100 shrink-0 overflow-hidden border border-slate-200 flex items-center justify-center"
+                            class="flex items-center justify-center overflow-hidden border w-11 h-11 rounded-xl bg-slate-100 shrink-0 border-slate-200"
                             :class="
                                 item.product?.foto
                                     ? 'cursor-pointer hover:opacity-75 hover:border-blue-300 transition'
@@ -229,7 +250,7 @@ onMounted(loadPurchase);
                             <img
                                 v-if="storageUrl(item.product?.foto)"
                                 :src="storageUrl(item.product?.foto)"
-                                class="w-full h-full object-cover"
+                                class="object-cover w-full h-full"
                                 @error="$event.target.style.display = 'none'"
                             />
                             <svg
@@ -289,32 +310,34 @@ onMounted(loadPurchase);
                         </div>
 
                         <!-- Fixed-width columns for alignment -->
-                        <div class="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto">
+                        <div
+                            class="flex flex-wrap items-center w-full gap-3 shrink-0 sm:w-auto"
+                        >
                             <!-- IMEI 1 -->
-                            <div class="text-right w-32">
+                            <div class="w-32 text-right">
                                 <p class="text-[10px] text-slate-400 mb-0.5">
                                     IMEI 1
                                 </p>
                                 <p
-                                    class="text-xs font-mono font-medium text-slate-600 whitespace-nowrap"
+                                    class="font-mono text-xs font-medium text-slate-600 whitespace-nowrap"
                                 >
                                     {{ item.product?.imei1 || "-" }}
                                 </p>
                             </div>
                             <!-- IMEI 2 -->
-                            <div class="text-right w-32">
+                            <div class="w-32 text-right">
                                 <p class="text-[10px] text-slate-400 mb-0.5">
                                     IMEI 2
                                 </p>
                                 <p
-                                    class="text-xs font-mono font-medium text-slate-600 whitespace-nowrap"
+                                    class="font-mono text-xs font-medium text-slate-600 whitespace-nowrap"
                                 >
                                     {{ item.product?.imei2 || "-" }}
                                 </p>
                             </div>
                             <div class="w-px h-8 bg-slate-100"></div>
                             <!-- Qty -->
-                            <div class="text-center w-12">
+                            <div class="w-12 text-center">
                                 <p class="text-[10px] text-slate-400 mb-0.5">
                                     Qty
                                 </p>
@@ -335,8 +358,41 @@ onMounted(loadPurchase);
                                 </p>
                             </div>
                             <div class="w-px h-8 bg-slate-100"></div>
+                            <!-- Harga Jual -->
+                            <div class="text-right w-28">
+                                <p class="text-[10px] text-slate-400 mb-0.5">
+                                    Harga Jual
+                                </p>
+                                <p
+                                    class="text-xs font-semibold text-blue-600 whitespace-nowrap"
+                                >
+                                    {{
+                                        formatCurrency(
+                                            getEffectiveSalePrice(item)
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                            <div class="w-px h-8 bg-slate-100"></div>
+                            <!-- Status -->
+                            <div class="w-20 text-center">
+                                <p class="text-[10px] text-slate-400 mb-0.5">
+                                    Status
+                                </p>
+                                <span
+                                    v-if="(item.product?.stok || 0) > 0"
+                                    class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"
+                                    >Tersedia</span
+                                >
+                                <span
+                                    v-else
+                                    class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700"
+                                    >Terjual</span
+                                >
+                            </div>
+                            <div class="w-px h-8 bg-slate-100"></div>
                             <!-- Action -->
-                            <div class="w-10 flex justify-center">
+                            <div class="flex justify-center w-10">
                                 <button
                                     @click="printBarcode(purchase.id, item.id)"
                                     class="p-1.5 text-purple-500 hover:bg-purple-100 rounded-lg transition"
@@ -363,15 +419,31 @@ onMounted(loadPurchase);
 
                 <!-- Total Footer -->
                 <div
-                    class="px-4 sm:px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-between items-center"
+                    class="flex flex-col gap-6 px-4 py-3 border-t sm:px-5 bg-slate-50 border-slate-100 sm:flex-row sm:items-center sm:justify-end"
                 >
-                    <span
-                        class="text-xs font-semibold text-slate-400 uppercase tracking-wider"
-                        >Total Pembelian</span
+                    <div
+                        class="flex items-center justify-between sm:justify-end sm:gap-6"
                     >
-                    <span class="text-lg font-bold text-emerald-600">{{
-                        formatCurrency(purchase.total)
-                    }}</span>
+                        <span
+                            class="text-xs font-semibold tracking-wider uppercase text-slate-400"
+                            >Total Pembelian</span
+                        >
+                        <span class="text-base font-bold text-emerald-600">{{
+                            formatCurrency(purchase.total)
+                        }}</span>
+                    </div>
+                    <div class="hidden w-px h-6 sm:block bg-slate-200"></div>
+                    <div
+                        class="flex items-center justify-between sm:justify-end sm:gap-6"
+                    >
+                        <span
+                            class="text-xs font-semibold tracking-wider uppercase text-slate-400"
+                            >Total Penjualan</span
+                        >
+                        <span class="text-base font-bold text-blue-600">{{
+                            formatCurrency(totalPenjualan(purchase.items))
+                        }}</span>
+                    </div>
                 </div>
             </div>
         </div>

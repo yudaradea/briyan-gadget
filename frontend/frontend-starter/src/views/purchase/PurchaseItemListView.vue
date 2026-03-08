@@ -155,6 +155,17 @@ function formatNumber(value) {
     return new Intl.NumberFormat("id-ID").format(Number(value || 0));
 }
 
+function getEffectiveSalePrice(item) {
+    const basePrice = Number(item?.product?.harga_jual || 0);
+    const transactionPrice = Number(item?.product?.harga_jual_transaksi || 0);
+
+    if (item?.product?.is_sold && transactionPrice > 0) {
+        return transactionPrice;
+    }
+
+    return basePrice;
+}
+
 async function printBarcode(purchaseId, itemId = null) {
     if (!purchaseId) return toast.error("ID Pembelian tidak tersedia");
     router.push({
@@ -266,7 +277,7 @@ const copyTotalModal = computed(() => {
 });
 const copyTotalJual = computed(() => {
     return items.value.reduce(
-        (acc, curr) => acc + (curr.product?.harga_jual || 0) * (curr.qty || 1),
+        (acc, curr) => acc + getEffectiveSalePrice(curr) * (curr.qty || 1),
         0
     );
 });
@@ -780,7 +791,9 @@ const copyTotalJual = computed(() => {
                                     class="hover:underline"
                                 >
                                     {{
-                                        formatCurrency(item.product?.harga_jual)
+                                        formatCurrency(
+                                            getEffectiveSalePrice(item)
+                                        )
                                     }}
                                 </a>
                             </td>
