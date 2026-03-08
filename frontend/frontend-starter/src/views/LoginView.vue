@@ -30,7 +30,7 @@ const handleLogin = async () => {
     if (success) {
         router.push("/");
     } else {
-        loginError.value = authStore.error || "Username/Email atau password salah";
+        loginError.value = authStore.error || "Username atau password salah";
     }
 };
 
@@ -53,7 +53,7 @@ onMounted(fetchStoreProfile);
 
 <template>
     <div
-        class="flex flex-col justify-center min-h-screen py-12 font-sans bg-gradient-to-br from-blue-50 via-gray-50 to-white px-4 sm:px-6 lg:px-8"
+        class="flex flex-col justify-center min-h-screen px-4 py-12 font-sans bg-gradient-to-br from-blue-50 via-gray-50 to-white sm:px-6 lg:px-8"
     >
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div
@@ -92,7 +92,7 @@ onMounted(fetchStoreProfile);
                     </div>
 
                     <h2
-                        class="mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight text-center text-gray-900"
+                        class="mt-6 text-2xl font-extrabold tracking-tight text-center text-gray-900 sm:text-3xl"
                     >
                         Selamat Datang
                     </h2>
@@ -124,7 +124,7 @@ onMounted(fetchStoreProfile);
                         <label
                             for="login"
                             class="block text-sm font-semibold text-gray-700"
-                            >Username atau Email</label
+                            >Username</label
                         >
                         <div class="relative mt-2">
                             <div
@@ -152,7 +152,7 @@ onMounted(fetchStoreProfile);
                                 autocomplete="username"
                                 required
                                 class="block w-full py-3 pl-10 pr-3 text-sm text-gray-900 transition duration-200 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400"
-                                placeholder="username atau nama@contoh.com"
+                                placeholder="username"
                             />
                         </div>
                     </div>
