@@ -250,7 +250,6 @@ async function doDelete() {
                             >Mulai</label
                         >
                         <DateInput
-                            
                             v-model="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
@@ -261,13 +260,12 @@ async function doDelete() {
                             >Sampai</label
                         >
                         <DateInput
-                            
                             v-model="filters.end_date"
                             :min="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
+                    <div class="flex flex-col col-span-2 gap-1 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Supplier</label
@@ -305,7 +303,9 @@ async function doDelete() {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
+                    <div
+                        class="flex flex-col col-span-2 gap-1 md:col-span-1 lg:justify-end"
+                    >
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block"
                             >Reset</label
@@ -383,7 +383,7 @@ async function doDelete() {
                             >Search</label
                         >
                         <div class="relative">
-                            <DateInput
+                            <input
                                 type="text"
                                 v-model="searchQuery"
                                 placeholder="Cari invoice/supplier..."
@@ -686,7 +686,3 @@ async function doDelete() {
         />
     </div>
 </template>
-
-
-
-

@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\SaleItem;
-use App\Models\SaleItemAllocation;
 use App\Services\BarcodeService;
 use Illuminate\Support\Facades\DB;
 
@@ -257,21 +256,21 @@ class PurchaseRepository
             // Sync hpp_total on sale items when harga_beli changes
             if (isset($data['harga_beli'])) {
                 $newHargaBeli = (float) $data['harga_beli'];
-                $allocations = SaleItemAllocation::where('product_id', $product->id)->get();
-                foreach ($allocations as $allocation) {
-                    $allocation->update([
-                        'harga_modal' => $newHargaBeli,
-                        'subtotal_hpp' => $newHargaBeli * $allocation->qty,
+
+                // Update sale items where this product was the selected item in POS
+                $affectedSaleItems = SaleItem::where('product_id', $product->id)->get();
+                foreach ($affectedSaleItems as $saleItem) {
+                    // Update allocations for this sale item that came from this product lot
+                    $saleItem->allocations()
+                        ->where('product_id', $product->id)
+                        ->each(fn($alloc) => $alloc->update([
+                            'harga_modal' => $newHargaBeli,
+                            'subtotal_hpp' => $newHargaBeli * $alloc->qty,
+                        ]));
+
+                    $saleItem->update([
+                        'hpp_total' => $newHargaBeli * $saleItem->qty,
                     ]);
-                }
-                $affectedSaleItemIds = $allocations->pluck('sale_item_id')->unique();
-                foreach ($affectedSaleItemIds as $saleItemId) {
-                    $saleItem = SaleItem::find($saleItemId);
-                    if ($saleItem) {
-                        $saleItem->update([
-                            'hpp_total' => $saleItem->allocations()->sum('subtotal_hpp'),
-                        ]);
-                    }
                 }
             }
 

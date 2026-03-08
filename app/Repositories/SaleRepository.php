@@ -315,19 +315,18 @@ class SaleRepository
 
     /**
      * Get available stock for selected product.
-     * For non-serialized product (identifier_type=none), stock is summed by same SKU (master + grade).
+     * For non-serialized product, stock is summed by same SKU (master + grade + unit).
      */
     private function getAvailableStockForSale(Product $selectedProduct): int
     {
-        $identifierType = $selectedProduct->masterProduct?->identifier_type ?? 'none';
-
-        if ($identifierType !== 'none') {
+        if ($this->isSerializedProduct($selectedProduct)) {
             return (int) $selectedProduct->stok;
         }
 
         return (int) Product::query()
             ->where('master_product_id', $selectedProduct->master_product_id)
             ->where('grade_id', $selectedProduct->grade_id)
+            ->where('unit_id', $selectedProduct->unit_id)
             ->sum('stok');
     }
 
@@ -337,9 +336,7 @@ class SaleRepository
      */
     private function consumeStockFifo(Product $selectedProduct, int $qty): array
     {
-        $identifierType = $selectedProduct->masterProduct?->identifier_type ?? 'none';
-
-        if ($identifierType !== 'none') {
+        if ($this->isSerializedProduct($selectedProduct)) {
             if ($selectedProduct->stok < $qty) {
                 throw new Exception("Stock insufficient for {$selectedProduct->nama}. Available: {$selectedProduct->stok}");
             }
@@ -356,6 +353,7 @@ class SaleRepository
 
         $lotsQuery = Product::query()
             ->where('master_product_id', $selectedProduct->master_product_id)
+            ->where('unit_id', $selectedProduct->unit_id)
             ->where('stok', '>', 0)
             ->orderBy('created_at')
             ->orderBy('id')
@@ -397,6 +395,11 @@ class SaleRepository
         }
 
         return $allocations;
+    }
+
+    private function isSerializedProduct(Product $product): bool
+    {
+        return !empty($product->imei1) || !empty($product->imei2);
     }
 
     /**

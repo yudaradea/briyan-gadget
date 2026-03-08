@@ -116,8 +116,8 @@ class SaleController extends Controller implements HasMiddleware
                 ]);
             }
 
-            // Update product.harga_modal and purchase_items.harga_beli
-            $productIds = $allocations->pluck('product_id')->unique();
+            // Update only the edited sale item's product, so modal sync stays on the same row/code.
+            $productIds = collect([$item->product_id])->filter();
             foreach ($productIds as $productId) {
                 Product::where('id', $productId)->update(['harga_modal' => $newHargaModal]);
 

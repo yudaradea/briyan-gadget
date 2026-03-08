@@ -213,14 +213,14 @@ class ProductRepository
 
     private function resolveAvailableStock(Product $product): int
     {
-        $identifierType = $product->masterProduct?->identifier_type ?? 'none';
-        if ($identifierType !== 'none') {
+        if (!empty($product->imei1) || !empty($product->imei2)) {
             return (int) $product->stok;
         }
 
         return (int) Product::query()
             ->where('master_product_id', $product->master_product_id)
             ->where('grade_id', $product->grade_id)
+            ->where('unit_id', $product->unit_id)
             ->sum('stok');
     }
 }
