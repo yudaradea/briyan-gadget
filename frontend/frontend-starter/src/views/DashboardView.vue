@@ -155,7 +155,10 @@ onUnmounted(() => {
                                     $route.path.includes(
                                         '/dashboard/purchases'
                                     ) ||
-                                    $route.path.includes('/dashboard/stock'),
+                                    $route.path.includes('/dashboard/stock') ||
+                                    $route.path.includes(
+                                        '/dashboard/purchase-items'
+                                    ),
                             }"
                         >
                             Stok Barang
