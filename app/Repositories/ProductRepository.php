@@ -211,6 +211,37 @@ class ProductRepository
         return ResponseHelper::success($products, 'Grouped stock details retrieved successfully');
     }
 
+    /**
+     * Stock WA: master products with available stock, grouped by brand
+     */
+    public function stockWa(): \Illuminate\Http\JsonResponse
+    {
+        $rows = DB::table('products')
+            ->join('master_products', 'products.master_product_id', '=', 'master_products.id')
+            ->join('brands', 'master_products.brand_id', '=', 'brands.id')
+            ->whereNull('products.deleted_at')
+            ->where('products.stok', '>', 0)
+            ->select(
+                'brands.nama as brand',
+                'master_products.nama as nama',
+                DB::raw('SUM(products.stok) as stok')
+            )
+            ->groupBy('brands.id', 'brands.nama', 'master_products.id', 'master_products.nama')
+            ->orderBy('brands.nama')
+            ->orderBy('master_products.nama')
+            ->get();
+
+        $grouped = $rows->groupBy('brand')->map(fn($items, $brand) => [
+            'brand' => $brand,
+            'products' => $items->map(fn($p) => [
+                'nama' => $p->nama,
+                'stok' => (int) $p->stok,
+            ])->values(),
+        ])->values();
+
+        return ResponseHelper::success($grouped, 'Stock WA retrieved successfully');
+    }
+
     private function resolveAvailableStock(Product $product): int
     {
         if (!empty($product->imei1) || !empty($product->imei2)) {

@@ -55,7 +55,14 @@ const detailTotals = computed(() =>
         (acc, item) => {
             const qty = Number(item.qty || 0);
             const modal = qty * Number(item.harga_beli || 0);
-            const hargaJual = qty * Number(item.product?.harga_jual || 0);
+            const hj = item.product?.is_sold
+                ? Number(
+                      item.product?.harga_jual_transaksi ||
+                          item.product?.harga_jual ||
+                          0
+                  )
+                : Number(item.product?.harga_jual || 0);
+            const hargaJual = qty * hj;
 
             acc.qty += qty;
             acc.modal += modal;
@@ -213,9 +220,12 @@ async function saveEdit() {
     const item = editModal.value.item;
     savingEdit.value = true;
     try {
-        await api.put(`/purchases/${editModal.value.purchaseId}/items/${item.id}`, {
-            harga_beli: editModal.value.newValue,
-        });
+        await api.put(
+            `/purchases/${editModal.value.purchaseId}/items/${item.id}`,
+            {
+                harga_beli: editModal.value.newValue,
+            }
+        );
         item.harga_beli = editModal.value.newValue;
         editModal.value.show = false;
         toast.success("Harga modal berhasil diubah");
@@ -223,13 +233,16 @@ async function saveEdit() {
         const row = rows.value.find((r) => r.id === editModal.value.purchaseId);
         if (row) {
             const newTotal = detailItems.value.reduce(
-                (sum, i) => sum + Number(i.qty || 0) * Number(i.harga_beli || 0),
+                (sum, i) =>
+                    sum + Number(i.qty || 0) * Number(i.harga_beli || 0),
                 0
             );
             row.total = newTotal;
         }
     } catch (err) {
-        toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
+        toast.error(
+            err.response?.data?.message || "Gagal mengubah harga modal"
+        );
     } finally {
         savingEdit.value = false;
     }
@@ -473,7 +486,6 @@ onMounted(() => {
                         >
                         <DateInput
                             v-model="filters.start_date"
-                            
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
                     </div>
@@ -485,11 +497,10 @@ onMounted(() => {
                         <DateInput
                             v-model="filters.end_date"
                             :min="filters.start_date"
-                            
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
+                    <div class="flex flex-col col-span-2 gap-1 md:col-span-1">
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Supplier</label
@@ -527,15 +538,30 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
+                    <div
+                        class="flex flex-col col-span-2 gap-1 md:col-span-1 lg:justify-end"
+                    >
+                        <label
+                            class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block"
+                            >Reset</label
+                        >
                         <button
                             @click="resetFilters"
                             class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <svg
+                                class="w-4 h-4 shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
                             </svg>
                             <span class="md:hidden">Reset Filter</span>
                         </button>
@@ -991,19 +1017,35 @@ onMounted(() => {
                                                 <a
                                                     href="javascript:void(0)"
                                                     @click="openEditModal(item)"
-                                                    class="hover:underline underline-offset-2 cursor-pointer"
+                                                    class="cursor-pointer hover:underline underline-offset-2"
                                                     title="Klik untuk ubah harga modal"
                                                 >
-                                                    {{ formatCurrency(item.harga_beli || 0) }}
+                                                    {{
+                                                        formatCurrency(
+                                                            item.harga_beli || 0
+                                                        )
+                                                    }}
                                                 </a>
                                             </td>
                                             <td
-                                                class="px-2 py-1.5 text-right text-emerald-700"
+                                                class="px-2 py-1.5 text-right"
+                                                :class="
+                                                    item.product?.is_sold
+                                                        ? 'text-emerald-700'
+                                                        : 'text-slate-500'
+                                                "
                                             >
                                                 {{
                                                     formatCurrency(
-                                                        item.product
-                                                            ?.harga_jual || 0
+                                                        item.product?.is_sold
+                                                            ? item.product
+                                                                  ?.harga_jual_transaksi ||
+                                                                  item.product
+                                                                      ?.harga_jual ||
+                                                                  0
+                                                            : item.product
+                                                                  ?.harga_jual ||
+                                                                  0
                                                     )
                                                 }}
                                             </td>
@@ -1102,48 +1144,78 @@ onMounted(() => {
             <!-- Edit Harga Modal (di dalam Teleport yang sama agar z-index bekerja) -->
             <div
                 v-if="editModal.show"
-                class="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+                class="fixed inset-0 flex items-center justify-center p-4 bg-black/50"
                 style="z-index: 9999"
                 @click.self="editModal.show = false"
             >
-                <div class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl">
-                    <div class="flex items-center justify-between px-4 py-3 text-white bg-blue-600">
+                <div
+                    class="w-full max-w-sm overflow-hidden bg-white shadow-2xl rounded-xl"
+                >
+                    <div
+                        class="flex items-center justify-between px-4 py-3 text-white bg-blue-600"
+                    >
                         <h3 class="text-sm font-bold">Update Harga Modal</h3>
-                        <button @click="editModal.show = false" class="text-white hover:text-rose-300">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <button
+                            @click="editModal.show = false"
+                            class="text-white hover:text-rose-300"
+                        >
+                            <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
                             </svg>
                         </button>
                     </div>
-                    <div class="px-5 py-5 flex flex-col gap-3">
+                    <div class="flex flex-col gap-3 px-5 py-5">
                         <div class="text-sm text-slate-600">
-                            <span class="font-semibold text-slate-800">{{ editModal.item?.product?.nama }}</span>
+                            <span class="font-semibold text-slate-800">{{
+                                editModal.item?.product?.nama
+                            }}</span>
                         </div>
                         <div class="text-xs text-slate-500">
-                            Harga lama: <span class="font-bold text-blue-600">{{ editModal.oldValueDisplay }}</span>
+                            Harga lama:
+                            <span class="font-bold text-blue-600">{{
+                                editModal.oldValueDisplay
+                            }}</span>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Harga Modal Baru</label>
-                            <CurrencyInput v-model="editModal.newValue" :allowThousands="true" />
+                            <label
+                                class="block text-sm font-bold text-slate-700 mb-1.5"
+                                >Harga Modal Baru</label
+                            >
+                            <CurrencyInput
+                                v-model="editModal.newValue"
+                                :allowThousands="true"
+                            />
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                    <div
+                        class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50"
+                    >
                         <button
                             @click="editModal.show = false"
                             class="px-4 py-1.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded transition"
-                        >Batal</button>
+                        >
+                            Batal
+                        </button>
                         <button
                             @click="saveEdit"
                             :disabled="savingEdit"
                             class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition disabled:opacity-50"
-                        >{{ savingEdit ? "Menyimpan..." : "Simpan" }}</button>
+                        >
+                            {{ savingEdit ? "Menyimpan..." : "Simpan" }}
+                        </button>
                     </div>
                 </div>
             </div>
         </Teleport>
     </div>
 </template>
-
-
-
-

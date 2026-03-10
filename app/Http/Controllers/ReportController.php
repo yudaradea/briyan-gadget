@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Models\Purchase;
+use App\Models\PurchaseItem;
 use App\Models\SaleItem;
 use App\Models\SalesTransaction;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class ReportController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:view reports|view all reports', only: ['sales', 'purchases', 'profit']),
+            new Middleware('permission:view reports|view all reports', only: ['sales', 'purchases', 'profit', 'salesDetail', 'purchasesDetail']),
         ];
     }
 
@@ -195,6 +196,378 @@ class ReportController extends Controller implements HasMiddleware
                 'laba_kotor' => (float) ($totalPendapatan - $totalHpp),
             ],
         ], 'Profit report retrieved');
+    }
+
+    public function salesDetail(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date'   => ['nullable', 'date'],
+            'search'     => ['nullable', 'string'],
+            'export'     => ['nullable', 'in:excel,pdf'],
+            'per_page'   => ['nullable', 'integer'],
+        ]);
+
+        $perPage = $this->resolvePerPage($request);
+
+        $query = SaleItem::query()
+            ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
+            ->whereNull('sales_transactions.deleted_at')
+            ->with([
+                'salesTransaction:id,no_invoice,tanggal,pelanggan,user_id,sales_rep_id',
+                'salesTransaction.user:id,name',
+                'salesTransaction.salesRep:id,nama',
+                'product:id,barcode,imei1,imei2,master_product_id,grade_id,unit_id',
+                'product.masterProduct:id,nama,brand_id',
+                'product.masterProduct.brand:id,nama',
+                'product.grade:id,nama',
+                'product.unit:id,nama',
+            ])
+            ->when(!empty($validated['start_date']), fn($q) => $q->where('sales_transactions.tanggal', '>=', $validated['start_date']))
+            ->when(!empty($validated['end_date']), fn($q) => $q->where('sales_transactions.tanggal', '<=', $validated['end_date']))
+            ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
+                $sq->where('sales_transactions.no_invoice', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%');
+            }))
+            ->select('sale_items.*')
+            ->orderBy('sales_transactions.tanggal', 'desc')
+            ->orderBy('sale_items.created_at', 'desc');
+
+        // Summary (unfiltered count but date-filtered)
+        $summaryBase = SaleItem::query()
+            ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
+            ->whereNull('sales_transactions.deleted_at')
+            ->when(!empty($validated['start_date']), fn($q) => $q->where('sales_transactions.tanggal', '>=', $validated['start_date']))
+            ->when(!empty($validated['end_date']), fn($q) => $q->where('sales_transactions.tanggal', '<=', $validated['end_date']))
+            ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
+                $sq->where('sales_transactions.no_invoice', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%');
+            }));
+
+        $totalModal     = (float) (clone $summaryBase)->sum('sale_items.hpp_total');
+        $totalHargaJual = (float) (clone $summaryBase)->sum('sale_items.subtotal');
+
+        $summary = [
+            'total_modal'      => $totalModal,
+            'total_harga_jual' => $totalHargaJual,
+            'total_laba'       => $totalHargaJual - $totalModal,
+        ];
+
+        if (($validated['export'] ?? null) === 'excel') {
+            return $this->exportSalesDetailCsv($query->get(), $summary);
+        }
+
+        if (($validated['export'] ?? null) === 'pdf') {
+            return $this->exportSalesDetailHtml($query->get(), $summary, $validated);
+        }
+
+        $data = $query->paginate($perPage);
+        $rows = $data->getCollection()->map(fn($item) => $this->formatSaleDetailRow($item))->values();
+        $data->setCollection($rows);
+
+        return ResponseHelper::success([
+            'data'         => $data->items(),
+            'current_page' => $data->currentPage(),
+            'last_page'    => $data->lastPage(),
+            'per_page'     => $data->perPage(),
+            'total'        => $data->total(),
+            'from'         => $data->firstItem(),
+            'to'           => $data->lastItem(),
+            'summary'      => $summary,
+        ], 'Sales detail retrieved');
+    }
+
+    public function purchasesDetail(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date'  => ['nullable', 'date'],
+            'end_date'    => ['nullable', 'date'],
+            'search'      => ['nullable', 'string'],
+            'supplier_id' => ['nullable', 'exists:suppliers,id'],
+            'export'      => ['nullable', 'in:excel,pdf'],
+            'per_page'    => ['nullable', 'integer'],
+        ]);
+
+        $perPage = $this->resolvePerPage($request);
+
+        $query = PurchaseItem::query()
+            ->join('purchases', 'purchase_items.purchase_id', '=', 'purchases.id')
+            ->whereNull('purchases.deleted_at')
+            ->with([
+                'purchase:id,no_invoice,tanggal,supplier_id,user_id',
+                'purchase.supplier:id,nama',
+                'purchase.user:id,name',
+                'product:id,barcode,imei1,imei2,master_product_id,grade_id,unit_id,stok,harga_jual',
+                'product.masterProduct:id,nama,brand_id',
+                'product.masterProduct.brand:id,nama',
+                'product.grade:id,nama',
+                'product.unit:id,nama',
+                'product.saleItems:id,product_id,harga_satuan',
+            ])
+            ->when(!empty($validated['start_date']), fn($q) => $q->where('purchases.tanggal', '>=', $validated['start_date']))
+            ->when(!empty($validated['end_date']), fn($q) => $q->where('purchases.tanggal', '<=', $validated['end_date']))
+            ->when(!empty($validated['supplier_id']), fn($q) => $q->where('purchases.supplier_id', $validated['supplier_id']))
+            ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
+                $sq->where('purchases.no_invoice', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('product', fn($pq) => $pq->whereHas('masterProduct', fn($mq) => $mq->where('nama', 'like', '%' . $validated['search'] . '%')))
+                    ->orWhereHas('product', fn($pq) => $pq->where('barcode', 'like', '%' . $validated['search'] . '%'));
+            }))
+            ->select('purchase_items.*')
+            ->orderBy('purchases.tanggal', 'desc')
+            ->orderBy('purchase_items.created_at', 'desc');
+
+        $summaryBase = PurchaseItem::query()
+            ->join('purchases', 'purchase_items.purchase_id', '=', 'purchases.id')
+            ->whereNull('purchases.deleted_at')
+            ->when(!empty($validated['start_date']), fn($q) => $q->where('purchases.tanggal', '>=', $validated['start_date']))
+            ->when(!empty($validated['end_date']), fn($q) => $q->where('purchases.tanggal', '<=', $validated['end_date']))
+            ->when(!empty($validated['supplier_id']), fn($q) => $q->where('purchases.supplier_id', $validated['supplier_id']));
+
+        $allItems   = (clone $summaryBase)->with(['product:id,stok,harga_jual', 'product.saleItems:id,product_id,harga_satuan'])->get();
+        $totalStok  = $allItems->sum(fn($i) => (int) ($i->product?->stok ?? 0));
+        $totalModal = (float) (clone $summaryBase)->sum('purchase_items.harga_beli');
+        $totalHJ    = $allItems->sum(fn($i) => $this->resolveHargaJual($i->product));
+
+        $summary = [
+            'total_stok'       => $totalStok,
+            'total_modal'      => $totalModal,
+            'total_harga_jual' => $totalHJ,
+        ];
+
+        if (($validated['export'] ?? null) === 'excel') {
+            return $this->exportPurchasesDetailCsv($query->get(), $summary);
+        }
+
+        if (($validated['export'] ?? null) === 'pdf') {
+            return $this->exportPurchasesDetailHtml($query->get(), $summary, $validated);
+        }
+
+        $data = $query->paginate($perPage);
+        $rows = $data->getCollection()->map(fn($item) => $this->formatPurchaseDetailRow($item))->values();
+        $data->setCollection($rows);
+
+        return ResponseHelper::success([
+            'data'         => $data->items(),
+            'current_page' => $data->currentPage(),
+            'last_page'    => $data->lastPage(),
+            'per_page'     => $data->perPage(),
+            'total'        => $data->total(),
+            'from'         => $data->firstItem(),
+            'to'           => $data->lastItem(),
+            'summary'      => $summary,
+        ], 'Purchases detail retrieved');
+    }
+
+    private function resolveHargaJual($product): float
+    {
+        if (!$product) return 0;
+        $saleItem = $product->saleItems?->first();
+        return $saleItem ? (float) $saleItem->harga_satuan : (float) $product->harga_jual;
+    }
+
+    private function formatSaleDetailRow(SaleItem $item): array
+    {
+        $modal     = (float) $item->hpp_total;
+        $hargaJual = (float) $item->subtotal;
+        return [
+            'id'           => $item->id,
+            'no_invoice'   => $item->salesTransaction?->no_invoice,
+            'kode'         => $item->product?->barcode,
+            'tanggal'      => $item->salesTransaction?->tanggal?->format('Y-m-d'),
+            'nama_produk'  => $item->product?->masterProduct?->nama,
+            'merk'         => $item->product?->masterProduct?->brand?->nama,
+            'grade'        => $item->product?->grade?->nama,
+            'satuan'       => $item->product?->unit?->nama,
+            'imei1'        => $item->product?->imei1,
+            'imei2'        => $item->product?->imei2,
+            'pelanggan'    => $item->salesTransaction?->pelanggan,
+            'kasir'        => $item->salesTransaction?->user?->name,
+            'sales'        => $item->salesTransaction?->salesRep?->nama,
+            'modal'        => $modal,
+            'harga_jual'   => $hargaJual,
+            'laba'         => $hargaJual - $modal,
+        ];
+    }
+
+    private function formatPurchaseDetailRow(PurchaseItem $item): array
+    {
+        $hargaJual = $this->resolveHargaJual($item->product);
+        return [
+            'id'          => $item->id,
+            'no_invoice'  => $item->purchase?->no_invoice,
+            'supplier'    => $item->purchase?->supplier?->nama,
+            'kode'        => $item->product?->barcode,
+            'tanggal'     => $item->purchase?->tanggal?->format('Y-m-d'),
+            'nama_produk' => $item->product?->masterProduct?->nama,
+            'merk'        => $item->product?->masterProduct?->brand?->nama,
+            'grade'       => $item->product?->grade?->nama,
+            'satuan'      => $item->product?->unit?->nama,
+            'imei1'       => $item->product?->imei1,
+            'imei2'       => $item->product?->imei2,
+            'stok'        => (int) ($item->product?->stok ?? 0),
+            'modal'       => (float) $item->harga_beli,
+            'harga_jual'  => $hargaJual,
+            'is_sold'     => $item->product?->saleItems?->isNotEmpty() ?? false,
+        ];
+    }
+
+    private function exportSalesDetailCsv($rows, array $summary)
+    {
+        $filename = 'rekap-penjualan-detail-' . now()->format('Ymd-His') . '.csv';
+        $headers  = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        return response()->stream(function () use ($rows, $summary) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['No Invoice', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Pelanggan', 'Kasir', 'Sales', 'Modal', 'Harga Jual', 'Laba']);
+            foreach ($rows as $item) {
+                $modal     = (float) ($item->hpp_total ?? 0);
+                $hargaJual = (float) ($item->subtotal ?? 0);
+                fputcsv($out, [
+                    $item->salesTransaction?->no_invoice,
+                    $item->product?->barcode,
+                    $item->salesTransaction?->tanggal?->format('Y-m-d'),
+                    $item->product?->masterProduct?->nama,
+                    $item->product?->masterProduct?->brand?->nama,
+                    $item->product?->grade?->nama,
+                    $item->product?->unit?->nama,
+                    $item->product?->imei1,
+                    $item->product?->imei2,
+                    $item->salesTransaction?->pelanggan,
+                    $item->salesTransaction?->user?->name,
+                    $item->salesTransaction?->salesRep?->nama,
+                    $modal,
+                    $hargaJual,
+                    $hargaJual - $modal,
+                ]);
+            }
+            fputcsv($out, []);
+            fputcsv($out, ['TOTAL', '', '', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual'], $summary['total_laba']]);
+            fclose($out);
+        }, 200, $headers);
+    }
+
+    private function exportPurchasesDetailCsv($rows, array $summary)
+    {
+        $filename = 'rekap-pembelian-detail-' . now()->format('Ymd-His') . '.csv';
+        $headers  = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        return response()->stream(function () use ($rows, $summary) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual']);
+            foreach ($rows as $item) {
+                $hargaJual = $this->resolveHargaJual($item->product);
+                fputcsv($out, [
+                    $item->purchase?->no_invoice,
+                    $item->purchase?->supplier?->nama,
+                    $item->product?->barcode,
+                    $item->purchase?->tanggal?->format('Y-m-d'),
+                    $item->product?->masterProduct?->nama,
+                    $item->product?->masterProduct?->brand?->nama,
+                    $item->product?->grade?->nama,
+                    $item->product?->unit?->nama,
+                    $item->product?->imei1,
+                    $item->product?->imei2,
+                    (float) $item->harga_beli,
+                    $hargaJual,
+                ]);
+            }
+            fputcsv($out, []);
+            fputcsv($out, ['TOTAL', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual']]);
+            fclose($out);
+        }, 200, $headers);
+    }
+
+    private function exportSalesDetailHtml($rows, array $summary, array $filters)
+    {
+        $dateLabel = '';
+        if (!empty($filters['start_date']) || !empty($filters['end_date'])) {
+            $dateLabel = ' | ' . ($filters['start_date'] ?? '') . ' s/d ' . ($filters['end_date'] ?? '');
+        }
+
+        $displayKeys = ['no_invoice', 'kode', 'tanggal', 'nama_produk', 'merk', 'grade', 'satuan', 'imei1', 'imei2', 'pelanggan', 'kasir', 'sales', 'modal', 'harga_jual', 'laba'];
+        $displayRows = $rows->map(function ($item) use ($displayKeys) {
+            $row = $this->formatSaleDetailRow($item);
+            return array_map(fn($k) => $row[$k] ?? '-', $displayKeys);
+        })->toArray();
+
+        $html = $this->buildDetailHtml(
+            'Rekap Penjualan Detail' . $dateLabel,
+            ['No Invoice', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Pelanggan', 'Kasir', 'Sales', 'Modal', 'Harga Jual', 'Laba'],
+            $displayRows,
+            [number_format($summary['total_modal'], 0, ',', '.'), number_format($summary['total_harga_jual'], 0, ',', '.'), number_format($summary['total_laba'], 0, ',', '.')]
+        );
+
+        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    private function exportPurchasesDetailHtml($rows, array $summary, array $filters)
+    {
+        $dateLabel = '';
+        if (!empty($filters['start_date']) || !empty($filters['end_date'])) {
+            $dateLabel = ' | ' . ($filters['start_date'] ?? '') . ' s/d ' . ($filters['end_date'] ?? '');
+        }
+
+        $displayKeys = ['no_invoice', 'supplier', 'kode', 'tanggal', 'nama_produk', 'merk', 'grade', 'satuan', 'imei1', 'imei2', 'modal', 'harga_jual'];
+        $displayRows = $rows->map(function ($item) use ($displayKeys) {
+            $row = $this->formatPurchaseDetailRow($item);
+            return array_map(fn($k) => $row[$k] ?? '-', $displayKeys);
+        })->toArray();
+
+        $html = $this->buildDetailHtml(
+            'Rekap Pembelian Detail' . $dateLabel,
+            ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual'],
+            $displayRows,
+            [number_format($summary['total_modal'], 0, ',', '.'), number_format($summary['total_harga_jual'], 0, ',', '.')]
+        );
+
+        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    private function buildDetailHtml(string $title, array $headers, array $rows, array $totalValues): string
+    {
+        $colCount = count($headers);
+        $headHtml = implode('', array_map(fn($h) => "<th>{$h}</th>", $headers));
+        $bodyHtml = '';
+        foreach ($rows as $idx => $row) {
+            $tds = implode('', array_map(fn($v) => '<td>' . htmlspecialchars((string) ($v ?? '-')) . '</td>', $row));
+            $bodyHtml .= "<tr class=\"" . ($idx % 2 === 0 ? 'even' : '') . "\">{$tds}</tr>";
+        }
+        $footCols = $colCount - count($totalValues);
+        $footHtml = "<td colspan=\"{$footCols}\" class=\"total-label\">TOTAL</td>";
+        foreach ($totalValues as $v) {
+            $footHtml .= "<td class=\"total-val\">{$v}</td>";
+        }
+
+        return "<!DOCTYPE html><html lang=\"id\"><head><meta charset=\"UTF-8\">
+<title>{$title}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;font-size:9px;color:#111}
+h1{font-size:13px;margin-bottom:4px}
+.sub{font-size:9px;color:#555;margin-bottom:10px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:2px 4px;white-space:nowrap}
+th{background:#1e3a5f;color:#fff;font-size:8px}
+tr.even td{background:#f4f7fb}
+tfoot td{background:#e8f0fe;font-weight:bold}
+.total-label{text-align:right}
+.total-val{text-align:right}
+@media print{@page{size:A4 landscape;margin:8mm}button{display:none}}
+</style></head><body>
+<h1>{$title}</h1>
+<p class=\"sub\">Dicetak: " . now()->format('d-m-Y H:i') . " | Total: " . count($rows) . " baris</p>
+<button onclick=\"window.print()\" style=\"margin-bottom:8px;padding:4px 10px;background:#1e3a5f;color:white;border:none;cursor:pointer;border-radius:3px\">Cetak / Simpan PDF</button>
+<table><thead><tr>{$headHtml}</tr></thead><tbody>{$bodyHtml}</tbody>
+<tfoot><tr>{$footHtml}</tr></tfoot></table>
+</body></html>";
     }
 
     private function validateReportRequest(Request $request, bool $withType = false): array

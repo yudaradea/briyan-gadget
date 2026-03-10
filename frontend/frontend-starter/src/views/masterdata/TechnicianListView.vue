@@ -189,6 +189,7 @@ async function doDelete() {
                             required
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                             placeholder="Nama teknisi"
+                            @input="form.nama = ($event.target.value).toUpperCase()"
                         />
                     </div>
                     <div>
@@ -211,6 +212,7 @@ async function doDelete() {
                             type="text"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                             placeholder="Contoh: iPhone, Samsung, Xiaomi"
+                            @input="form.specialist = ($event.target.value).toUpperCase()"
                         />
                     </div>
                     <div>

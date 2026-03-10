@@ -168,6 +168,7 @@ async function doDelete() {
                                 required
                                 class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Contoh: Unit"
+                                @input="form.nama = ($event.target.value).toUpperCase()"
                             />
                         </div>
                         <p v-if="error" class="mb-3 text-sm text-red-500">

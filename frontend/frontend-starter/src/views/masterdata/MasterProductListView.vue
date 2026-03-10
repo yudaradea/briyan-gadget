@@ -112,16 +112,18 @@ async function doDelete() {
 
 <template>
     <div>
-        <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <div
+            class="flex flex-col gap-4 mb-6 sm:flex-row sm:justify-between sm:items-center"
+        >
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Katalog Produk</h1>
-                <p class="text-sm text-gray-500 mt-1">
+                <p class="mt-1 text-sm text-gray-500">
                     Kelola daftar katalog produk (Master Data)
                 </p>
             </div>
             <button
                 @click="openCreate"
-                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
             >
                 <svg
                     class="w-4 h-4"
@@ -200,15 +202,15 @@ async function doDelete() {
             >
                 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
                 <div
-                    class="relative bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 z-10"
+                    class="relative z-10 w-full max-w-lg p-6 bg-white shadow-2xl rounded-xl"
                 >
-                    <div class="flex justify-between items-center mb-5">
+                    <div class="flex items-center justify-between mb-5">
                         <h3 class="text-xl font-bold text-gray-900">
                             {{ editId ? "Edit" : "Tambah" }} Katalog Produk
                         </h3>
                         <button
                             @click="showForm = false"
-                            class="text-gray-400 hover:text-gray-600 transition"
+                            class="text-gray-400 transition hover:text-gray-600"
                         >
                             <svg
                                 class="w-6 h-6"
@@ -229,28 +231,32 @@ async function doDelete() {
                     <form @submit.prevent="saveForm" class="space-y-4">
                         <div>
                             <label
-                                class="block text-sm font-semibold text-gray-700 mb-1"
+                                class="block mb-1 text-sm font-semibold text-gray-700"
                                 >Nama Produk</label
                             >
                             <input
                                 v-model="form.nama"
                                 type="text"
                                 required
-                                class="w-full px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
+                                class="w-full px-4 py-2 text-sm transition border border-gray-200 shadow-sm bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white"
                                 placeholder="Contoh: iPhone 13 Pro Max"
+                                @input="
+                                    form.nama =
+                                        $event.target.value.toUpperCase()
+                                "
                             />
                         </div>
 
                         <div>
                             <label
-                                class="block text-sm font-semibold text-gray-700 mb-1"
+                                class="block mb-1 text-sm font-semibold text-gray-700"
                                 >Merk</label
                             >
                             <div class="flex gap-2">
                                 <select
                                     v-model="form.brand_id"
                                     required
-                                    class="flex-1 px-4 py-2 bg-slate-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm shadow-sm"
+                                    class="flex-1 px-4 py-2 text-sm transition border border-gray-200 shadow-sm bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white"
                                 >
                                     <option :value="null">Pilih Merk</option>
                                     <option
@@ -272,11 +278,11 @@ async function doDelete() {
                             </div>
                         </div>
 
-                        <p v-if="error" class="text-red-500 text-sm italic">
+                        <p v-if="error" class="text-sm italic text-red-500">
                             {{ error }}
                         </p>
 
-                        <div class="flex gap-3 mt-6 pt-4">
+                        <div class="flex gap-3 pt-4 mt-6">
                             <button
                                 type="button"
                                 @click="showForm = false"

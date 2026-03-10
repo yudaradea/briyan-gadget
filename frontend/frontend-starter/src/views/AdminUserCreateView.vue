@@ -56,6 +56,7 @@ const createUser = async () => {
                     required
                     placeholder="Masukkan nama lengkap"
                     class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    @input="form.name = ($event.target.value).toUpperCase()"
                 />
             </div>
 

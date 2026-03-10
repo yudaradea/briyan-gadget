@@ -28,6 +28,7 @@
                                 :required="field.required !== false"
                                 :step="field.step"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                @input="(!field.type || field.type === 'text') ? (formData[field.key] = $event.target.value.toUpperCase()) : null"
                             />
                             <textarea
                                 v-else

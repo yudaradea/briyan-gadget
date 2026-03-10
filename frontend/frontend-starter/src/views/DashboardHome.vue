@@ -30,30 +30,30 @@ const currency = new Intl.NumberFormat("id-ID", {
 const salesCards = computed(() => {
     const c = summary.value?.cards?.sales || {};
     return [
-        { label: "Hari Ini", value: c.today || 0 },
-        { label: "Bulan Ini", value: c.month || 0 },
-        { label: "Tahun Ini", value: c.year || 0 },
-        { label: "Total", value: c.total || 0 },
+        { label: "Penjualan Hari Ini", value: c.today || 0 },
+        { label: "Penjualan Bulan Ini", value: c.month || 0 },
+        { label: "Penjualan Tahun Ini", value: c.year || 0 },
+        { label: "Total Seluruh Penjualan", value: c.total || 0 },
     ];
 });
 
 const profitCards = computed(() => {
     const c = summary.value?.cards?.profit || {};
     return [
-        { label: "Hari Ini", value: c.today || 0 },
-        { label: "Bulan Ini", value: c.month || 0 },
-        { label: "Tahun Ini", value: c.year || 0 },
-        { label: "Total", value: c.total || 0 },
+        { label: "Laba Hari Ini", value: c.today || 0 },
+        { label: "Laba Bulan Ini", value: c.month || 0 },
+        { label: "Laba Tahun Ini", value: c.year || 0 },
+        { label: "Total Seluruh Laba", value: c.total || 0 },
     ];
 });
 
 const purchaseCards = computed(() => {
     const c = summary.value?.cards?.purchases || {};
     return [
-        { label: "Hari Ini", value: c.today || 0 },
-        { label: "Bulan Ini", value: c.month || 0 },
-        { label: "Tahun Ini", value: c.year || 0 },
-        { label: "Total", value: c.total || 0 },
+        { label: "Pembelian Hari Ini", value: c.today || 0 },
+        { label: "Pembelian Bulan Ini", value: c.month || 0 },
+        { label: "Pembelian Tahun Ini", value: c.year || 0 },
+        { label: "Total Seluruh Pembelian", value: c.total || 0 },
     ];
 });
 
@@ -106,7 +106,7 @@ function maxValue(rows, includeProfit = true, includePurchases = true) {
 // Konfigurasi dinamis untuk kedua grafik
 const chartsData = computed(() => [
     {
-        title: "Grafik 7 Hari Terakhir",
+        title: "Grafik Penjualan Perhari",
         rows: dailyRows.value,
         max: maxValue(dailyRows.value, !isKasir.value, !isKasir.value),
     },
@@ -148,7 +148,7 @@ onMounted(fetchSummary);
     <section
         class="min-h-screen p-4 space-y-8 font-sans bg-slate-50 sm:p-6 lg:p-8"
     >
-        <div
+        <!-- <div
             class="relative p-5 overflow-hidden text-white shadow-2xl sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-black shadow-slate-900/20"
         >
             <div class="relative z-10">
@@ -170,7 +170,7 @@ onMounted(fetchSummary);
             <div
                 class="absolute rounded-full pointer-events-none -right-10 -top-24 h-96 w-96 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl"
             ></div>
-        </div>
+        </div> -->
 
         <div
             v-if="loading"
@@ -200,14 +200,14 @@ onMounted(fetchSummary);
                             ? []
                             : [
                                   {
+                                      //   title: 'Laba',
+                                      cards: profitCards,
+                                      color: colors.profit,
+                                  },
+                                  {
                                       title: 'Pembelian',
                                       cards: purchaseCards,
                                       color: colors.purchases,
-                                  },
-                                  {
-                                      title: 'Laba Bersih',
-                                      cards: profitCards,
-                                      color: colors.profit,
                                   },
                               ]
                     )"
@@ -217,9 +217,9 @@ onMounted(fetchSummary);
                     <h2
                         class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400"
                     >
-                        <span
+                        <!-- <span
                             class="h-1.5 w-1.5 rounded-full bg-slate-400"
-                        ></span>
+                        ></span> -->
                         {{ section.title }}
                     </h2>
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -228,17 +228,17 @@ onMounted(fetchSummary);
                             :key="card.label"
                             class="p-5 transition-all duration-300 bg-white shadow-sm group rounded-2xl ring-1 ring-slate-200/60 hover:-translate-y-1 hover:shadow-lg"
                         >
+                            <div
+                                class="inline-flex items-center px-4 py-2 mb-4 text-sm font-bold text-white transition-transform shadow-md rounded-xl bg-gradient-to-r group-hover:scale-105"
+                                :class="section.color"
+                            >
+                                {{ currency.format(card.value) }}
+                            </div>
                             <p
                                 class="text-xs font-semibold tracking-wider uppercase text-slate-400"
                             >
                                 {{ card.label }}
                             </p>
-                            <div
-                                class="inline-flex items-center px-4 py-2 mt-4 text-sm font-bold text-white transition-transform shadow-md rounded-xl bg-gradient-to-r group-hover:scale-105"
-                                :class="section.color"
-                            >
-                                {{ currency.format(card.value) }}
-                            </div>
                         </article>
                     </div>
                 </div>
@@ -247,10 +247,10 @@ onMounted(fetchSummary);
                     <h2
                         class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400"
                     >
-                        <span
+                        <!-- <span
                             class="h-1.5 w-1.5 rounded-full bg-slate-400"
                         ></span>
-                        Metrik Pendukung
+                        Metrik Pendukung -->
                     </h2>
                     <div
                         class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5"

@@ -4,7 +4,7 @@ import api from "../api";
 export const useAuthStore = defineStore("auth", {
     state: () => ({
         user: null,
-        token: localStorage.getItem("token") || null,
+        token: sessionStorage.getItem("token") || null,
         loading: false,
         error: null,
     }),
@@ -101,7 +101,7 @@ export const useAuthStore = defineStore("auth", {
                 this.token = response.data.data.access_token;
                 this.user = response.data.data.user;
 
-                localStorage.setItem("token", this.token);
+                sessionStorage.setItem("token", this.token);
 
                 // Fetch full user profile
                 await this.fetchUser();
@@ -123,7 +123,7 @@ export const useAuthStore = defineStore("auth", {
                 this.token = response.data.data.access_token;
                 this.user = response.data.data.user;
 
-                localStorage.setItem("token", this.token);
+                sessionStorage.setItem("token", this.token);
                 await this.fetchUser();
 
                 return true;
@@ -159,7 +159,7 @@ export const useAuthStore = defineStore("auth", {
                 this.user = null;
                 this.token = null;
                 this.error = null;
-                localStorage.removeItem("token");
+                sessionStorage.removeItem("token");
             }
         },
 

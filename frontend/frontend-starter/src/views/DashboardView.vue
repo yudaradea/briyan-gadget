@@ -122,7 +122,7 @@ onUnmounted(() => {
                         </svg>
                     </div>
                     <span
-                        class="hidden text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-700 sm:block"
+                        class="hidden text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-700 sm:block xl:hidden 2xl:block"
                     >
                         {{ storeProfile.name }}
                     </span>
@@ -130,7 +130,7 @@ onUnmounted(() => {
 
                 <!-- Center: Desktop Menu -->
                 <nav
-                    class="items-center justify-center flex-1 hidden max-w-4xl gap-1 lg:flex"
+                    class="items-center justify-center flex-1 hidden gap-0.5 xl:gap-1 xl:flex"
                 >
                     <!-- Dashboard -->
                     <router-link
@@ -225,7 +225,7 @@ onUnmounted(() => {
                                 to="/dashboard/pos"
                                 class="flex items-center gap-2 dropdown-item"
                             >
-                                Input Penjualan
+                                Jual Barang
                             </router-link>
                             <router-link
                                 to="/dashboard/sales"
@@ -273,6 +273,51 @@ onUnmounted(() => {
                         </div>
                     </div> -->
 
+                    <!-- Rekap Detail (if authorized) -->
+                    <div
+                        v-if="
+                            authStore.isSuperAdmin ||
+                            authStore.isAdmin ||
+                            authStore.canViewReports
+                        "
+                        class="relative group"
+                    >
+                        <button
+                            class="nav-link flex items-center gap-1.5"
+                            :class="{
+                                'nav-link-active':
+                                    $route.path.includes('/rekap'),
+                            }"
+                        >
+                            Rekap Detail
+                            <svg
+                                class="w-3.5 h-3.5 opacity-60"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu">
+                            <router-link
+                                to="/dashboard/rekap/sales-detail"
+                                class="dropdown-item"
+                                >Penjualan Detail</router-link
+                            >
+                            <router-link
+                                to="/dashboard/rekap/purchases-detail"
+                                class="dropdown-item"
+                                >Pembelian Detail</router-link
+                            >
+                        </div>
+                    </div>
+
                     <!-- Laporan (if authorized) -->
                     <div
                         v-if="
@@ -313,13 +358,13 @@ onUnmounted(() => {
                             <router-link
                                 to="/dashboard/report/purchases"
                                 class="dropdown-item"
-                                >Laporan Pembelian</router-link
+                                >Laporan Barang Masuk</router-link
                             >
-                            <router-link
+                            <!-- <router-link
                                 to="/dashboard/report/profit"
                                 class="dropdown-item"
                                 >Laba Rugi</router-link
-                            >
+                            > -->
                         </div>
                     </div>
 
@@ -462,7 +507,7 @@ onUnmounted(() => {
                     <!-- Mobile Menu Toggle -->
                     <button
                         @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="p-2 lg:hidden text-slate-500 hover:bg-slate-100 rounded-xl"
+                        class="p-2 xl:hidden text-slate-500 hover:bg-slate-100 rounded-xl"
                     >
                         <svg
                             class="w-6 h-6"
@@ -501,7 +546,7 @@ onUnmounted(() => {
                                     }}</span>
                                 </div>
                             </div>
-                            <div class="hidden mr-1 text-left md:block">
+                            <div class="hidden mr-1 text-left 2xl:block">
                                 <p
                                     class="text-xs font-bold leading-none text-slate-800"
                                 >
@@ -513,7 +558,7 @@ onUnmounted(() => {
                                 >
                             </div>
                             <svg
-                                class="hidden w-4 h-4 text-slate-400 md:block"
+                                class="hidden w-4 h-4 text-slate-400 2xl:block"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -533,7 +578,7 @@ onUnmounted(() => {
                             class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-[60] animate-in-fade-slide overflow-hidden font-medium"
                         >
                             <div
-                                class="px-4 py-3 mb-1 border-b border-slate-100 lg:hidden"
+                                class="px-4 py-3 mb-1 border-b border-slate-100"
                             >
                                 <p class="text-sm font-bold text-slate-800">
                                     {{ authStore.user?.name }}
@@ -720,7 +765,7 @@ onUnmounted(() => {
                         </div>
 
                         <div>
-                            <p class="section-badge">Penjualan & Kasir</p>
+                            <p class="section-badge">Transaksi Penjualan</p>
                             <div class="mt-2 space-y-1">
                                 <router-link
                                     @click="mobileMenuOpen = false"
@@ -732,7 +777,7 @@ onUnmounted(() => {
                                                 '/dashboard/pos'
                                             ),
                                     }"
-                                    >POS Kasir</router-link
+                                    >Jual Barang</router-link
                                 >
                                 <router-link
                                     @click="mobileMenuOpen = false"
@@ -889,6 +934,42 @@ onUnmounted(() => {
                                 authStore.canViewReports
                             "
                         >
+                            <p class="section-badge">Rekap Detail</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/rekap/sales-detail"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/rekap/sales-detail'
+                                            ),
+                                    }"
+                                    >Penjualan Detail</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/rekap/purchases-detail"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/rekap/purchases-detail'
+                                            ),
+                                    }"
+                                    >Pembelian Detail</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="
+                                authStore.isSuperAdmin ||
+                                authStore.isAdmin ||
+                                authStore.canViewReports
+                            "
+                        >
                             <p class="section-badge">Laporan</p>
                             <div class="grid grid-cols-1 mt-2 space-y-1">
                                 <router-link
@@ -913,9 +994,9 @@ onUnmounted(() => {
                                                 '/dashboard/report/purchases'
                                             ),
                                     }"
-                                    >Laporan Pembelian</router-link
+                                    >Laporan Barang Masuk</router-link
                                 >
-                                <router-link
+                                <!-- <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/report/profit"
                                     class="mobile-sublink"
@@ -926,7 +1007,7 @@ onUnmounted(() => {
                                             ),
                                     }"
                                     >Laba Rugi</router-link
-                                >
+                                > -->
                             </div>
                         </div>
 
@@ -1005,7 +1086,8 @@ onUnmounted(() => {
             <p
                 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
             >
-                &copy; 2026 {{ storeProfile.name }}. Developed with &hearts;
+                &copy; 2024 - {{ new Date().getFullYear() }}
+                {{ storeProfile.name }}.
             </p>
         </footer>
     </div>
@@ -1013,20 +1095,20 @@ onUnmounted(() => {
 
 <style scoped>
 .nav-link {
-    @apply px-4 py-2 text-sm font-semibold text-slate-600 rounded-xl transition-all duration-300 hover:text-blue-600 hover:bg-blue-50/50 relative whitespace-nowrap;
+    @apply px-2 py-1.5 xl:px-2.5 xl:py-2 text-[11px] 2xl:text-[13px] font-semibold text-slate-600 rounded-lg transition-all duration-300 hover:text-blue-600 hover:bg-blue-50/50 relative whitespace-nowrap uppercase;
 }
 .nav-link-active {
     @apply text-blue-700 bg-blue-50 shadow-sm shadow-blue-500/5 ring-1 ring-blue-100/50;
 }
 .dropdown-menu {
-    @apply absolute top-full left-0 mt-0 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-[60] animate-in-fade-slide min-w-[220px];
+    @apply absolute top-full left-0 mt-0 hidden group-hover:block bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-[60] animate-in-fade-slide min-w-[220px] uppercase;
 }
 .group:hover .dropdown-menu,
 .dropdown-menu:hover {
     @apply block;
 }
 .dropdown-item {
-    @apply px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50/70 transition-all duration-150 flex items-center;
+    @apply px-4 py-2.5 text-xs 2xl:text-[13px] font-medium text-slate-600 hover:text-blue-700 hover:bg-blue-50/70 transition-all duration-150 flex items-center;
 }
 .mobile-link {
     @apply block py-1.5 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors;

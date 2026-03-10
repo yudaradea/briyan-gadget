@@ -34,7 +34,6 @@ const filters = ref({
     supplier_id: "",
     brand_id: "",
     no_invoice: "",
-    status: "",
 });
 
 const showDelete = ref(false);
@@ -88,7 +87,7 @@ async function fetchItems(page = 1) {
                 supplier_id: filters.value.supplier_id,
                 brand_id: filters.value.brand_id,
                 no_invoice: filters.value.no_invoice,
-                status: filters.value.status,
+                status: "available",
             },
         });
 
@@ -287,7 +286,9 @@ const copyTotalJual = computed(() => {
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
         <div class="flex items-start justify-between">
             <div class="flex flex-col w-full">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                >
                     <div>
                         <h1 class="text-2xl font-bold text-slate-800">
                             List Semua Barang
@@ -319,7 +320,7 @@ const copyTotalJual = computed(() => {
                     </div>
                 </div>
                 <div
-                    class="grid w-full max-w-2xl grid-cols-1 gap-3 mt-4 md:grid-cols-2"
+                    class="grid w-full max-w-3xl grid-cols-1 gap-3 mt-4 sm:grid-cols-3"
                 >
                     <div
                         class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 text-white shadow-blue-500/20"
@@ -387,6 +388,33 @@ const copyTotalJual = computed(() => {
                             ></span>
                         </div>
                     </div>
+                    <router-link
+                        :to="{ name: 'stock-wa' }"
+                        class="relative overflow-hidden rounded-2xl shadow-lg p-4 min-h-[94px] bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 text-white shadow-purple-500/20 flex flex-col justify-between hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+                    >
+                        <div class="relative z-10">
+                            <div class="text-sm font-black tracking-wide">
+                                List Stok WA
+                            </div>
+                            <div class="mt-1 text-xs opacity-90">
+                                Lihat &amp; copy daftar stok
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs font-semibold opacity-80 mt-2">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Buka &rarr;
+                        </div>
+                        <div class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-40">
+                            <span class="w-2 h-3 rounded-sm bg-purple-900/30"></span>
+                            <span class="w-2 h-6 rounded-sm bg-purple-900/30"></span>
+                            <span class="w-2 h-10 rounded-sm bg-purple-900/30"></span>
+                            <span class="w-2 h-5 rounded-sm bg-purple-900/30"></span>
+                            <span class="w-2 h-8 rounded-sm bg-purple-900/30"></span>
+                        </div>
+                    </router-link>
                 </div>
             </div>
         </div>
@@ -408,7 +436,6 @@ const copyTotalJual = computed(() => {
                             >Mulai</label
                         >
                         <DateInput
-                            
                             v-model="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
@@ -419,44 +446,10 @@ const copyTotalJual = computed(() => {
                             >Sampai</label
                         >
                         <DateInput
-                            
                             v-model="filters.end_date"
                             :min="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
                         />
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <label
-                            class="text-[10px] font-bold text-slate-400 uppercase"
-                            >Status</label
-                        >
-                        <div class="relative">
-                            <select
-                                v-model="filters.status"
-                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[120px] pr-8"
-                            >
-                                <option value="">Semua</option>
-                                <option value="available">Tersedia</option>
-                                <option value="sold">Terjual</option>
-                            </select>
-                            <div
-                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400"
-                            >
-                                <svg
-                                    class="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
                     </div>
                     <div class="flex flex-col gap-1">
                         <label
@@ -534,24 +527,17 @@ const copyTotalJual = computed(() => {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1">
+
+                    <div
+                        class="flex flex-col col-span-2 gap-1 md:col-span-1 lg:justify-end"
+                    >
                         <label
-                            class="text-[10px] font-bold text-slate-400 uppercase"
-                            >No. Invoice</label
+                            class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block"
+                            >Reset</label
                         >
-                        <input
-                            v-model="filters.no_invoice"
-                            type="text"
-                            placeholder="INV..."
-                            class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white w-full sm:w-32"
-                        />
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
                         <button
                             @click="
                                 filters = {
-                                    status: '',
                                     start_date: '',
                                     end_date: '',
                                     supplier_id: '',
@@ -563,8 +549,18 @@ const copyTotalJual = computed(() => {
                             class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <svg
+                                class="w-4 h-4 shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
                             </svg>
                             <span class="md:hidden">Reset Filter</span>
                         </button>
@@ -942,7 +938,7 @@ const copyTotalJual = computed(() => {
             <!-- Pagination -->
             <div
                 v-if="pagination.last_page > 1"
-                class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-6 py-3 border-t border-slate-200 bg-slate-50"
+                class="flex flex-col items-start justify-between gap-3 px-6 py-3 border-t sm:flex-row sm:items-center border-slate-200 bg-slate-50"
             >
                 <div class="text-[11px] text-slate-500">
                     Menampilkan
@@ -1114,7 +1110,3 @@ const copyTotalJual = computed(() => {
         </div>
     </div>
 </template>
-
-
-
-

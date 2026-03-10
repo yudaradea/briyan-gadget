@@ -155,6 +155,13 @@ const router = createRouter({
                     meta: { requiresStockView: true },
                 },
                 {
+                    path: "stock-wa",
+                    name: "stock-wa",
+                    component: () =>
+                        import("../views/purchase/StockWaView.vue"),
+                    meta: { requiresStockView: true },
+                },
+                {
                     path: "sold-items",
                     name: "sold-item-list",
                     component: () =>
@@ -270,6 +277,20 @@ const router = createRouter({
                     name: "report-profit",
                     component: () =>
                         import("../views/report/ProfitReportView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
+                    path: "rekap/sales-detail",
+                    name: "rekap-sales-detail",
+                    component: () =>
+                        import("../views/rekap/SalesDetailView.vue"),
+                    meta: { requiresAdmin: true },
+                },
+                {
+                    path: "rekap/purchases-detail",
+                    name: "rekap-purchases-detail",
+                    component: () =>
+                        import("../views/rekap/PurchasesDetailView.vue"),
                     meta: { requiresAdmin: true },
                 },
             ],

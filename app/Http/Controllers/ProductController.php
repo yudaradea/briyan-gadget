@@ -71,4 +71,9 @@ class ProductController extends Controller
             $request->query('grade_id')
         );
     }
+
+    public function stockWa()
+    {
+        return $this->repository->stockWa();
+    }
 }

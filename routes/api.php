@@ -134,6 +134,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // ============================================
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/summary', [ProductController::class, 'summary']);
+    Route::get('/products/stock-wa', [ProductController::class, 'stockWa']);
     Route::get('/products/stock-details', [ProductController::class, 'stockDetails']);
     Route::get('/products/scan', [ProductController::class, 'scan']);
     Route::get('/products/search', [ProductController::class, 'search']);
@@ -161,6 +162,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/reports/sales', [ReportController::class, 'sales']);
     Route::get('/reports/purchases', [ReportController::class, 'purchases']);
     Route::get('/reports/profit', [ReportController::class, 'profit']);
+    Route::get('/reports/sales-detail', [ReportController::class, 'salesDetail']);
+    Route::get('/reports/purchases-detail', [ReportController::class, 'purchasesDetail']);
 
     // ============================================
     // Service Routes (Servis HP)
