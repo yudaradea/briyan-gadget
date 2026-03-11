@@ -19,7 +19,10 @@ const isMobile =
         navigator.userAgent,
     ) || window.innerWidth < 768;
 
+const originalTitle = document.title;
+
 const handleAfterPrint = () => {
+    document.title = originalTitle;
     if (!isMobile) {
         window.location.href = returnTo;
     }
@@ -40,14 +43,16 @@ onMounted(async () => {
         toast.error("Gagal memuat detail invoice");
     } finally {
         isLoading.value = false;
-        // Auto print only on desktop
-        if (!isMobile) {
-            nextTick(() => {
-                setTimeout(() => {
-                    if (sale.value) window.print();
-                }, 500);
-            });
-        }
+        // Set document title as filename for Save as PDF, then auto-print
+        nextTick(() => {
+            setTimeout(() => {
+                if (sale.value) {
+                    const pelanggan = (sale.value.pelanggan || "Umum").toUpperCase();
+                    document.title = `${sale.value.no_invoice} - ${pelanggan}`;
+                    window.print();
+                }
+            }, 500);
+        });
     }
 });
 
@@ -76,6 +81,10 @@ function getProductIdentifierLines(product) {
 }
 
 function printInvoice() {
+    if (sale.value) {
+        const pelanggan = (sale.value.pelanggan || "Umum").toUpperCase();
+        document.title = `${sale.value.no_invoice} - ${pelanggan}`;
+    }
     window.print();
 }
 </script>
@@ -357,25 +366,31 @@ function printInvoice() {
     html,
     body {
         height: auto !important;
+        min-height: 0 !important;
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
     }
 
-    body * {
-        visibility: hidden !important;
+    /* Hide print button bar (also has print:hidden Tailwind class) */
+    .print\:hidden {
+        display: none !important;
     }
 
-    #invoice-printable,
-    #invoice-printable * {
-        visibility: visible !important;
+    /* Remove min-height so no blank second page */
+    .min-h-screen {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    /* Reset scroll wrapper */
+    .overflow-x-auto {
+        overflow: visible !important;
     }
 
     #invoice-printable {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+        position: static !important;
         width: 100% !important;
         max-width: none !important;
         min-width: unset !important;

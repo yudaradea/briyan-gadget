@@ -581,9 +581,8 @@ function cancelTransaction() {
                     type="text"
                     v-model="form.pelanggan"
                     placeholder="Masukkan Nama Pelanggan"
-                    class="px-3 py-2 text-sm font-medium transition bg-white border rounded outline-none text-slate-800 border-slate-200 focus:ring-1 focus:border-blue-500 focus:ring-blue-400"
+                    class="px-3 py-2 text-sm font-medium capitalize transition bg-white border rounded outline-none text-slate-800 border-slate-200 focus:ring-1 focus:border-blue-500 focus:ring-blue-400"
                     required=""
-                    @input="form.pelanggan = ($event.target.value).toUpperCase()"
                 />
             </div>
         </div>
