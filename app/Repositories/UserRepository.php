@@ -178,6 +178,12 @@ class UserRepository implements UserRepositoryInterface
         $user = User::findOrFail($id);
         $user->delete();
 
+        // Also soft-delete the linked SalesRep (same ID) so it disappears from filters
+        $salesRep = SalesRep::find($id);
+        if ($salesRep) {
+            $salesRep->delete();
+        }
+
         return ResponseHelper::success(
             null,
             'User deleted successfully'
