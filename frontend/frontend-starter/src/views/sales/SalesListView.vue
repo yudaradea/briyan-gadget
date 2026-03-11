@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from "vue";
 import DateInput from "../../components/DateInput.vue";
+import CurrencyInput from "../../components/CurrencyInput.vue";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 import debounce from "lodash-es/debounce";
@@ -225,6 +226,42 @@ function getProductIdentifierLines(product) {
     const imei2 = product.imei2 ? String(product.imei2).trim() : "-";
 
     return [`IMEI 1: ${imei1}`, `IMEI 2: ${imei2}`];
+}
+
+// Edit HPP modal
+const editModalData = ref({
+    show: false,
+    item: null,
+    saleId: null,
+    oldValueDisplay: "",
+    newValue: 0,
+});
+const savingEditModal = ref(false);
+
+function openEditModalItem(item) {
+    editModalData.value.item = item;
+    editModalData.value.saleId = selectedSale.value?.id;
+    editModalData.value.oldValueDisplay = formatCurrency(item.hpp_total || 0);
+    editModalData.value.newValue = Number(item.hpp_total || 0);
+    editModalData.value.show = true;
+}
+
+async function saveEditModal() {
+    if (!editModalData.value.item) return;
+    const item = editModalData.value.item;
+    savingEditModal.value = true;
+    try {
+        await api.put(`/sales/${editModalData.value.saleId}/items/${item.id}`, {
+            hpp_total: editModalData.value.newValue,
+        });
+        item.hpp_total = editModalData.value.newValue;
+        editModalData.value.show = false;
+        toast.success("Harga modal berhasil diubah");
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
+    } finally {
+        savingEditModal.value = false;
+    }
 }
 
 function servicePartsSummary(sale) {
@@ -1016,6 +1053,12 @@ function servicePartsSummary(sale) {
                                         Qty
                                     </th>
                                     <th
+                                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                                        class="px-4 py-3 text-xs tracking-wider text-right uppercase"
+                                    >
+                                        Modal
+                                    </th>
+                                    <th
                                         class="px-4 py-3 text-xs tracking-wider text-right uppercase"
                                     >
                                         Subtotal
@@ -1025,7 +1068,7 @@ function servicePartsSummary(sale) {
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="detailLoading">
                                     <td
-                                        colspan="5"
+                                        :colspan="(authStore.isSuperAdmin || authStore.isAdmin) ? 6 : 5"
                                         class="py-8 italic text-center text-slate-400"
                                     >
                                         <div
@@ -1045,7 +1088,7 @@ function servicePartsSummary(sale) {
                                     "
                                 >
                                     <td
-                                        colspan="5"
+                                        :colspan="(authStore.isSuperAdmin || authStore.isAdmin) ? 6 : 5"
                                         class="py-8 italic text-center text-slate-400"
                                     >
                                         {{
@@ -1098,6 +1141,17 @@ function servicePartsSummary(sale) {
                                         class="px-4 py-3 font-bold text-center align-top"
                                     >
                                         {{ item.qty }}
+                                    </td>
+                                    <td
+                                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                                        class="px-4 py-3 text-right align-top whitespace-nowrap"
+                                    >
+                                        <a
+                                            href="javascript:void(0)"
+                                            @click="openEditModalItem(item)"
+                                            class="font-semibold text-amber-600 hover:text-amber-700 hover:underline underline-offset-2 cursor-pointer"
+                                            title="Klik untuk ubah harga modal"
+                                        >{{ formatCurrency(item.hpp_total) }}</a>
                                     </td>
                                     <td
                                         class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap"
@@ -1282,6 +1336,48 @@ function servicePartsSummary(sale) {
                 </div>
             </div>
         </div>
+        <!-- Edit Harga Modal Popup -->
+        <div
+            v-if="editModalData.show"
+            class="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+            style="z-index: 9999"
+            @click.self="editModalData.show = false"
+        >
+            <div class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl">
+                <div class="flex items-center justify-between px-4 py-3 text-white bg-amber-600">
+                    <h3 class="text-sm font-bold">Update Harga Modal</h3>
+                    <button @click="editModalData.show = false" class="text-white hover:text-rose-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="px-5 py-5 flex flex-col gap-3">
+                    <div class="text-sm text-slate-600">
+                        <span class="font-semibold text-slate-800">{{ editModalData.item?.product?.nama }}</span>
+                    </div>
+                    <div class="text-xs text-slate-500">
+                        Harga lama: <span class="font-bold text-amber-600">{{ editModalData.oldValueDisplay }}</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Harga Modal Baru</label>
+                        <CurrencyInput v-model="editModalData.newValue" :allowThousands="true" />
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                    <button
+                        @click="editModalData.show = false"
+                        class="px-4 py-1.5 text-sm font-semibold text-slate-600 bg-slate-200 hover:bg-slate-300 rounded transition"
+                    >Batal</button>
+                    <button
+                        @click="saveEditModal"
+                        :disabled="savingEditModal"
+                        class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition disabled:opacity-50"
+                    >{{ savingEditModal ? "Menyimpan..." : "Simpan" }}</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Deletion Confirmation Dialog -->
         <ConfirmDialog
             :show="showDeleteDialog"

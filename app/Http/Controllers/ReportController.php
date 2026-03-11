@@ -227,7 +227,9 @@ class ReportController extends Controller implements HasMiddleware
             ->when(!empty($validated['end_date']), fn($q) => $q->where('sales_transactions.tanggal', '<=', $validated['end_date']))
             ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
                 $sq->where('sales_transactions.no_invoice', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%');
+                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('product', fn($pq) => $pq->where('imei1', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('imei2', 'like', '%' . $validated['search'] . '%'));
             }))
             ->select('sale_items.*')
             ->orderBy('sales_transactions.tanggal', 'desc')
@@ -241,7 +243,9 @@ class ReportController extends Controller implements HasMiddleware
             ->when(!empty($validated['end_date']), fn($q) => $q->where('sales_transactions.tanggal', '<=', $validated['end_date']))
             ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
                 $sq->where('sales_transactions.no_invoice', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%');
+                    ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('product', fn($pq) => $pq->where('imei1', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('imei2', 'like', '%' . $validated['search'] . '%'));
             }));
 
         $totalModal     = (float) (clone $summaryBase)->sum('sale_items.hpp_total');
@@ -370,8 +374,9 @@ class ReportController extends Controller implements HasMiddleware
         $modal     = (float) $item->hpp_total;
         $hargaJual = (float) $item->subtotal;
         return [
-            'id'           => $item->id,
-            'no_invoice'   => $item->salesTransaction?->no_invoice,
+            'id'                   => $item->id,
+            'sales_transaction_id' => $item->sales_transaction_id,
+            'no_invoice'           => $item->salesTransaction?->no_invoice,
             'kode'         => $item->product?->barcode,
             'tanggal'      => $item->salesTransaction?->tanggal?->format('Y-m-d'),
             'nama_produk'  => $item->product?->masterProduct?->nama,

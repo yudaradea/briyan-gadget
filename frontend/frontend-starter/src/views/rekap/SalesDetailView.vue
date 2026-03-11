@@ -3,8 +3,11 @@ import { ref, watch, onMounted } from "vue";
 import debounce from "lodash-es/debounce";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
+import { useAuthStore } from "../../stores/auth";
+import CurrencyInput from "../../components/CurrencyInput.vue";
 
 const toast = useToast();
+const authStore = useAuthStore();
 const isLoading = ref(false);
 const exportingExcel = ref(false);
 const exportingPdf = ref(false);
@@ -135,6 +138,39 @@ async function exportPdf() {
 }
 
 onMounted(() => fetchData(1));
+
+// Edit HPP modal
+const editModal = ref({ show: false, row: null, oldValueDisplay: "", newValue: 0 });
+const savingEdit = ref(false);
+
+function openEditModal(row) {
+    editModal.value.row = row;
+    editModal.value.oldValueDisplay = formatCurrency(row.modal);
+    editModal.value.newValue = Number(row.modal || 0);
+    editModal.value.show = true;
+}
+
+async function saveEdit() {
+    if (!editModal.value.row) return;
+    const row = editModal.value.row;
+    savingEdit.value = true;
+    try {
+        await api.put(`/sales/${row.sales_transaction_id}/items/${row.id}`, {
+            hpp_total: editModal.value.newValue,
+        });
+        const diff = editModal.value.newValue - row.modal;
+        row.modal = editModal.value.newValue;
+        row.laba = row.harga_jual - row.modal;
+        summary.value.total_modal += diff;
+        summary.value.total_laba -= diff;
+        editModal.value.show = false;
+        toast.success("Harga modal berhasil diubah");
+    } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
+    } finally {
+        savingEdit.value = false;
+    }
+}
 </script>
 
 <template>
@@ -300,7 +336,7 @@ onMounted(() => fetchData(1));
                         <input
                             type="text"
                             v-model="filters.search"
-                            placeholder="No invoice / pelanggan..."
+                            placeholder="No invoice / pelanggan / IMEI..."
                             class="px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 w-52"
                         />
                     </div>
@@ -447,10 +483,15 @@ onMounted(() => fetchData(1));
                             <td class="px-2 py-2 leading-tight text-slate-600">
                                 {{ row.sales || "-" }}
                             </td>
-                            <td
-                                class="px-2 py-2 font-semibold text-right text-blue-700 whitespace-nowrap"
-                            >
-                                {{ formatCurrency(row.modal) }}
+                            <td class="px-2 py-2 text-right whitespace-nowrap">
+                                <a
+                                    v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                                    href="javascript:void(0)"
+                                    @click="openEditModal(row)"
+                                    class="font-semibold text-amber-600 hover:text-amber-700 hover:underline underline-offset-2 cursor-pointer"
+                                    title="Klik untuk ubah harga modal"
+                                >{{ formatCurrency(row.modal) }}</a>
+                                <span v-else class="font-semibold text-blue-700">{{ formatCurrency(row.modal) }}</span>
                             </td>
                             <td
                                 class="px-2 py-2 font-semibold text-right text-slate-700 whitespace-nowrap"
@@ -549,5 +590,47 @@ onMounted(() => fetchData(1));
                 </div>
             </div>
         </div>
+    <!-- Edit Harga Modal Popup -->
+    <div
+        v-if="editModal.show"
+        class="fixed inset-0 flex items-center justify-center bg-black/50 p-4"
+        style="z-index: 9999"
+        @click.self="editModal.show = false"
+    >
+        <div class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl">
+            <div class="flex items-center justify-between px-4 py-3 text-white bg-amber-600">
+                <h3 class="text-sm font-bold">Update Harga Modal</h3>
+                <button @click="editModal.show = false" class="text-white hover:text-rose-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="px-5 py-5 flex flex-col gap-3">
+                <div class="text-sm text-slate-600">
+                    <span class="font-semibold text-slate-800">{{ editModal.row?.nama_produk }}</span>
+                    <span class="ml-2 text-xs text-slate-400">{{ editModal.row?.no_invoice }}</span>
+                </div>
+                <div class="text-xs text-slate-500">
+                    Harga lama: <span class="font-bold text-amber-600">{{ editModal.oldValueDisplay }}</span>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Harga Modal Baru</label>
+                    <CurrencyInput v-model="editModal.newValue" :allowThousands="true" />
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                <button
+                    @click="editModal.show = false"
+                    class="px-4 py-1.5 text-sm font-semibold text-slate-600 bg-slate-200 hover:bg-slate-300 rounded transition"
+                >Batal</button>
+                <button
+                    @click="saveEdit"
+                    :disabled="savingEdit"
+                    class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition disabled:opacity-50"
+                >{{ savingEdit ? "Menyimpan..." : "Simpan" }}</button>
+            </div>
+        </div>
+    </div>
     </div>
 </template>

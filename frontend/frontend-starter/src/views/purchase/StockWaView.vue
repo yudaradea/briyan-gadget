@@ -38,7 +38,7 @@ const waText = computed(() => {
     return groups.value
         .map((g) => {
             const header = `==${g.brand}==`;
-            const lines = g.products.map((p) => `${p.nama}`).join("\n");
+            const lines = g.products.map((p) => `${p.nama} x${p.stok}`).join("\n");
             return `${header}\n${lines}`;
         })
         .join("\n\n");
