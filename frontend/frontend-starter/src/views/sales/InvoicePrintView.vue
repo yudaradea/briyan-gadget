@@ -22,10 +22,13 @@ const isMobile =
 const originalTitle = document.title;
 
 const handleAfterPrint = () => {
-    document.title = originalTitle;
     if (!isMobile) {
+        // On desktop: restore title and navigate back
+        document.title = originalTitle;
         window.location.href = returnTo;
     }
+    // On mobile: afterprint can fire immediately before dialog opens,
+    // so we don't reset the title — let it stay as the invoice filename
 };
 
 onMounted(async () => {
