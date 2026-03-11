@@ -376,7 +376,8 @@ function printInvoice() {
         overflow: visible !important;
     }
 
-    /* Hide print button bar (also has print:hidden Tailwind class) */
+    /* Hide navbar header and print button bar */
+    header,
     .print\:hidden {
         display: none !important;
     }
