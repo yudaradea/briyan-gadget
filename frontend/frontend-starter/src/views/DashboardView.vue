@@ -669,25 +669,8 @@ onUnmounted(() => {
                 >
                     <div class="flex items-center justify-between mb-8">
                         <div class="flex items-center gap-2">
-                            <div
-                                class="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-lg"
-                            >
-                                <svg
-                                    class="w-4 h-4 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                                    />
-                                </svg>
-                            </div>
                             <span class="font-bold text-slate-800"
-                                >Menu Navigasi</span
+                                >Menu Utama</span
                             >
                         </div>
                         <button
@@ -759,7 +742,7 @@ onUnmounted(() => {
                                                 '/dashboard/purchase-items'
                                             ),
                                     }"
-                                    >Mutasi Stok</router-link
+                                    >Keseluruhan Barang</router-link
                                 >
                             </div>
                         </div>
@@ -811,6 +794,90 @@ onUnmounted(() => {
                                 >
                             </div>
                         </div> -->
+
+                        <div
+                            v-if="
+                                authStore.isSuperAdmin ||
+                                authStore.isAdmin ||
+                                authStore.canViewReports
+                            "
+                        >
+                            <p class="section-badge">Rekap Detail</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/rekap/sales-detail"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/rekap/sales-detail'
+                                            ),
+                                    }"
+                                    >Penjualan Detail</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/rekap/purchases-detail"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/rekap/purchases-detail'
+                                            ),
+                                    }"
+                                    >Pembelian Detail</router-link
+                                >
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="
+                                authStore.isSuperAdmin ||
+                                authStore.isAdmin ||
+                                authStore.canViewReports
+                            "
+                        >
+                            <p class="section-badge">Laporan</p>
+                            <div class="grid grid-cols-1 mt-2 space-y-1">
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/sales"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/sales'
+                                            ),
+                                    }"
+                                    >Laporan Penjualan</router-link
+                                >
+                                <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/purchases"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/purchases'
+                                            ),
+                                    }"
+                                    >Laporan Barang Masuk</router-link
+                                >
+                                <!-- <router-link
+                                    @click="mobileMenuOpen = false"
+                                    to="/dashboard/report/profit"
+                                    class="mobile-sublink"
+                                    :class="{
+                                        'mobile-sublink-active':
+                                            $route.path.includes(
+                                                '/dashboard/report/profit'
+                                            ),
+                                    }"
+                                    >Laba Rugi</router-link
+                                > -->
+                            </div>
+                        </div>
 
                         <div v-if="authStore.canViewMasterData">
                             <p class="section-badge">Master Data</p>
@@ -927,90 +994,6 @@ onUnmounted(() => {
                             </div>
                         </div>
 
-                        <div
-                            v-if="
-                                authStore.isSuperAdmin ||
-                                authStore.isAdmin ||
-                                authStore.canViewReports
-                            "
-                        >
-                            <p class="section-badge">Rekap Detail</p>
-                            <div class="grid grid-cols-1 mt-2 space-y-1">
-                                <router-link
-                                    @click="mobileMenuOpen = false"
-                                    to="/dashboard/rekap/sales-detail"
-                                    class="mobile-sublink"
-                                    :class="{
-                                        'mobile-sublink-active':
-                                            $route.path.includes(
-                                                '/dashboard/rekap/sales-detail'
-                                            ),
-                                    }"
-                                    >Penjualan Detail</router-link
-                                >
-                                <router-link
-                                    @click="mobileMenuOpen = false"
-                                    to="/dashboard/rekap/purchases-detail"
-                                    class="mobile-sublink"
-                                    :class="{
-                                        'mobile-sublink-active':
-                                            $route.path.includes(
-                                                '/dashboard/rekap/purchases-detail'
-                                            ),
-                                    }"
-                                    >Pembelian Detail</router-link
-                                >
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="
-                                authStore.isSuperAdmin ||
-                                authStore.isAdmin ||
-                                authStore.canViewReports
-                            "
-                        >
-                            <p class="section-badge">Laporan</p>
-                            <div class="grid grid-cols-1 mt-2 space-y-1">
-                                <router-link
-                                    @click="mobileMenuOpen = false"
-                                    to="/dashboard/report/sales"
-                                    class="mobile-sublink"
-                                    :class="{
-                                        'mobile-sublink-active':
-                                            $route.path.includes(
-                                                '/dashboard/report/sales'
-                                            ),
-                                    }"
-                                    >Laporan Penjualan</router-link
-                                >
-                                <router-link
-                                    @click="mobileMenuOpen = false"
-                                    to="/dashboard/report/purchases"
-                                    class="mobile-sublink"
-                                    :class="{
-                                        'mobile-sublink-active':
-                                            $route.path.includes(
-                                                '/dashboard/report/purchases'
-                                            ),
-                                    }"
-                                    >Laporan Barang Masuk</router-link
-                                >
-                                <!-- <router-link
-                                    @click="mobileMenuOpen = false"
-                                    to="/dashboard/report/profit"
-                                    class="mobile-sublink"
-                                    :class="{
-                                        'mobile-sublink-active':
-                                            $route.path.includes(
-                                                '/dashboard/report/profit'
-                                            ),
-                                    }"
-                                    >Laba Rugi</router-link
-                                > -->
-                            </div>
-                        </div>
-
                         <router-link
                             v-if="authStore.canViewPurchases"
                             @click="mobileMenuOpen = false"
@@ -1081,8 +1064,11 @@ onUnmounted(() => {
             </router-view>
         </main>
 
-        <!-- Footer -->
-        <footer class="px-6 py-4 mt-auto text-center border-t border-slate-200">
+        <!-- Footer — hidden on print pages -->
+        <footer
+            v-if="!$route.path.includes('/barcode') && !$route.path.includes('/invoice') && !$route.path.includes('/print')"
+            class="px-6 py-4 mt-auto text-center border-t border-slate-200"
+        >
             <p
                 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
             >

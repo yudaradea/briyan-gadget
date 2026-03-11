@@ -152,13 +152,13 @@ onMounted(loadPurchase);
 </template>
 
 <style>
-/* === SCREEN PREVIEW === */
+/* === SCREEN PREVIEW (A6 preview: 2 columns) === */
 .label-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 8px;
-    max-width: 800px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+    max-width: 420px;
 }
 
 .label-card {
@@ -173,7 +173,7 @@ onMounted(loadPurchase);
     display: block;
     margin: 0 auto;
     width: 100%;
-    max-height: 50px;
+    max-height: 55px;
 }
 
 .label-code {
@@ -181,16 +181,16 @@ onMounted(loadPurchase);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1px;
-    margin-top: 3px;
+    margin-top: 4px;
     color: #111;
 }
 
 .label-name {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    margin-top: 2px;
+    margin-top: 3px;
     color: #333;
     white-space: nowrap;
     overflow: hidden;
@@ -199,21 +199,20 @@ onMounted(loadPurchase);
 
 .label-imei {
     font-family: "Courier New", Courier, monospace;
-    font-size: 7px;
+    font-size: 8px;
     color: #555;
-    margin-top: 1px;
+    margin-top: 2px;
 }
 
-/* === PRINT STYLES (A4) === */
+/* === PRINT STYLES (A6 — Printer Okay D100) === */
 @media print {
-    /* Hide sidebar, topbar, screen-only elements */
-    .no-print,
-    .no-print * {
-        display: none !important;
+    @page {
+        size: A6;
+        margin: 5mm 5mm;
     }
 
-    body,
-    html {
+    html,
+    body {
         margin: 0 !important;
         padding: 0 !important;
         background: white !important;
@@ -222,49 +221,44 @@ onMounted(loadPurchase);
         print-color-adjust: exact;
     }
 
-    /* Hide the dashboard sidebar and topbar */
-    aside,
-    header,
-    nav,
-    [class*="bg-gradient-to-b"][class*="from-slate-900"],
-    [class*="bg-white/80"][class*="backdrop-blur"] {
-        display: none !important;
+    /* Sembunyikan semua elemen */
+    body * {
+        visibility: hidden !important;
     }
 
-    /* Remove any layout constraints */
-    .min-h-screen,
-    .flex-1 {
-        display: block !important;
+    /* Tampilkan hanya area barcode */
+    #print-area,
+    #print-area * {
+        visibility: visible !important;
+    }
+
+    #print-area {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
-    main {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    @page {
-        size: A4;
-        margin: 8mm 10mm;
-    }
-
-    /* Grid: 4 columns x multiple rows on A4 */
+    /* Grid: 2 columns untuk A6 (105mm × 148mm) */
+    /* Printable area: 95mm × 138mm */
     .label-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 3mm;
         padding: 0;
         max-width: none;
     }
 
     .label-card {
-        border: 0.3pt solid #ccc;
+        border: 0.4pt solid #ccc;
         border-radius: 0;
-        padding: 2mm 1.5mm;
+        padding: 2mm 2mm;
         page-break-inside: avoid;
+        break-inside: avoid;
         text-align: center;
-        min-height: 22mm;
+        min-height: 30mm;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -272,24 +266,29 @@ onMounted(loadPurchase);
     }
 
     .barcode-canvas {
-        max-width: 40mm;
-        height: 12mm;
+        max-width: 44mm;
+        height: 16mm;
     }
 
     .label-code {
-        font-size: 7pt;
-        margin-top: 0.5mm;
+        font-size: 8pt;
+        letter-spacing: 0.5px;
+        margin-top: 1mm;
     }
 
     .label-name {
-        font-size: 5.5pt;
-        margin-top: 0.3mm;
-        max-width: 40mm;
+        font-size: 6.5pt;
+        margin-top: 0.5mm;
+        max-width: 44mm;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        line-height: 1.2;
     }
 
     .label-imei {
-        font-size: 5pt;
-        margin-top: 0.2mm;
+        font-size: 6pt;
+        margin-top: 0.5mm;
     }
 }
 </style>
