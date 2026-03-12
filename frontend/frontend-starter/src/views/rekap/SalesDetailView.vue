@@ -5,6 +5,7 @@ import api from "../../api";
 import { useToast } from "../../composables/useToast";
 import { useAuthStore } from "../../stores/auth";
 import CurrencyInput from "../../components/CurrencyInput.vue";
+import DateInput from "../../components/DateInput.vue";
 
 const toast = useToast();
 const authStore = useAuthStore();
@@ -82,6 +83,13 @@ function resetFilter() {
     filters.value = { start_date: "", end_date: "", search: "" };
 }
 
+function buildDateSuffix(start, end) {
+    if (!start && !end) return "all";
+    const fmt = (d) => { const [y, m, day] = d.split("-"); return `${day}-${m}-${y}`; };
+    if (start && end) return `${fmt(start)}_sd_${fmt(end)}`;
+    return fmt(start || end);
+}
+
 async function exportExcel() {
     exportingExcel.value = true;
     try {
@@ -97,13 +105,13 @@ async function exportExcel() {
             params,
             responseType: "blob",
         });
-        const url = URL.createObjectURL(new Blob([res.data]));
+        const url = URL.createObjectURL(res.data);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `rekap-penjualan-detail-${new Date()
-            .toISOString()
-            .slice(0, 10)}.csv`;
+        a.download = `rekap-penjualan-detail_${buildDateSuffix(filters.value.start_date, filters.value.end_date)}.xlsx`;
+        document.body.appendChild(a);
         a.click();
+        a.remove();
         URL.revokeObjectURL(url);
     } catch {
         toast.error("Gagal export Excel");
@@ -112,24 +120,82 @@ async function exportExcel() {
     }
 }
 
+function buildPdfHtml(dataRows, summ) {
+    const title = "Rekap Penjualan Detail";
+    const s = filters.value.start_date ? formatDate(filters.value.start_date) : null;
+    const e = filters.value.end_date ? formatDate(filters.value.end_date) : null;
+    const periode = (s || e) ? `${s || "-"} s/d ${e || "-"}` : "Semua";
+
+    const bodyRows = dataRows.map((row, idx) => `
+        <tr>
+            <td>${idx + 1}</td>
+            <td>${row.no_invoice || "-"}</td>
+            <td>${row.kode || "-"}</td>
+            <td>${formatDate(row.tanggal)}</td>
+            <td>${row.nama_produk || "-"}</td>
+            <td>${row.merk || "-"}</td>
+            <td>${row.grade || "-"}</td>
+            <td>${row.satuan || "-"}</td>
+            <td>${row.imei1 || "-"}</td>
+            <td>${row.imei2 || "-"}</td>
+            <td>${row.pelanggan || "-"}</td>
+            <td>${row.kasir || "-"}</td>
+            <td>${row.sales || "-"}</td>
+            <td style="text-align:right;">${formatCurrency(row.modal)}</td>
+            <td style="text-align:right;">${formatCurrency(row.harga_jual)}</td>
+            <td style="text-align:right; color:${Number(row.laba || 0) < 0 ? "#dc2626" : "#16a34a"};">${formatCurrency(row.laba)}</td>
+        </tr>`).join("");
+
+    return `<html><head><title>${title}</title><style>
+        body { font-family: Arial, sans-serif; padding: 16px; color: #0f172a; }
+        h1 { margin: 0 0 6px; font-size: 18px; }
+        p { margin: 0 0 12px; font-size: 11px; color: #475569; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        th, td { border: 1px solid #cbd5e1; padding: 5px 6px; }
+        th { background: #f8fafc; text-align: left; }
+        tfoot td { background: #e2eef6; font-weight: 700; }
+    </style></head><body>
+        <h1>${title}</h1>
+        <p>Periode: ${periode}</p>
+        <table>
+            <thead><tr>
+                <th>No</th><th>No Invoice</th><th>Kode</th><th>Tanggal</th>
+                <th>Nama Produk</th><th>Merk</th><th>Grade</th><th>Satuan</th>
+                <th>IMEI 1</th><th>IMEI 2</th><th>Pelanggan</th><th>Kasir</th><th>Sales</th>
+                <th style="text-align:right;">Modal</th>
+                <th style="text-align:right;">Harga Jual</th>
+                <th style="text-align:right;">Laba</th>
+            </tr></thead>
+            <tbody>${bodyRows}</tbody>
+            <tfoot><tr>
+                <td colspan="13" style="text-align:right;">TOTAL</td>
+                <td style="text-align:right;">${formatCurrency(summ.total_modal || 0)}</td>
+                <td style="text-align:right;">${formatCurrency(summ.total_harga_jual || 0)}</td>
+                <td style="text-align:right; color:${Number(summ.total_laba || 0) < 0 ? "#dc2626" : "#16a34a"};">${formatCurrency(summ.total_laba || 0)}</td>
+            </tr></tfoot>
+        </table>
+    </body></html>`;
+}
+
 async function exportPdf() {
     exportingPdf.value = true;
     try {
-        const params = {
-            export: "pdf",
-            ...(filters.value.start_date && {
-                start_date: filters.value.start_date,
-            }),
-            ...(filters.value.end_date && { end_date: filters.value.end_date }),
-            ...(filters.value.search && { search: filters.value.search }),
-        };
-        const res = await api.get("/reports/sales-detail", {
-            params,
-            responseType: "text",
+        const { data } = await api.get("/reports/sales-detail", {
+            params: {
+                per_page: -1,
+                ...(filters.value.start_date && { start_date: filters.value.start_date }),
+                ...(filters.value.end_date && { end_date: filters.value.end_date }),
+                ...(filters.value.search && { search: filters.value.search }),
+            },
         });
-        const win = window.open("", "_blank");
-        win.document.write(res.data);
-        win.document.close();
+        const allRows = data.data.data || [];
+        const summ = data.data.summary || summary.value;
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) { toast.error("Popup diblokir browser"); return; }
+        printWindow.document.write(buildPdfHtml(allRows, summ));
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
     } catch {
         toast.error("Gagal export PDF");
     } finally {
@@ -288,8 +354,7 @@ async function saveEdit() {
                             class="text-xs font-semibold tracking-wide uppercase text-slate-500"
                             >Dari Tanggal</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
                             v-model="filters.start_date"
                             class="w-40 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                         />
@@ -299,9 +364,9 @@ async function saveEdit() {
                             class="text-xs font-semibold tracking-wide uppercase text-slate-500"
                             >Sampai Tanggal</label
                         >
-                        <input
-                            type="date"
+                        <DateInput
                             v-model="filters.end_date"
+                            :min="filters.start_date"
                             class="w-40 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
                         />
                     </div>

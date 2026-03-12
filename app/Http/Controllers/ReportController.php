@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SimpleArrayExport;
 use App\Helpers\ResponseHelper;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -9,6 +10,7 @@ use App\Models\SaleItem;
 use App\Models\SalesTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Maatwebsite\Excel\Facades\Excel;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -418,76 +420,60 @@ class ReportController extends Controller implements HasMiddleware
 
     private function exportSalesDetailCsv($rows, array $summary)
     {
-        $filename = 'rekap-penjualan-detail-' . now()->format('Ymd-His') . '.csv';
-        $headers  = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        $headings = ['No Invoice', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Pelanggan', 'Kasir', 'Sales', 'Modal', 'Harga Jual', 'Laba'];
+        $data = [];
+        foreach ($rows as $item) {
+            $modal     = (float) ($item->hpp_total ?? 0);
+            $hargaJual = (float) ($item->subtotal ?? 0);
+            $data[] = [
+                $item->salesTransaction?->no_invoice,
+                $item->product?->barcode,
+                $item->salesTransaction?->tanggal?->format('d-m-Y'),
+                $item->product?->masterProduct?->nama,
+                $item->product?->masterProduct?->brand?->nama,
+                $item->product?->grade?->nama,
+                $item->product?->unit?->nama,
+                $item->product?->imei1,
+                $item->product?->imei2,
+                $item->salesTransaction?->pelanggan,
+                $item->salesTransaction?->user?->name,
+                $item->salesTransaction?->salesRep?->nama,
+                $modal,
+                $hargaJual,
+                $hargaJual - $modal,
+            ];
+        }
+        $data[] = [];
+        $data[] = ['TOTAL', '', '', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual'], $summary['total_laba']];
 
-        return response()->stream(function () use ($rows, $summary) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Pelanggan', 'Kasir', 'Sales', 'Modal', 'Harga Jual', 'Laba']);
-            foreach ($rows as $item) {
-                $modal     = (float) ($item->hpp_total ?? 0);
-                $hargaJual = (float) ($item->subtotal ?? 0);
-                fputcsv($out, [
-                    $item->salesTransaction?->no_invoice,
-                    $item->product?->barcode,
-                    $item->salesTransaction?->tanggal?->format('Y-m-d'),
-                    $item->product?->masterProduct?->nama,
-                    $item->product?->masterProduct?->brand?->nama,
-                    $item->product?->grade?->nama,
-                    $item->product?->unit?->nama,
-                    $item->product?->imei1,
-                    $item->product?->imei2,
-                    $item->salesTransaction?->pelanggan,
-                    $item->salesTransaction?->user?->name,
-                    $item->salesTransaction?->salesRep?->nama,
-                    $modal,
-                    $hargaJual,
-                    $hargaJual - $modal,
-                ]);
-            }
-            fputcsv($out, []);
-            fputcsv($out, ['TOTAL', '', '', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual'], $summary['total_laba']]);
-            fclose($out);
-        }, 200, $headers);
+        return Excel::download(new SimpleArrayExport($headings, $data), 'rekap-penjualan-detail.xlsx');
     }
 
     private function exportPurchasesDetailCsv($rows, array $summary)
     {
-        $filename = 'rekap-pembelian-detail-' . now()->format('Ymd-His') . '.csv';
-        $headers  = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        $headings = ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual'];
+        $data = [];
+        foreach ($rows as $item) {
+            $hargaJual = $this->resolveHargaJual($item->product);
+            $data[] = [
+                $item->purchase?->no_invoice,
+                $item->purchase?->supplier?->nama,
+                $item->product?->barcode,
+                $item->purchase?->tanggal?->format('d-m-Y'),
+                $item->product?->masterProduct?->nama,
+                $item->product?->masterProduct?->brand?->nama,
+                $item->product?->grade?->nama,
+                $item->product?->unit?->nama,
+                $item->product?->imei1,
+                $item->product?->imei2,
+                (float) $item->harga_beli,
+                $hargaJual,
+            ];
+        }
+        $data[] = [];
+        $data[] = ['TOTAL', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual']];
 
-        return response()->stream(function () use ($rows, $summary) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual']);
-            foreach ($rows as $item) {
-                $hargaJual = $this->resolveHargaJual($item->product);
-                fputcsv($out, [
-                    $item->purchase?->no_invoice,
-                    $item->purchase?->supplier?->nama,
-                    $item->product?->barcode,
-                    $item->purchase?->tanggal?->format('Y-m-d'),
-                    $item->product?->masterProduct?->nama,
-                    $item->product?->masterProduct?->brand?->nama,
-                    $item->product?->grade?->nama,
-                    $item->product?->unit?->nama,
-                    $item->product?->imei1,
-                    $item->product?->imei2,
-                    (float) $item->harga_beli,
-                    $hargaJual,
-                ]);
-            }
-            fputcsv($out, []);
-            fputcsv($out, ['TOTAL', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual']]);
-            fclose($out);
-        }, 200, $headers);
+        return Excel::download(new SimpleArrayExport($headings, $data), 'rekap-pembelian-detail.xlsx');
     }
 
     private function exportSalesDetailHtml($rows, array $summary, array $filters)
@@ -643,94 +629,66 @@ tfoot td{background:#e8f0fe;font-weight:bold}
 
     private function exportSalesCsv($rows, array $summary)
     {
-        $filename = 'laporan-penjualan-' . now()->format('Ymd-His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        $headings = ['No Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Sales', 'Qty', 'Total Bayar', 'Modal (HPP)', 'Laba'];
+        $data = [];
+        foreach ($rows as $item) {
+            $hpp        = (float) ($item->hpp_total ?? 0);
+            $grandTotal = (float) $item->grand_total;
+            $data[] = [
+                $item->no_invoice,
+                optional($item->tanggal)->format('d-m-Y'),
+                $item->pelanggan,
+                $item->user?->name,
+                $item->salesRep?->nama,
+                (int) ($item->qty_total ?? 0),
+                $grandTotal,
+                $hpp,
+                $grandTotal - $hpp,
+            ];
+        }
+        $data[] = [];
+        $data[] = ['TOTAL', '', '', '', '', (int) ($summary['qty_total'] ?? 0), (float) ($summary['grand_total'] ?? 0), (float) ($summary['hpp_total'] ?? 0), (float) ($summary['laba_kotor'] ?? 0)];
 
-        return response()->stream(function () use ($rows, $summary) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Tanggal', 'Pelanggan', 'Kasir', 'Sales', 'Qty', 'Total Bayar', 'Modal (HPP)', 'Laba']);
-
-            foreach ($rows as $item) {
-                $hpp = (float) ($item->hpp_total ?? 0);
-                $grandTotal = (float) $item->grand_total;
-                fputcsv($out, [
-                    $item->no_invoice,
-                    optional($item->tanggal)->format('Y-m-d'),
-                    $item->pelanggan,
-                    $item->user?->name,
-                    $item->salesRep?->nama,
-                    (int) ($item->qty_total ?? 0),
-                    $grandTotal,
-                    $hpp,
-                    $grandTotal - $hpp,
-                ]);
-            }
-
-            fputcsv($out, []);
-            fputcsv($out, ['TOTAL', '', '', '', '', (int) ($summary['qty_total'] ?? 0), (float) ($summary['grand_total'] ?? 0), (float) ($summary['hpp_total'] ?? 0), (float) ($summary['laba_kotor'] ?? 0)]);
-            fclose($out);
-        }, 200, $headers);
+        return Excel::download(new SimpleArrayExport($headings, $data), 'laporan-penjualan.xlsx');
     }
 
     private function exportPurchasesCsv($rows)
     {
-        $filename = 'laporan-pembelian-' . now()->format('Ymd-His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        $headings = ['No Invoice', 'Tanggal', 'Supplier', 'Kasir', 'Jumlah Item', 'Total', 'Keterangan'];
+        $data = [];
+        foreach ($rows as $item) {
+            $data[] = [
+                $item->no_invoice,
+                optional($item->tanggal)->format('d-m-Y'),
+                $item->supplier?->nama,
+                $item->user?->name,
+                (int) ($item->items_count ?? 0),
+                (float) $item->total,
+                $item->keterangan,
+            ];
+        }
 
-        return response()->stream(function () use ($rows) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Tanggal', 'Supplier', 'Kasir', 'Jumlah Item', 'Total', 'Keterangan']);
-
-            foreach ($rows as $item) {
-                fputcsv($out, [
-                    $item->no_invoice,
-                    optional($item->tanggal)->format('Y-m-d'),
-                    $item->supplier?->nama,
-                    $item->user?->name,
-                    (int) ($item->items_count ?? 0),
-                    (float) $item->total,
-                    $item->keterangan,
-                ]);
-            }
-            fclose($out);
-        }, 200, $headers);
+        return Excel::download(new SimpleArrayExport($headings, $data), 'laporan-pembelian.xlsx');
     }
 
     private function exportProfitCsv($rows)
     {
-        $filename = 'laporan-laba-rugi-hpp-' . now()->format('Ymd-His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename={$filename}",
-        ];
+        $headings = ['No Invoice', 'Tanggal', 'Tipe', 'Kasir', 'Pendapatan', 'HPP', 'Laba Kotor'];
+        $data = [];
+        foreach ($rows as $item) {
+            $hpp        = (float) ($item->hpp_total ?? 0);
+            $pendapatan = (float) $item->grand_total;
+            $data[] = [
+                $item->no_invoice,
+                optional($item->tanggal)->format('d-m-Y'),
+                $item->tipe ?? 'penjualan',
+                $item->user?->name,
+                $pendapatan,
+                $hpp,
+                $pendapatan - $hpp,
+            ];
+        }
 
-        return response()->stream(function () use ($rows) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['No Invoice', 'Tanggal', 'Tipe', 'Kasir', 'Pendapatan', 'HPP', 'Laba Kotor']);
-
-            foreach ($rows as $item) {
-                $hpp = (float) ($item->hpp_total ?? 0);
-                $pendapatan = (float) $item->grand_total;
-                fputcsv($out, [
-                    $item->no_invoice,
-                    optional($item->tanggal)->format('Y-m-d'),
-                    $item->tipe ?? 'penjualan',
-                    $item->user?->name,
-                    $pendapatan,
-                    $hpp,
-                    $pendapatan - $hpp,
-                ]);
-            }
-            fclose($out);
-        }, 200, $headers);
+        return Excel::download(new SimpleArrayExport($headings, $data), 'laporan-laba-rugi-hpp.xlsx');
     }
 }

@@ -112,6 +112,13 @@ function fileSafeDate(value) {
     return value ? value.replaceAll("-", "") : "all";
 }
 
+function buildDateSuffix(start, end) {
+    if (!start && !end) return "all";
+    const fmt = (d) => { const [y, m, day] = d.split("-"); return `${day}-${m}-${y}`; };
+    if (start && end) return `${fmt(start)}_sd_${fmt(end)}`;
+    return fmt(start || end);
+}
+
 function saveBlob(blob, filename) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -289,9 +296,7 @@ async function exportExcel() {
 
         saveBlob(
             response.data,
-            `laporan-pembelian-${fileSafeDate(
-                filters.value.start_date
-            )}-${fileSafeDate(filters.value.end_date)}.csv`
+            `laporan-pembelian-${buildDateSuffix(filters.value.start_date, filters.value.end_date)}.xlsx`
         );
     } catch (error) {
         toast.error("Gagal export Excel");
