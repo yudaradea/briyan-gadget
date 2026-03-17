@@ -180,15 +180,16 @@ async function printViaPopup(preset) {
                     padding: 0;
                 }
                 /*
-                 * label-card = 23mm (20mm label + 3mm gap fisik).
-                 * padding-bottom: 3mm → area ini jatuh di gap antar stiker (kosong).
-                 * Konten aktif = 23 - 1 - 3 = 19mm, sepenuhnya di dalam area putih label.
+                 * @page = 23mm = label 20mm + gap fisik 3mm.
+                 * padding-top: 1.5mm  → jarak aman dari tepi atas label.
+                 * padding-bottom: 3mm → jatuh tepat di gap antar stiker (kosong).
+                 * Konten aktif = 23 - 1.5 - 3 = 18.5mm, di-center vertikal.
                  */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
                     height: ${preset.totalHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 1mm 2.5mm 3mm 2.5mm;
+                    padding: 1.5mm 2.5mm 3mm 2.5mm;
                     display: flex;
                     flex-direction: column;
                     align-items: stretch;
@@ -201,11 +202,12 @@ async function printViaPopup(preset) {
                     page-break-after: auto;
                     break-after: auto;
                 }
-                /* Area konten aktif = 19mm (setelah padding 1mm atas + 3mm bawah) */
+                /* Konten 18.5mm — QR + teks center vertikal di tengah area aktif */
                 .label-content {
                     display: flex;
                     flex-direction: row;
                     align-items: center;
+                    justify-content: flex-start;
                     gap: 1mm;
                     width: 100%;
                     flex: 1;
