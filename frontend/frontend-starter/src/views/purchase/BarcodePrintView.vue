@@ -33,7 +33,8 @@ async function loadPurchase() {
         purchase.value = loadedPurchase;
         await nextTick();
         setTimeout(() => {
-            renderAllBarcodes();
+            applyPrintPreset("50x20");
+            renderAllBarcodes("50x20");
             barcodesReady.value = true;
         }, 200);
     } catch (err) {
@@ -42,28 +43,6 @@ async function loadPurchase() {
     } finally {
         loading.value = false;
     }
-}
-
-function renderAllBarcodes() {
-    if (!purchase.value?.items) return;
-    purchase.value.items.forEach((item, idx) => {
-        try {
-            const el = document.getElementById(`bc-${idx}`);
-            if (el && item.product?.barcode) {
-                JsBarcode(el, item.product.barcode, {
-                    format: "CODE128",
-                    width: 1.55,
-                    height: 42,
-                    displayValue: false,
-                    margin: 0,
-                    background: "#ffffff",
-                    lineColor: "#000000",
-                });
-            }
-        } catch (e) {
-            console.error("Barcode error:", e);
-        }
-    });
 }
 
 const PRINT_PRESETS = {
@@ -89,22 +68,37 @@ const PRINT_PRESETS = {
     },
 };
 
-function printPage(paperSize = "50x20") {
-    if (!purchase.value?.items?.length) return;
+function applyPrintPreset(paperSize = "50x20") {
+    const preset = PRINT_PRESETS[paperSize] || PRINT_PRESETS["50x20"];
+    const root = document.documentElement;
+
+    root.style.setProperty("--paper-width", `${preset.pageWidthMm}mm`);
+    root.style.setProperty("--paper-height", `${preset.pageHeightMm}mm`);
+    root.style.setProperty("--label-padding", preset.labelPadding);
+    root.style.setProperty("--barcode-width", `${preset.barcodeWidthMm}mm`);
+    root.style.setProperty("--barcode-height", `${preset.barcodeHeightMm}mm`);
+    root.style.setProperty("--name-max-width", `${preset.nameMaxWidthMm}mm`);
+
+    let pageSizeStyle = document.getElementById("dynamic-print-page-size");
+    if (!pageSizeStyle) {
+        pageSizeStyle = document.createElement("style");
+        pageSizeStyle.id = "dynamic-print-page-size";
+        document.head.appendChild(pageSizeStyle);
+    }
+    pageSizeStyle.textContent = `@media print { @page { size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm; margin: 0; } }`;
+
+    return preset;
+}
+
+function renderAllBarcodes(paperSize = "50x20") {
+    if (!purchase.value?.items) return;
     const preset = PRINT_PRESETS[paperSize] || PRINT_PRESETS["50x20"];
 
-    const popup = window.open("", "_blank", "width=420,height=320");
-    if (!popup) {
-        alert("Popup diblokir browser. Izinkan popup lalu coba print lagi.");
-        return;
-    }
-
-    const labelsHtml = purchase.value.items
-        .map((item, idx) => {
-            let barcodeImage = "";
-            if (item.product?.barcode) {
-                const tempCanvas = document.createElement("canvas");
-                JsBarcode(tempCanvas, item.product.barcode, {
+    purchase.value.items.forEach((item, idx) => {
+        try {
+            const el = document.getElementById(`bc-${idx}`);
+            if (el && item.product?.barcode) {
+                JsBarcode(el, item.product.barcode, {
                     format: "CODE128",
                     width: preset.barcodeLineWidth,
                     height: preset.barcodePixelHeight,
@@ -113,107 +107,19 @@ function printPage(paperSize = "50x20") {
                     background: "#ffffff",
                     lineColor: "#000000",
                 });
-                barcodeImage = tempCanvas.toDataURL("image/png");
             }
+        } catch (e) {
+            console.error("Barcode error:", e);
+        }
+    });
+}
 
-            return `
-                <div class="label-card">
-                    <img class="barcode-img" src="${barcodeImage}" alt="barcode" />
-                    <div class="label-code">${item.product?.barcode || ""}</div>
-                    <div class="label-name">${item.product?.nama || ""}</div>
-                    ${
-                        item.product?.imei1
-                            ? `<div class="label-imei">${item.product.imei1}</div>`
-                            : ""
-                    }
-                </div>
-            `;
-        })
-        .join("");
+function printPage(paperSize = "50x20") {
+    if (!purchase.value?.items?.length) return;
 
-    popup.document.write(`
-        <!doctype html>
-        <html>
-        <head>
-            <meta charset="utf-8" />
-            <title>Print Barcode</title>
-            <style>
-                @page {
-                    size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm;
-                    margin: 0;
-                }
-                html, body {
-                    width: ${preset.pageWidthMm}mm;
-                    margin: 0;
-                    padding: 0;
-                    background: #fff;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-                .label-card {
-                    width: ${preset.pageWidthMm}mm;
-                    height: ${preset.pageHeightMm}mm;
-                    box-sizing: border-box;
-                    padding: ${preset.labelPadding};
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                    overflow: hidden;
-                    page-break-after: always;
-                }
-                .label-card:last-child {
-                    page-break-after: auto;
-                }
-                .barcode-img {
-                    width: ${preset.barcodeWidthMm}mm;
-                    max-width: ${preset.barcodeWidthMm}mm;
-                    height: ${preset.barcodeHeightMm}mm;
-                    object-fit: contain;
-                    display: block;
-                }
-                .label-code {
-                    font-family: "Courier New", Courier, monospace;
-                    font-size: 7pt;
-                    font-weight: 700;
-                    letter-spacing: 0.4px;
-                    margin-top: 0.6mm;
-                    line-height: 1;
-                }
-                .label-name {
-                    font-family: Arial, Helvetica, sans-serif;
-                    font-size: 6pt;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    margin-top: 0.4mm;
-                    max-width: ${preset.nameMaxWidthMm}mm;
-                    line-height: 1;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    color: #222;
-                }
-                .label-imei {
-                    font-family: "Courier New", Courier, monospace;
-                    font-size: 5.6pt;
-                    margin-top: 0.3mm;
-                    line-height: 1;
-                    color: #444;
-                }
-            </style>
-        </head>
-        <body>${labelsHtml}</body>
-        </html>
-    `);
-    popup.document.close();
-    popup.onload = () => {
-        setTimeout(() => {
-            popup.focus();
-            popup.print();
-            popup.close();
-        }, 300);
-    };
+    applyPrintPreset(paperSize);
+    renderAllBarcodes(paperSize);
+    window.print();
 }
 
 onMounted(loadPurchase);
@@ -292,6 +198,15 @@ onMounted(loadPurchase);
 </template>
 
 <style>
+:root {
+    --paper-width: 50mm;
+    --paper-height: 20mm;
+    --label-padding: 1.2mm 1.4mm 1mm;
+    --barcode-width: 40mm;
+    --barcode-height: 9mm;
+    --name-max-width: 40mm;
+}
+
 /* === SCREEN PREVIEW (A6 preview: 2 columns) === */
 .label-grid {
     display: grid;
@@ -346,15 +261,10 @@ onMounted(loadPurchase);
 
 /* === PRINT STYLES (Thermal Label 50x20mm) === */
 @media print {
-    @page {
-        size: 50mm 20mm;
-        margin: 0;
-    }
-
     html,
     body {
-        width: 50mm !important;
-        height: 20mm !important;
+        width: var(--paper-width) !important;
+        height: var(--paper-height) !important;
         margin: 0 !important;
         padding: 0 !important;
         background: white !important;
@@ -376,8 +286,8 @@ onMounted(loadPurchase);
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
-        width: 50mm !important;
-        height: 20mm !important;
+        width: var(--paper-width) !important;
+        height: var(--paper-height) !important;
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -386,16 +296,16 @@ onMounted(loadPurchase);
         display: block;
         padding: 0;
         margin: 0;
-        width: 50mm;
+        width: var(--paper-width);
     }
 
     .label-card {
-        width: 50mm;
-        height: 20mm;
+        width: var(--paper-width);
+        height: var(--paper-height);
         border: none;
         border-radius: 0;
         box-sizing: border-box;
-        padding: 1.2mm 1.4mm 1mm;
+        padding: var(--label-padding);
         page-break-inside: avoid;
         break-inside: avoid;
         page-break-after: always;
@@ -412,10 +322,10 @@ onMounted(loadPurchase);
     }
 
     .barcode-canvas {
-        width: 40mm;
-        max-width: 40mm;
-        height: 9mm;
-        max-height: 9mm;
+        width: var(--barcode-width);
+        max-width: var(--barcode-width);
+        height: var(--barcode-height);
+        max-height: var(--barcode-height);
     }
 
     .label-code {
@@ -427,7 +337,7 @@ onMounted(loadPurchase);
     .label-name {
         font-size: 6pt;
         margin-top: 0.4mm;
-        max-width: 40mm;
+        max-width: var(--name-max-width);
         white-space: normal;
         overflow: visible;
         text-overflow: unset;
