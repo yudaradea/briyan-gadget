@@ -45,14 +45,17 @@ async function loadPurchase() {
 }
 
 /**
- * @page size = label size only (50x20 or 40x20).
- * Gap 3mm antar stiker ditangani OTOMATIS oleh printer thermal — tidak perlu di CSS.
- * QR code dibuat lebih kecil (13mm) agar pasti muat dalam 20mm height.
+ * pageHeightMm  = tinggi konten label (20mm)
+ * totalHeightMm = label + gap fisik stiker (20 + 3 = 23mm)
+ * @page size memakai totalHeightMm agar setiap "halaman" cetak
+ * mencakup 1 label (20mm) + jeda antar stiker (3mm).
  */
+const GAP_MM = 3;
 const PRINT_PRESETS = {
     "50x20": {
         pageWidthMm: 50,
         pageHeightMm: 20,
+        totalHeightMm: 20 + GAP_MM,
         qrSizeMm: 14,
         qrPixels: 100,
         nameFontPt: 6.5,
@@ -62,6 +65,7 @@ const PRINT_PRESETS = {
     "40x20": {
         pageWidthMm: 40,
         pageHeightMm: 20,
+        totalHeightMm: 20 + GAP_MM,
         qrSizeMm: 13,
         qrPixels: 90,
         nameFontPt: 6,
@@ -117,13 +121,15 @@ async function buildPopupLabelsHtml(preset) {
 
         return `
             <div class="label-card">
-                <div class="label-left">
-                    ${qrDataUrl ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />` : ""}
-                </div>
-                <div class="label-right">
-                    <div class="label-code">${code}</div>
-                    <div class="label-name">${name}</div>
-                    ${imei ? `<div class="label-imei">${imei}</div>` : ""}
+                <div class="label-content">
+                    <div class="label-left">
+                        ${qrDataUrl ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />` : ""}
+                    </div>
+                    <div class="label-right">
+                        <div class="label-code">${code}</div>
+                        <div class="label-name">${name}</div>
+                        ${imei ? `<div class="label-imei">${imei}</div>` : ""}
+                    </div>
                 </div>
             </div>
         `;
@@ -145,9 +151,12 @@ async function printViaPopup(preset) {
             <meta charset="utf-8" />
             <title>Print Barcode</title>
             <style>
-                /* @page = EXACT label size. Printer thermal handle gap 3mm otomatis. */
+                /*
+                 * @page = totalHeightMm (label 20mm + gap 3mm = 23mm).
+                 * Konten label mengisi 20mm, sisa 3mm jatuh di jeda fisik stiker.
+                 */
                 @page {
-                    size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm;
+                    size: ${preset.pageWidthMm}mm ${preset.totalHeightMm}mm;
                     margin: 0;
                 }
                 * { box-sizing: border-box; }
@@ -164,14 +173,16 @@ async function printViaPopup(preset) {
                     margin: 0;
                     padding: 0;
                 }
+                /* Setiap .label-card = 1 halaman (totalHeightMm).
+                   Konten diisi 20mm, 3mm bawah = area gap stiker (kosong). */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
-                    height: ${preset.pageHeightMm}mm;
+                    height: ${preset.totalHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 1.2mm 1mm;
+                    padding: 1.5mm 2.5mm 0 2.5mm;
                     display: flex;
                     flex-direction: row;
-                    align-items: center;
+                    align-items: flex-start;
                     gap: 1mm;
                     overflow: hidden;
                     page-break-after: always;
@@ -181,6 +192,16 @@ async function printViaPopup(preset) {
                 .label-card:last-child {
                     page-break-after: auto;
                     break-after: auto;
+                }
+                /* Area konten aktif (20mm dari atas) */
+                .label-content {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 1mm;
+                    width: 100%;
+                    height: ${preset.pageHeightMm}mm;
+                    overflow: hidden;
                 }
                 .label-left {
                     flex-shrink: 0;
