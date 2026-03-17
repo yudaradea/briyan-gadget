@@ -4,31 +4,31 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
 import QRCode from "qrcode";
 
-const route  = useRoute();
+const route = useRoute();
 const router = useRouter();
-const purchase     = ref(null);
-const loading      = ref(true);
+const purchase = ref(null);
+const loading = ref(true);
 const barcodesReady = ref(false);
-const selectedSize  = ref("50x20");
+const selectedSize = ref("50x20");
 
 const PRINT_PRESETS = {
     "50x20": {
-        pageWidthMm:  50,
+        pageWidthMm: 50,
         pageHeightMm: 20,
-        qrSizeMm:  13,
-        qrPixels:  100,
-        nameFontPt:  6.5,
-        codeFontPt:  6.5,
-        imeiFontPt:  5.5,
+        qrSizeMm: 13,
+        qrPixels: 100,
+        nameFontPt: 6.5,
+        codeFontPt: 6.5,
+        imeiFontPt: 5.5,
     },
     "40x20": {
-        pageWidthMm:  40,
+        pageWidthMm: 40,
         pageHeightMm: 20,
-        qrSizeMm:  12,
-        qrPixels:   90,
-        nameFontPt:  6,
-        codeFontPt:  6,
-        imeiFontPt:  5,
+        qrSizeMm: 12,
+        qrPixels: 90,
+        nameFontPt: 6,
+        codeFontPt: 6,
+        imeiFontPt: 5,
     },
 };
 
@@ -38,12 +38,16 @@ async function loadPurchase() {
         const { data } = await api.get(`/purchases/${route.params.id}`);
         let loaded = data.data;
 
-        const itemId    = route.query.item_id;
+        const itemId = route.query.item_id;
         const productId = route.query.product_id;
         if (itemId && loaded.items)
-            loaded.items = loaded.items.filter(i => String(i.id) === String(itemId));
+            loaded.items = loaded.items.filter(
+                (i) => String(i.id) === String(itemId)
+            );
         else if (productId && loaded.items)
-            loaded.items = loaded.items.filter(i => String(i.product_id) === String(productId));
+            loaded.items = loaded.items.filter(
+                (i) => String(i.product_id) === String(productId)
+            );
 
         purchase.value = loaded;
         await nextTick();
@@ -62,15 +66,18 @@ async function loadPurchase() {
 async function renderAllQR() {
     if (!purchase.value?.items) return;
     for (let idx = 0; idx < purchase.value.items.length; idx++) {
-        const item   = purchase.value.items[idx];
+        const item = purchase.value.items[idx];
         const canvas = document.getElementById(`qr-${idx}`);
         if (canvas && item.product?.barcode) {
             try {
                 await QRCode.toCanvas(canvas, item.product.barcode, {
-                    width: 100, margin: 0,
+                    width: 100,
+                    margin: 0,
                     color: { dark: "#000000", light: "#ffffff" },
                 });
-            } catch (e) { console.error("QR error:", e); }
+            } catch (e) {
+                console.error("QR error:", e);
+            }
         }
     }
 }
@@ -85,25 +92,30 @@ async function doPrint() {
         if (item.product?.barcode) {
             try {
                 qrDataUrl = await QRCode.toDataURL(item.product.barcode, {
-                    width: preset.qrPixels, margin: 0,
+                    width: preset.qrPixels,
+                    margin: 0,
                     color: { dark: "#000000", light: "#ffffff" },
                 });
-            } catch (e) { console.error("QR DataURL error:", e); }
+            } catch (e) {
+                console.error("QR DataURL error:", e);
+            }
         }
         const name = (item.product?.nama || "").toUpperCase();
         const code = item.product?.barcode || "";
-        const imei = item.product?.imei1   || "";
+        const imei = item.product?.imei1 || "";
         return `
             <div class="lbl-card">
-                <div class="lbl-content">
-                    <div class="lbl-left">
-                        ${qrDataUrl ? `<img class="lbl-qr" src="${qrDataUrl}" alt="qr"/>` : ""}
-                    </div>
-                    <div class="lbl-right">
-                        <div class="lbl-code">${code}</div>
-                        <div class="lbl-name">${name}</div>
-                        ${imei ? `<div class="lbl-imei">${imei}</div>` : ""}
-                    </div>
+                <div class="lbl-left">
+                    ${
+                        qrDataUrl
+                            ? `<img class="lbl-qr" src="${qrDataUrl}" alt="qr"/>`
+                            : ""
+                    }
+                </div>
+                <div class="lbl-right">
+                    <div class="lbl-code">${code}</div>
+                    <div class="lbl-name">${name}</div>
+                    ${imei ? `<div class="lbl-imei">${imei}</div>` : ""}
                 </div>
             </div>`;
     });
@@ -111,7 +123,10 @@ async function doPrint() {
 
     // Buka popup — popup yang mengelola ukuran halaman sendiri via @page CSS
     const popup = window.open("", "_blank", "width=600,height=500");
-    if (!popup) { alert("Popup diblokir browser. Izinkan popup untuk halaman ini."); return; }
+    if (!popup) {
+        alert("Popup diblokir browser. Izinkan popup untuk halaman ini.");
+        return;
+    }
 
     popup.document.write(`<!doctype html>
 <html>
@@ -119,9 +134,10 @@ async function doPrint() {
 <meta charset="utf-8"/>
 <title>Barcode</title>
 <style>
+/* Reset absolut untuk printer thermal */
 @page {
     size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm;
-    margin: 0;
+    margin: 0mm !important; /* Wajib 0 agar tidak bergeser */
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -129,29 +145,30 @@ html, body {
     background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    margin: 0 !important;
+    padding: 0 !important;
 }
+
 .lbl-card {
     width: ${preset.pageWidthMm}mm;
     height: ${preset.pageHeightMm}mm;
-    padding: 1.5mm 2.5mm 1.5mm 2.5mm;
+    /* Sedikit modifikasi padding agar aman dari tepi pemotongan printer */
+    padding: 1.5mm 2mm; 
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5mm;
     overflow: hidden;
+    /* Aturan page break */
     page-break-after: always;
     break-after: page;
     break-inside: avoid;
 }
-.lbl-card:last-child { page-break-after: auto; break-after: auto; }
-.lbl-content {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1mm;
-    width: 100%;
-    flex: 1;
-    overflow: hidden;
+.lbl-card:last-child { 
+    page-break-after: auto; 
+    break-after: auto; 
 }
+
 .lbl-left {
     flex-shrink: 0;
     width: ${preset.qrSizeMm}mm;
@@ -161,6 +178,7 @@ html, body {
     justify-content: center;
 }
 .lbl-qr { width: ${preset.qrSizeMm}mm; height: ${preset.qrSizeMm}mm; display: block; }
+
 .lbl-right {
     flex: 1;
     min-width: 0;
@@ -170,6 +188,7 @@ html, body {
     gap: 0.5mm;
     overflow: hidden;
 }
+
 .lbl-code {
     font-family: "Courier New", Courier, monospace;
     font-size: ${preset.codeFontPt}pt;
@@ -187,6 +206,9 @@ html, body {
     line-height: 1.2;
     color: #000;
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
 }
 .lbl-imei {
@@ -216,67 +238,126 @@ onMounted(loadPurchase);
 
 <template>
     <div>
-        <!-- Header -->
         <div class="flex items-center gap-3 mb-6">
-            <button @click="router.back()" class="p-2.5 hover:bg-slate-100 rounded-xl transition">
-                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            <button
+                @click="router.back()"
+                class="p-2.5 hover:bg-slate-100 rounded-xl transition"
+            >
+                <svg
+                    class="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 19l-7-7 7-7"
+                    />
                 </svg>
             </button>
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">Cetak Barcode</h1>
                 <p class="text-sm text-slate-400 mt-0.5" v-if="purchase">
-                    {{ purchase.no_invoice }} — {{ purchase.items?.length || 0 }} label
+                    {{ purchase.no_invoice }} —
+                    {{ purchase.items?.length || 0 }} label
                 </p>
             </div>
 
             <div v-if="barcodesReady" class="flex items-center gap-3 ml-auto">
-                <!-- Radio ukuran kertas -->
-                <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
-                    <label v-for="size in ['50x20', '40x20']" :key="size" class="cursor-pointer">
-                        <input type="radio" v-model="selectedSize" :value="size" class="sr-only"/>
-                        <span :class="[
-                            'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all select-none',
-                            selectedSize === size
-                                ? 'bg-white text-slate-800 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700',
-                        ]">{{ size }} mm</span>
+                <div
+                    class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl"
+                >
+                    <label
+                        v-for="size in ['50x20', '40x20']"
+                        :key="size"
+                        class="cursor-pointer"
+                    >
+                        <input
+                            type="radio"
+                            v-model="selectedSize"
+                            :value="size"
+                            class="sr-only"
+                        />
+                        <span
+                            :class="[
+                                'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all select-none',
+                                selectedSize === size
+                                    ? 'bg-white text-slate-800 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700',
+                            ]"
+                            >{{ size }} mm</span
+                        >
                     </label>
                 </div>
 
-                <button @click="doPrint"
-                    class="flex items-center gap-2 px-4 py-2.5 bg-slate-700 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                <button
+                    @click="doPrint"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-slate-700 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all"
+                >
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                        />
                     </svg>
                     Cetak
                 </button>
             </div>
         </div>
 
-        <!-- Info margin -->
-        <div v-if="barcodesReady" class="mb-4 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 max-w-md">
-            ⚠️ Di dialog cetak: pilih printer <strong>Okay D100</strong>, pastikan <strong>Margin → Default</strong>
+        <div
+            v-if="barcodesReady"
+            class="max-w-md px-3 py-2 mb-4 text-xs border rounded-lg bg-amber-50 border-amber-200 text-amber-700"
+        >
+            ⚠️ Di dialog cetak: pilih printer <strong>Okay D100</strong>,
+            pastikan <strong>Margin → None (Tidak Ada)</strong>, Skala
+            <strong>100% / Default</strong>.
         </div>
 
-        <!-- Loading -->
         <div v-if="loading" class="flex justify-center py-12">
-            <div class="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"></div>
+            <div
+                class="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"
+            ></div>
         </div>
 
-        <!-- Preview -->
         <div v-else-if="purchase">
-            <p class="mb-3 text-xs text-slate-400">Preview ({{ selectedSize }} mm)</p>
+            <p class="mb-3 text-xs text-slate-400">
+                Preview ({{ selectedSize }} mm)
+            </p>
             <div class="label-grid">
-                <div v-for="(item, idx) in purchase.items" :key="item.id" class="label-card-preview">
+                <div
+                    v-for="(item, idx) in purchase.items"
+                    :key="item.id"
+                    class="label-card-preview"
+                >
                     <div class="label-left-preview">
-                        <canvas :id="`qr-${idx}`" class="qr-canvas-preview"></canvas>
+                        <canvas
+                            :id="`qr-${idx}`"
+                            class="qr-canvas-preview"
+                        ></canvas>
                     </div>
                     <div class="label-right-preview">
-                        <div class="label-code-preview">{{ item.product?.barcode }}</div>
-                        <div class="label-name-preview">{{ item.product?.nama }}</div>
-                        <div v-if="item.product?.imei1" class="label-imei-preview">{{ item.product.imei1 }}</div>
+                        <div class="label-code-preview">
+                            {{ item.product?.barcode }}
+                        </div>
+                        <div class="label-name-preview">
+                            {{ item.product?.nama }}
+                        </div>
+                        <div
+                            v-if="item.product?.imei1"
+                            class="label-imei-preview"
+                        >
+                            {{ item.product.imei1 }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,25 +385,46 @@ onMounted(loadPurchase);
     min-height: 68px;
     overflow: hidden;
 }
-.label-left-preview { flex-shrink: 0; }
-.qr-canvas-preview { width: 55px !important; height: 55px !important; display: block; }
+.label-left-preview {
+    flex-shrink: 0;
+}
+.qr-canvas-preview {
+    width: 55px !important;
+    height: 55px !important;
+    display: block;
+}
 .label-right-preview {
-    flex: 1; min-width: 0;
-    display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
 }
 .label-code-preview {
     font-family: "Courier New", Courier, monospace;
-    font-size: 10px; font-weight: 700; color: #111;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .label-name-preview {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 9px; font-weight: 700; text-transform: uppercase;
-    color: #333; line-height: 1.2;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #333;
+    line-height: 1.2;
 }
 .label-imei-preview {
     font-family: "Courier New", Courier, monospace;
-    font-size: 8px; font-weight: 700; color: #222;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 8px;
+    font-weight: 700;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>
