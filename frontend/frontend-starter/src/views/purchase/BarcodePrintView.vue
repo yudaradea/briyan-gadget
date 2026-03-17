@@ -45,17 +45,19 @@ async function loadPurchase() {
 }
 
 /**
- * pageHeightMm  = tinggi konten label (20mm)
- * totalHeightMm = label + gap fisik stiker (20 + 3 = 23mm)
- * @page size memakai totalHeightMm agar setiap "halaman" cetak
- * mencakup 1 label (20mm) + jeda antar stiker (3mm).
+ * Struktur fisik stiker roll:
+ *   GAP_TOP_MM  = 1.5mm  → jarak dari tepi atas halaman ke awal konten label
+ *   pageHeightMm = 20mm  → tinggi konten label (area putih yg dicetak)
+ *   GAP_BOT_MM  = 3mm    → jeda fisik antar stiker (kosong)
+ *   totalHeightMm = 1.5 + 20 + 3 = 24.5mm  → @page size
  */
-const GAP_MM = 3;
+const GAP_TOP_MM = 1.5;
+const GAP_BOT_MM = 3;
 const PRINT_PRESETS = {
     "50x20": {
         pageWidthMm: 50,
         pageHeightMm: 20,
-        totalHeightMm: 20 + GAP_MM,
+        totalHeightMm: GAP_TOP_MM + 20 + GAP_BOT_MM,   // 24.5mm
         qrSizeMm: 14,
         qrPixels: 100,
         nameFontPt: 6.5,
@@ -65,7 +67,7 @@ const PRINT_PRESETS = {
     "40x20": {
         pageWidthMm: 40,
         pageHeightMm: 20,
-        totalHeightMm: 20 + GAP_MM,
+        totalHeightMm: GAP_TOP_MM + 20 + GAP_BOT_MM,   // 24.5mm
         qrSizeMm: 13,
         qrPixels: 90,
         nameFontPt: 6,
@@ -180,16 +182,16 @@ async function printViaPopup(preset) {
                     padding: 0;
                 }
                 /*
-                 * @page = 23mm = label 20mm + gap fisik 3mm.
-                 * padding-top: 1.5mm  → jarak aman dari tepi atas label.
-                 * padding-bottom: 3mm → jatuh tepat di gap antar stiker (kosong).
-                 * Konten aktif = 23 - 1.5 - 3 = 18.5mm, di-center vertikal.
+                 * @page = 24.5mm = 1.5mm (gap atas) + 20mm (konten label) + 3mm (gap bawah).
+                 * padding-top  : 1.5mm → skip gap atas, konten mulai di tepi atas label
+                 * padding-bot  : 3mm  → jatuh di gap fisik antar stiker (kosong)
+                 * Konten aktif : 24.5 - 1.5 - 3 = 20mm persis = tinggi label putih
                  */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
                     height: ${preset.totalHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 1.5mm 2.5mm 3mm 2.5mm;
+                    padding: ${GAP_TOP_MM}mm 2.5mm ${GAP_BOT_MM}mm 2.5mm;
                     display: flex;
                     flex-direction: column;
                     align-items: stretch;
@@ -202,7 +204,7 @@ async function printViaPopup(preset) {
                     page-break-after: auto;
                     break-after: auto;
                 }
-                /* Konten 18.5mm — QR + teks center vertikal di tengah area aktif */
+                /* Konten 20mm persis — QR + teks center vertikal */
                 .label-content {
                     display: flex;
                     flex-direction: row;
