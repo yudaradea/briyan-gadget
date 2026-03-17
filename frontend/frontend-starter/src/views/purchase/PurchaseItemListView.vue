@@ -27,6 +27,7 @@ const pagination = ref({
     total: 0,
     per_page: 10,
 });
+const summary = ref({ total_item: 0, total_modal: 0, total_jual: 0 });
 
 const filters = ref({
     start_date: "",
@@ -98,6 +99,7 @@ async function fetchItems(page = 1) {
             total: data.data.total,
             per_page: data.data.per_page,
         };
+        summary.value = data.data.summary ?? { total_item: 0, total_modal: 0, total_jual: 0 };
     } catch (err) {
         toast.error("Gagal memuat detail stok");
     } finally {
@@ -262,24 +264,9 @@ async function saveEdit() {
     }
 }
 
-const copyAmountStok = computed(() => {
-    return items.value.reduce(
-        (acc, curr) => acc + (curr.qty || curr.product?.stok || 0),
-        0
-    );
-});
-const copyTotalModal = computed(() => {
-    return items.value.reduce(
-        (acc, curr) => acc + (curr.harga_beli || 0) * (curr.qty || 1),
-        0
-    );
-});
-const copyTotalJual = computed(() => {
-    return items.value.reduce(
-        (acc, curr) => acc + getEffectiveSalePrice(curr) * (curr.qty || 1),
-        0
-    );
-});
+const copyAmountStok = computed(() => summary.value.total_item);
+const copyTotalModal = computed(() => summary.value.total_modal);
+const copyTotalJual  = computed(() => summary.value.total_jual);
 </script>
 
 <template>

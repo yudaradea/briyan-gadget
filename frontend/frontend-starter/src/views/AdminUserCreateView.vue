@@ -22,7 +22,7 @@ const createUser = async () => {
     try {
         await api.post("/user", form.value);
         toast.success("Pengguna berhasil dibuat");
-        form.value = initialForm();
+        router.push({ name: "user-list" });
     } catch (err) {
         toast.error(err.response?.data?.message || "Gagal membuat pengguna");
     } finally {

@@ -435,18 +435,15 @@ async function processTransaction() {
             })),
         };
 
-        let res;
         if (isEditing.value) {
-            res = await api.put(`/sales/${editId.value}`, payload);
+            await api.put(`/sales/${editId.value}`, payload);
             toast.success("Transaksi berhasil diperbarui!");
         } else {
-            res = await api.post("/sales", payload);
+            await api.post("/sales", payload);
             toast.success("Transaksi berhasil!");
         }
 
-        router.push(
-            `/dashboard/pos/${res.data.data.id}/invoice?from=/dashboard/pos`
-        );
+        router.push({ name: "sales-list" });
     } catch (error) {
         toast.error(error.response?.data?.message || "Terjadi kesalahan");
     } finally {

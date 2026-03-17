@@ -47,14 +47,7 @@ class PurchaseRepository
      */
     public function indexItems($perPage, $search, $startDate = null, $endDate = null, $supplierId = null, $invoiceNo = null, $status = null, $brandId = null)
     {
-        $query = PurchaseItem::query()
-            ->with([
-                'purchase.supplier',
-                'product.masterProduct.brand',
-                'product.unit',
-                'product.grade',
-                'product.saleItems.salesTransaction'
-            ])
+        $baseQuery = PurchaseItem::query()
             ->whereHas('purchase', function ($q) use ($startDate, $endDate, $supplierId, $invoiceNo) {
                 $q->dateRange($startDate, $endDate)
                     ->when($supplierId, fn($sq) => $sq->where('supplier_id', $supplierId))
@@ -74,15 +67,35 @@ class PurchaseRepository
                     $sq->whereHas('product', fn($pq) => $pq->search($search))
                         ->orWhereHas('purchase', fn($pq) => $pq->where('no_invoice', 'like', "%{$search}%"));
                 });
-            })
-            ->latest();
+            });
 
-        $data = $query->paginate($perPage);
+        // Summary totals from ALL matching records (across all pages)
+        $totalItem  = (clone $baseQuery)->count();
+        $totalModal = (clone $baseQuery)->sum(DB::raw('harga_beli * COALESCE(qty, 1)'));
+        $totalJual  = (clone $baseQuery)
+            ->join('products', 'purchase_items.product_id', '=', 'products.id')
+            ->selectRaw('COALESCE(SUM(products.harga_jual * COALESCE(purchase_items.qty, 1)), 0) as total')
+            ->value('total');
 
-        return ResponseHelper::success(
-            new \App\Http\Resources\PaginateResource($data, \App\Http\Resources\PurchaseItemResource::class),
-            'Purchase items retrieved successfully'
-        );
+        $data = (clone $baseQuery)
+            ->with([
+                'purchase.supplier',
+                'product.masterProduct.brand',
+                'product.unit',
+                'product.grade',
+                'product.saleItems.salesTransaction'
+            ])
+            ->latest()
+            ->paginate($perPage);
+
+        $paginateArray = (new \App\Http\Resources\PaginateResource($data, \App\Http\Resources\PurchaseItemResource::class))->toArray(request());
+        $paginateArray['summary'] = [
+            'total_item'  => (int) $totalItem,
+            'total_modal' => (float) ($totalModal ?? 0),
+            'total_jual'  => (float) ($totalJual ?? 0),
+        ];
+
+        return ResponseHelper::success($paginateArray, 'Purchase items retrieved successfully');
     }
 
     /**
