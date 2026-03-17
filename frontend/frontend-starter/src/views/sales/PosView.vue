@@ -166,7 +166,7 @@ async function fetchSaleDetails() {
             : today;
         form.value.pelanggan = sale.pelanggan;
         form.value.user_id = sale.user?.id || "";
-        form.value.sales_rep_id = sale.sales_rep_id || "";
+        form.value.sales_rep_id = sale.sales_rep?.id || "";
         form.value.tax_id = sale.tax_id || "";
         form.value.tax_persen = parseFloat(sale.tax_persen) || 0;
 

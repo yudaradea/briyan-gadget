@@ -179,16 +179,19 @@ async function printViaPopup(preset) {
                     margin: 0;
                     padding: 0;
                 }
-                /* Setiap .label-card = 1 halaman (totalHeightMm = 23mm).
-                   Konten aktif hanya 20mm (pageHeightMm), 3mm bawah = gap fisik stiker (kosong). */
+                /*
+                 * label-card = 23mm (20mm label + 3mm gap fisik).
+                 * padding-bottom: 3mm → area ini jatuh di gap antar stiker (kosong).
+                 * Konten aktif = 23 - 1 - 3 = 19mm, sepenuhnya di dalam area putih label.
+                 */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
                     height: ${preset.totalHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 0;
+                    padding: 1mm 2.5mm 3mm 2.5mm;
                     display: flex;
                     flex-direction: column;
-                    align-items: flex-start;
+                    align-items: stretch;
                     overflow: hidden;
                     page-break-after: always;
                     break-after: page;
@@ -198,17 +201,14 @@ async function printViaPopup(preset) {
                     page-break-after: auto;
                     break-after: auto;
                 }
-                /* Area konten aktif: tepat pageHeightMm (20mm), padding ada di sini */
+                /* Area konten aktif = 19mm (setelah padding 1mm atas + 3mm bawah) */
                 .label-content {
                     display: flex;
                     flex-direction: row;
                     align-items: center;
                     gap: 1mm;
                     width: 100%;
-                    height: ${preset.pageHeightMm}mm;
-                    max-height: ${preset.pageHeightMm}mm;
-                    padding: 1.5mm 2.5mm;
-                    box-sizing: border-box;
+                    flex: 1;
                     overflow: hidden;
                 }
                 .label-left {
@@ -263,6 +263,14 @@ async function printViaPopup(preset) {
                     text-overflow: ellipsis;
                 }
             </style>
+        <script>
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 300);
+                }, 600);
+            });
+        <\/script>
         </head>
         <body>
             <div id="print-root">${labelsHtml}</div>
@@ -270,14 +278,6 @@ async function printViaPopup(preset) {
         </html>
     `);
     popup.document.close();
-
-    popup.onload = () => {
-        setTimeout(() => {
-            popup.focus();
-            popup.print();
-            popup.close();
-        }, 400);
-    };
 
     return true;
 }

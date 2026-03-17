@@ -325,6 +325,16 @@ function printInvoice() {
                                         Rp.{{ formatCurrency(sale.diskon_nominal) }},-
                                     </td>
                                 </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-2 font-bold uppercase text-slate-500">
+                                        Pajak
+                                        <span v-if="sale.tax_persen > 0">({{ sale.tax_persen }}%)</span>
+                                        <span v-else>(0%)</span>
+                                    </td>
+                                    <td class="py-2 font-bold text-right">
+                                        Rp.{{ formatCurrency(sale.tax_nominal) }},-
+                                    </td>
+                                </tr>
                                 <tr class="border-t-2 border-black">
                                     <td class="py-4 font-black uppercase text-[12px]">GRAND TOTAL</td>
                                     <td class="py-4 text-right font-black text-[16px]">Rp.{{ formatCurrency(sale.grand_total) }},-</td>
