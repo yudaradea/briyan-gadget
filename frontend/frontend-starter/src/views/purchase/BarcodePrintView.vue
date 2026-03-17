@@ -45,11 +45,13 @@ async function loadPurchase() {
 }
 
 /**
- * Struktur fisik stiker roll:
- *   GAP_TOP_MM  = 1.5mm  → jarak dari tepi atas halaman ke awal konten label
- *   pageHeightMm = 20mm  → tinggi konten label (area putih yg dicetak)
- *   GAP_BOT_MM  = 3mm    → jeda fisik antar stiker (kosong)
- *   totalHeightMm = 1.5 + 20 + 3 = 24.5mm  → @page size
+ * Pitch fisik stiker roll = 20mm (label) + 3mm (gap) = 23mm.
+ * @page HARUS = 23mm agar tidak ada drift antar label.
+ *
+ * Dalam 23mm halaman:
+ *   GAP_TOP_MM = 1.5mm → margin atas dalam area label (blank)
+ *   Konten      = 18.5mm (1.5mm s/d 20mm dalam label)
+ *   GAP_BOT_MM = 3mm   → jeda antar stiker (blank, di luar label)
  */
 const GAP_TOP_MM = 1.5;
 const GAP_BOT_MM = 3;
@@ -57,8 +59,8 @@ const PRINT_PRESETS = {
     "50x20": {
         pageWidthMm: 50,
         pageHeightMm: 20,
-        totalHeightMm: GAP_TOP_MM + 20 + GAP_BOT_MM,   // 24.5mm
-        qrSizeMm: 14,
+        totalHeightMm: 20 + GAP_BOT_MM,   // 23mm = pitch fisik
+        qrSizeMm: 13,
         qrPixels: 100,
         nameFontPt: 6.5,
         codeFontPt: 6.5,
@@ -67,8 +69,8 @@ const PRINT_PRESETS = {
     "40x20": {
         pageWidthMm: 40,
         pageHeightMm: 20,
-        totalHeightMm: GAP_TOP_MM + 20 + GAP_BOT_MM,   // 24.5mm
-        qrSizeMm: 13,
+        totalHeightMm: 20 + GAP_BOT_MM,   // 23mm = pitch fisik
+        qrSizeMm: 12,
         qrPixels: 90,
         nameFontPt: 6,
         codeFontPt: 6,
@@ -182,10 +184,10 @@ async function printViaPopup(preset) {
                     padding: 0;
                 }
                 /*
-                 * @page = 24.5mm = 1.5mm (gap atas) + 20mm (konten label) + 3mm (gap bawah).
-                 * padding-top  : 1.5mm → skip gap atas, konten mulai di tepi atas label
-                 * padding-bot  : 3mm  → jatuh di gap fisik antar stiker (kosong)
-                 * Konten aktif : 24.5 - 1.5 - 3 = 20mm persis = tinggi label putih
+                 * @page = 23mm = pitch fisik (20mm label + 3mm gap).
+                 * Padding top  : 1.5mm → margin atas dalam label (blank)
+                 * Padding bot  : 3mm   → jatuh di gap fisik antar stiker (blank)
+                 * Konten aktif : 23 - 1.5 - 3 = 18.5mm, di dalam area putih label
                  */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
