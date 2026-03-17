@@ -316,7 +316,9 @@ class ReportController extends Controller implements HasMiddleware
             ->when(!empty($validated['search']), fn($q) => $q->where(function ($sq) use ($validated) {
                 $sq->where('purchases.no_invoice', 'like', '%' . $validated['search'] . '%')
                     ->orWhereHas('product', fn($pq) => $pq->whereHas('masterProduct', fn($mq) => $mq->where('nama', 'like', '%' . $validated['search'] . '%')))
-                    ->orWhereHas('product', fn($pq) => $pq->where('barcode', 'like', '%' . $validated['search'] . '%'));
+                    ->orWhereHas('product', fn($pq) => $pq->where('barcode', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('imei1', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('imei2', 'like', '%' . $validated['search'] . '%'));
             }))
             ->select('purchase_items.*')
             ->orderBy('purchases.tanggal', 'desc')

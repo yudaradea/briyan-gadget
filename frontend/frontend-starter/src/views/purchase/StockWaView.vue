@@ -134,54 +134,43 @@ async function copyToClipboard() {
 
         <!-- Stat Cards -->
 
-        <!-- Content -->
+        <!-- Loading -->
         <div
-            class="overflow-hidden bg-white border shadow-sm rounded-xl border-slate-200"
+            v-if="isLoading"
+            class="flex flex-col items-center justify-center gap-3 py-20"
         >
-            <!-- Loading -->
             <div
-                v-if="isLoading"
-                class="flex flex-col items-center justify-center gap-3 py-20"
-            >
-                <div
-                    class="border-4 rounded-full w-9 h-9 border-slate-200 border-t-blue-500 animate-spin"
-                ></div>
-                <span class="text-sm text-slate-400">Memuat stok...</span>
-            </div>
-
-            <!-- Empty -->
-            <div
-                v-else-if="!groups.length"
-                class="flex flex-col items-center justify-center gap-3 py-20"
-            >
-                <svg
-                    class="w-12 h-12 text-slate-200"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.5"
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                    />
-                </svg>
-                <p class="text-sm text-slate-400">Tidak ada stok tersedia</p>
-            </div>
-
-            <!-- List -->
-
-            <!-- Footer preview -->
-            <div
-                v-if="groups.length"
-                class="px-5 py-4 border-t border-slate-200 bg-slate-50"
-            >
-                <pre
-                    class="p-3 overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap bg-white border rounded-lg text-slate-600 max-h-48 border-slate-200"
-                    >{{ waText }}</pre
-                >
-            </div>
+                class="border-4 rounded-full w-9 h-9 border-slate-200 border-t-blue-500 animate-spin"
+            ></div>
+            <span class="text-sm text-slate-400">Memuat stok...</span>
         </div>
+
+        <!-- Empty -->
+        <div
+            v-else-if="!groups.length"
+            class="flex flex-col items-center justify-center gap-3 py-20"
+        >
+            <svg
+                class="w-12 h-12 text-slate-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+            </svg>
+            <p class="text-sm text-slate-400">Tidak ada stok tersedia</p>
+        </div>
+
+        <!-- WA Text Preview -->
+        <pre
+            v-else
+            class="p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-700"
+            >{{ waText }}</pre
+        >
     </div>
 </template>

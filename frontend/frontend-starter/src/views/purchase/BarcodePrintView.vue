@@ -22,11 +22,11 @@ async function loadPurchase() {
 
         if (itemId && loadedPurchase.items) {
             loadedPurchase.items = loadedPurchase.items.filter(
-                (item) => String(item.id) === String(itemId),
+                (item) => String(item.id) === String(itemId)
             );
         } else if (productId && loadedPurchase.items) {
             loadedPurchase.items = loadedPurchase.items.filter(
-                (item) => String(item.product_id) === String(productId),
+                (item) => String(item.product_id) === String(productId)
             );
         }
 
@@ -95,7 +95,9 @@ async function renderAllQR() {
 
 function isMobilePrintContext() {
     const ua = navigator.userAgent || "";
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        ua
+    );
 }
 
 async function buildPopupLabelsHtml(preset) {
@@ -123,7 +125,11 @@ async function buildPopupLabelsHtml(preset) {
             <div class="label-card">
                 <div class="label-content">
                     <div class="label-left">
-                        ${qrDataUrl ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />` : ""}
+                        ${
+                            qrDataUrl
+                                ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />`
+                                : ""
+                        }
                     </div>
                     <div class="label-right">
                         <div class="label-code">${code}</div>
@@ -173,17 +179,16 @@ async function printViaPopup(preset) {
                     margin: 0;
                     padding: 0;
                 }
-                /* Setiap .label-card = 1 halaman (totalHeightMm).
-                   Konten diisi 20mm, 3mm bawah = area gap stiker (kosong). */
+                /* Setiap .label-card = 1 halaman (totalHeightMm = 23mm).
+                   Konten aktif hanya 20mm (pageHeightMm), 3mm bawah = gap fisik stiker (kosong). */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
                     height: ${preset.totalHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 1.5mm 2.5mm 0 2.5mm;
+                    padding: 0;
                     display: flex;
-                    flex-direction: row;
+                    flex-direction: column;
                     align-items: flex-start;
-                    gap: 1mm;
                     overflow: hidden;
                     page-break-after: always;
                     break-after: page;
@@ -193,7 +198,7 @@ async function printViaPopup(preset) {
                     page-break-after: auto;
                     break-after: auto;
                 }
-                /* Area konten aktif (20mm dari atas) */
+                /* Area konten aktif: tepat pageHeightMm (20mm), padding ada di sini */
                 .label-content {
                     display: flex;
                     flex-direction: row;
@@ -201,6 +206,9 @@ async function printViaPopup(preset) {
                     gap: 1mm;
                     width: 100%;
                     height: ${preset.pageHeightMm}mm;
+                    max-height: ${preset.pageHeightMm}mm;
+                    padding: 1.5mm 2.5mm;
+                    box-sizing: border-box;
                     overflow: hidden;
                 }
                 .label-left {
@@ -291,7 +299,7 @@ onMounted(loadPurchase);
 <template>
     <div>
         <!-- Screen Header -->
-        <div class="no-print flex items-center gap-3 mb-6">
+        <div class="flex items-center gap-3 mb-6 no-print">
             <button
                 @click="router.back()"
                 class="p-2.5 hover:bg-slate-100 rounded-xl transition"
@@ -318,11 +326,22 @@ onMounted(loadPurchase);
                 </p>
             </div>
 
-            <div v-if="barcodesReady" class="ml-auto flex items-center gap-3">
+            <div v-if="barcodesReady" class="flex items-center gap-3 ml-auto">
                 <!-- Radio toggle ukuran kertas -->
-                <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
-                    <label v-for="size in ['50x20', '40x20']" :key="size" class="cursor-pointer">
-                        <input type="radio" v-model="selectedSize" :value="size" class="sr-only" />
+                <div
+                    class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl"
+                >
+                    <label
+                        v-for="size in ['50x20', '40x20']"
+                        :key="size"
+                        class="cursor-pointer"
+                    >
+                        <input
+                            type="radio"
+                            v-model="selectedSize"
+                            :value="size"
+                            class="sr-only"
+                        />
                         <span
                             :class="[
                                 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all select-none',
@@ -340,8 +359,16 @@ onMounted(loadPurchase);
                     @click="doPrint"
                     class="flex items-center gap-2 px-4 py-2.5 bg-slate-700 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                         />
                     </svg>
@@ -352,12 +379,14 @@ onMounted(loadPurchase);
 
         <!-- Loading -->
         <div v-if="loading" class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div
+                class="w-8 h-8 border-b-2 border-blue-600 rounded-full animate-spin"
+            ></div>
         </div>
 
         <!-- Preview -->
         <div v-else-if="purchase" id="print-area">
-            <p class="text-xs text-slate-400 mb-3 no-print">
+            <p class="mb-3 text-xs text-slate-400 no-print">
                 Preview ({{ selectedSize }} mm) — klik Cetak untuk mencetak
             </p>
             <div class="label-grid">
@@ -367,12 +396,22 @@ onMounted(loadPurchase);
                     class="label-card-preview"
                 >
                     <div class="label-left-preview">
-                        <canvas :id="`qr-${idx}`" class="qr-canvas-preview"></canvas>
+                        <canvas
+                            :id="`qr-${idx}`"
+                            class="qr-canvas-preview"
+                        ></canvas>
                     </div>
                     <div class="label-right-preview">
-                        <div class="label-code-preview">{{ item.product?.barcode }}</div>
-                        <div class="label-name-preview">{{ item.product?.nama }}</div>
-                        <div v-if="item.product?.imei1" class="label-imei-preview">
+                        <div class="label-code-preview">
+                            {{ item.product?.barcode }}
+                        </div>
+                        <div class="label-name-preview">
+                            {{ item.product?.nama }}
+                        </div>
+                        <div
+                            v-if="item.product?.imei1"
+                            class="label-imei-preview"
+                        >
                             {{ item.product.imei1 }}
                         </div>
                     </div>
@@ -453,6 +492,8 @@ onMounted(loadPurchase);
 }
 
 @media print {
-    body * { visibility: hidden !important; }
+    body * {
+        visibility: hidden !important;
+    }
 }
 </style>
