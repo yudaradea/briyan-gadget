@@ -44,28 +44,29 @@ async function loadPurchase() {
     }
 }
 
-// Preset includes gapMm = jarak antar stiker di roll (3mm)
-// @page height = pageHeightMm + gapMm agar setiap label pas di masing-masing stiker
+/**
+ * @page size = label size only (50x20 or 40x20).
+ * Gap 3mm antar stiker ditangani OTOMATIS oleh printer thermal — tidak perlu di CSS.
+ * QR code dibuat lebih kecil (13mm) agar pasti muat dalam 20mm height.
+ */
 const PRINT_PRESETS = {
     "50x20": {
         pageWidthMm: 50,
         pageHeightMm: 20,
-        gapMm: 3,
-        qrSizeMm: 16,
-        qrPixels: 120,
-        nameFontPt: 6,
-        codeFontPt: 6,
-        imeiFontPt: 5,
+        qrSizeMm: 14,
+        qrPixels: 100,
+        nameFontPt: 6.5,
+        codeFontPt: 6.5,
+        imeiFontPt: 5.5,
     },
     "40x20": {
         pageWidthMm: 40,
         pageHeightMm: 20,
-        gapMm: 3,
-        qrSizeMm: 15,
-        qrPixels: 110,
-        nameFontPt: 5.5,
-        codeFontPt: 5.5,
-        imeiFontPt: 4.8,
+        qrSizeMm: 13,
+        qrPixels: 90,
+        nameFontPt: 6,
+        codeFontPt: 6,
+        imeiFontPt: 5,
     },
 };
 
@@ -77,8 +78,8 @@ async function renderAllQR() {
         if (canvas && item.product?.barcode) {
             try {
                 await QRCode.toCanvas(canvas, item.product.barcode, {
-                    width: 120,
-                    margin: 1,
+                    width: 100,
+                    margin: 0,
                     color: { dark: "#000000", light: "#ffffff" },
                 });
             } catch (e) {
@@ -96,15 +97,13 @@ function isMobilePrintContext() {
 async function buildPopupLabelsHtml(preset) {
     if (!purchase.value?.items?.length) return "";
 
-    const totalPageHeightMm = preset.pageHeightMm + preset.gapMm;
-
     const labelPromises = purchase.value.items.map(async (item) => {
         let qrDataUrl = "";
         if (item.product?.barcode) {
             try {
                 qrDataUrl = await QRCode.toDataURL(item.product.barcode, {
                     width: preset.qrPixels,
-                    margin: 1,
+                    margin: 0,
                     color: { dark: "#000000", light: "#ffffff" },
                 });
             } catch (e) {
@@ -112,37 +111,32 @@ async function buildPopupLabelsHtml(preset) {
             }
         }
 
-        const name = item.product?.nama || "";
+        const name = (item.product?.nama || "").toUpperCase();
         const code = item.product?.barcode || "";
         const imei = item.product?.imei1 || "";
 
         return `
-            <div class="label-wrap">
-                <div class="label-card">
-                    <div class="label-left">
-                        ${qrDataUrl ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />` : ""}
-                    </div>
-                    <div class="label-right">
-                        <div class="label-code">${code}</div>
-                        <div class="label-name">${name}</div>
-                        ${imei ? `<div class="label-imei">${imei}</div>` : ""}
-                    </div>
+            <div class="label-card">
+                <div class="label-left">
+                    ${qrDataUrl ? `<img class="qr-img" src="${qrDataUrl}" alt="qr" />` : ""}
                 </div>
-                <div class="label-gap"></div>
+                <div class="label-right">
+                    <div class="label-code">${code}</div>
+                    <div class="label-name">${name}</div>
+                    ${imei ? `<div class="label-imei">${imei}</div>` : ""}
+                </div>
             </div>
         `;
     });
 
-    const labelsHtml = (await Promise.all(labelPromises)).join("");
-
-    return { labelsHtml, totalPageHeightMm };
+    return (await Promise.all(labelPromises)).join("");
 }
 
 async function printViaPopup(preset) {
     const popup = window.open("", "_blank", "width=500,height=400");
     if (!popup) return false;
 
-    const { labelsHtml, totalPageHeightMm } = await buildPopupLabelsHtml(preset);
+    const labelsHtml = await buildPopupLabelsHtml(preset);
 
     popup.document.write(`
         <!doctype html>
@@ -151,10 +145,12 @@ async function printViaPopup(preset) {
             <meta charset="utf-8" />
             <title>Print Barcode</title>
             <style>
+                /* @page = EXACT label size. Printer thermal handle gap 3mm otomatis. */
                 @page {
-                    size: ${preset.pageWidthMm}mm ${totalPageHeightMm}mm;
+                    size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm;
                     margin: 0;
                 }
+                * { box-sizing: border-box; }
                 html, body {
                     width: ${preset.pageWidthMm}mm;
                     margin: 0;
@@ -168,42 +164,28 @@ async function printViaPopup(preset) {
                     margin: 0;
                     padding: 0;
                 }
-                /* label-wrap = label content + gap space, fits exactly 1 page */
-                .label-wrap {
-                    width: ${preset.pageWidthMm}mm;
-                    height: ${totalPageHeightMm}mm;
-                    box-sizing: border-box;
-                    page-break-after: always;
-                    break-after: page;
-                    break-inside: avoid;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .label-wrap:last-child {
-                    page-break-after: auto;
-                    break-after: auto;
-                }
-                /* Actual printed label content area */
                 .label-card {
                     width: ${preset.pageWidthMm}mm;
                     height: ${preset.pageHeightMm}mm;
                     box-sizing: border-box;
-                    padding: 1mm;
+                    padding: 1.2mm 1mm;
                     display: flex;
                     flex-direction: row;
                     align-items: center;
-                    gap: 1.5mm;
+                    gap: 1mm;
                     overflow: hidden;
+                    page-break-after: always;
+                    break-after: page;
+                    break-inside: avoid;
                 }
-                /* Gap between stickers (white/blank area) */
-                .label-gap {
-                    width: ${preset.pageWidthMm}mm;
-                    height: ${preset.gapMm}mm;
-                    background: #fff;
-                    flex-shrink: 0;
+                .label-card:last-child {
+                    page-break-after: auto;
+                    break-after: auto;
                 }
                 .label-left {
                     flex-shrink: 0;
+                    width: ${preset.qrSizeMm}mm;
+                    height: ${preset.qrSizeMm}mm;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -219,7 +201,7 @@ async function printViaPopup(preset) {
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
-                    gap: 0.5mm;
+                    gap: 0.6mm;
                     overflow: hidden;
                 }
                 .label-code {
@@ -227,7 +209,7 @@ async function printViaPopup(preset) {
                     font-size: ${preset.codeFontPt}pt;
                     font-weight: 700;
                     line-height: 1.1;
-                    color: #111;
+                    color: #000;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -236,16 +218,17 @@ async function printViaPopup(preset) {
                     font-family: Arial, Helvetica, sans-serif;
                     font-size: ${preset.nameFontPt}pt;
                     font-weight: 700;
-                    text-transform: uppercase;
                     line-height: 1.2;
-                    color: #111;
+                    color: #000;
                     word-break: break-word;
+                    overflow: hidden;
                 }
                 .label-imei {
                     font-family: "Courier New", Courier, monospace;
                     font-size: ${preset.imeiFontPt}pt;
+                    font-weight: 700;
                     line-height: 1.1;
-                    color: #444;
+                    color: #000;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -264,7 +247,7 @@ async function printViaPopup(preset) {
             popup.focus();
             popup.print();
             popup.close();
-        }, 300);
+        }, 400);
     };
 
     return true;
@@ -278,8 +261,6 @@ async function doPrint() {
         await printViaPopup(preset);
         return;
     }
-
-    // Mobile fallback: current page print
     window.print();
 }
 
@@ -316,21 +297,11 @@ onMounted(loadPurchase);
                 </p>
             </div>
 
-            <!-- Paper size selector + print button -->
             <div v-if="barcodesReady" class="ml-auto flex items-center gap-3">
                 <!-- Radio toggle ukuran kertas -->
                 <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
-                    <label
-                        v-for="size in ['50x20', '40x20']"
-                        :key="size"
-                        class="cursor-pointer"
-                    >
-                        <input
-                            type="radio"
-                            v-model="selectedSize"
-                            :value="size"
-                            class="sr-only"
-                        />
+                    <label v-for="size in ['50x20', '40x20']" :key="size" class="cursor-pointer">
+                        <input type="radio" v-model="selectedSize" :value="size" class="sr-only" />
                         <span
                             :class="[
                                 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all select-none',
@@ -344,7 +315,6 @@ onMounted(loadPurchase);
                     </label>
                 </div>
 
-                <!-- Print button -->
                 <button
                     @click="doPrint"
                     class="flex items-center gap-2 px-4 py-2.5 bg-slate-700 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all"
@@ -364,10 +334,10 @@ onMounted(loadPurchase);
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
 
-        <!-- Preview Grid (screen only) -->
+        <!-- Preview -->
         <div v-else-if="purchase" id="print-area">
             <p class="text-xs text-slate-400 mb-3 no-print">
-                Preview — pilih ukuran kertas lalu klik Cetak
+                Preview ({{ selectedSize }} mm) — klik Cetak untuk mencetak
             </p>
             <div class="label-grid">
                 <div
@@ -392,13 +362,12 @@ onMounted(loadPurchase);
 </template>
 
 <style>
-/* === SCREEN PREVIEW === */
 .label-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     padding: 10px;
-    max-width: 500px;
+    max-width: 480px;
 }
 
 .label-card-preview {
@@ -410,19 +379,17 @@ onMounted(loadPurchase);
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    min-height: 70px;
+    min-height: 68px;
+    overflow: hidden;
 }
 
 .label-left-preview {
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .qr-canvas-preview {
-    width: 60px !important;
-    height: 60px !important;
+    width: 55px !important;
+    height: 55px !important;
     display: block;
 }
 
@@ -452,19 +419,18 @@ onMounted(loadPurchase);
     text-transform: uppercase;
     color: #333;
     line-height: 1.2;
-    word-break: break-word;
 }
 
 .label-imei-preview {
     font-family: "Courier New", Courier, monospace;
     font-size: 8px;
-    color: #555;
+    font-weight: 700;
+    color: #222;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Screen-only: hide print-area from DashboardView footer logic */
 @media print {
     body * { visibility: hidden !important; }
 }
