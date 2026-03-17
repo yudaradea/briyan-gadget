@@ -190,7 +190,7 @@ html, body {
 }
 
 .lbl-code {
-    font-family: "Courier New", Courier, monospace;
+    font-family: Arial, Helvetica, sans-serif; /* Disamakan dengan nama barang */
     font-size: ${preset.codeFontPt}pt;
     font-weight: 700;
     line-height: 1.1;
@@ -212,7 +212,7 @@ html, body {
     overflow: hidden;
 }
 .lbl-imei {
-    font-family: "Courier New", Courier, monospace;
+    font-family: Arial, Helvetica, sans-serif; /* Disamakan dengan nama barang */
     font-size: ${preset.imeiFontPt}pt;
     font-weight: 700;
     line-height: 1.1;
