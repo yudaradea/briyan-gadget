@@ -114,8 +114,158 @@ function renderAllBarcodes(paperSize = "50x20") {
     });
 }
 
+function isMobilePrintContext() {
+    const ua = navigator.userAgent || "";
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        ua,
+    );
+}
+
+function buildPopupLabelsHtml(preset) {
+    if (!purchase.value?.items?.length) return "";
+
+    return purchase.value.items
+        .map((item) => {
+            let barcodeImage = "";
+            if (item.product?.barcode) {
+                const tempCanvas = document.createElement("canvas");
+                JsBarcode(tempCanvas, item.product.barcode, {
+                    format: "CODE128",
+                    width: preset.barcodeLineWidth,
+                    height: preset.barcodePixelHeight,
+                    displayValue: false,
+                    margin: 0,
+                    background: "#ffffff",
+                    lineColor: "#000000",
+                });
+                barcodeImage = tempCanvas.toDataURL("image/png");
+            }
+
+            return `
+                <div class="label-card">
+                    <img class="barcode-img" src="${barcodeImage}" alt="barcode" />
+                    <div class="label-code">${item.product?.barcode || ""}</div>
+                    <div class="label-name">${item.product?.nama || ""}</div>
+                    ${
+                        item.product?.imei1
+                            ? `<div class="label-imei">${item.product.imei1}</div>`
+                            : ""
+                    }
+                </div>
+            `;
+        })
+        .join("");
+}
+
+function printViaPopup(preset) {
+    const popup = window.open("", "_blank", "width=420,height=320");
+    if (!popup) return false;
+
+    const labelsHtml = buildPopupLabelsHtml(preset);
+
+    popup.document.write(`
+        <!doctype html>
+        <html>
+        <head>
+            <meta charset="utf-8" />
+            <title>Print Barcode</title>
+            <style>
+                @page {
+                    size: ${preset.pageWidthMm}mm ${preset.pageHeightMm}mm;
+                    margin: 0;
+                }
+                html, body {
+                    width: ${preset.pageWidthMm}mm;
+                    margin: 0;
+                    padding: 0;
+                    background: #fff;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+                #print-root {
+                    width: ${preset.pageWidthMm}mm;
+                    margin: 0;
+                    padding: 0;
+                }
+                .label-card {
+                    width: ${preset.pageWidthMm}mm;
+                    height: ${preset.pageHeightMm}mm;
+                    box-sizing: border-box;
+                    padding: ${preset.labelPadding};
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    overflow: hidden;
+                    page-break-after: always;
+                    break-inside: avoid;
+                }
+                .label-card:last-child {
+                    page-break-after: auto;
+                }
+                .barcode-img {
+                    width: ${preset.barcodeWidthMm}mm;
+                    max-width: ${preset.barcodeWidthMm}mm;
+                    height: ${preset.barcodeHeightMm}mm;
+                    object-fit: contain;
+                    display: block;
+                }
+                .label-code {
+                    font-family: "Courier New", Courier, monospace;
+                    font-size: 7pt;
+                    font-weight: 700;
+                    letter-spacing: 0.4px;
+                    margin-top: 0.6mm;
+                    line-height: 1;
+                }
+                .label-name {
+                    font-family: Arial, Helvetica, sans-serif;
+                    font-size: 6pt;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    margin-top: 0.4mm;
+                    max-width: ${preset.nameMaxWidthMm}mm;
+                    line-height: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    color: #222;
+                }
+                .label-imei {
+                    font-family: "Courier New", Courier, monospace;
+                    font-size: 5.6pt;
+                    margin-top: 0.3mm;
+                    line-height: 1;
+                    color: #444;
+                }
+            </style>
+        </head>
+        <body>
+            <div id="print-root">${labelsHtml}</div>
+        </body>
+        </html>
+    `);
+    popup.document.close();
+
+    popup.onload = () => {
+        setTimeout(() => {
+            popup.focus();
+            popup.print();
+            popup.close();
+        }, 220);
+    };
+
+    return true;
+}
+
 function printPage(paperSize = "50x20") {
     if (!purchase.value?.items?.length) return;
+    const preset = PRINT_PRESETS[paperSize] || PRINT_PRESETS["50x20"];
+
+    if (!isMobilePrintContext() && printViaPopup(preset)) {
+        return;
+    }
 
     applyPrintPreset(paperSize);
     renderAllBarcodes(paperSize);
