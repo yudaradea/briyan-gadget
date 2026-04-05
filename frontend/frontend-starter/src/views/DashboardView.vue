@@ -182,11 +182,11 @@ onUnmounted(() => {
                                 class="dropdown-item"
                                 >Pembelian (Invoice)</router-link
                             >
-                            <router-link
+                            <!-- <router-link
                                 to="/dashboard/stock-summary"
                                 class="dropdown-item"
                                 >Stok Barang</router-link
-                            >
+                            > -->
                             <router-link
                                 to="/dashboard/purchase-items"
                                 class="dropdown-item"
@@ -720,7 +720,7 @@ onUnmounted(() => {
                                     }"
                                     >Pembelian (Invoice)</router-link
                                 >
-                                <router-link
+                                <!-- <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/stock-summary"
                                     class="mobile-sublink"
@@ -731,7 +731,7 @@ onUnmounted(() => {
                                             ),
                                     }"
                                     >Stok Barang</router-link
-                                >
+                                > -->
                                 <router-link
                                     @click="mobileMenuOpen = false"
                                     to="/dashboard/purchase-items"
@@ -1066,7 +1066,11 @@ onUnmounted(() => {
 
         <!-- Footer — hidden on print pages -->
         <footer
-            v-if="!$route.path.includes('/barcode') && !$route.path.includes('/invoice') && !$route.path.includes('/print')"
+            v-if="
+                !$route.path.includes('/barcode') &&
+                !$route.path.includes('/invoice') &&
+                !$route.path.includes('/print')
+            "
             class="px-6 py-4 mt-auto text-center border-t border-slate-200"
         >
             <p

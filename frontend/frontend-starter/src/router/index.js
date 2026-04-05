@@ -126,13 +126,13 @@ const router = createRouter({
                     meta: { requiresMasterDataView: true },
                 },
                 // --- Stok Barang (Admin+) ---
-                {
-                    path: "stock-summary",
-                    name: "stock-summary",
-                    component: () =>
-                        import("../views/purchase/StockSummaryView.vue"),
-                    meta: { requiresStockView: true },
-                },
+                // {
+                //     path: "stock-summary",
+                //     name: "stock-summary",
+                //     component: () =>
+                //         import("../views/purchase/StockSummaryView.vue"),
+                //     meta: { requiresStockView: true },
+                // },
                 {
                     path: "item-lookup",
                     name: "item-lookup",

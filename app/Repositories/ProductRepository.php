@@ -220,6 +220,8 @@ class ProductRepository
             ->join('master_products', 'products.master_product_id', '=', 'master_products.id')
             ->join('brands', 'master_products.brand_id', '=', 'brands.id')
             ->whereNull('products.deleted_at')
+            ->whereNull('master_products.deleted_at')
+            ->whereNull('brands.deleted_at')
             ->where('products.stok', '>', 0)
             ->select(
                 'brands.nama as brand',
