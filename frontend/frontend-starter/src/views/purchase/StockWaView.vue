@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onActivated } from "vue";
 import api from "../../api";
 import { useToast } from "../../composables/useToast";
 
@@ -9,6 +9,7 @@ const groups = ref([]);
 const copied = ref(false);
 
 onMounted(() => fetchStockWa());
+onActivated(() => fetchStockWa());
 
 async function fetchStockWa() {
     isLoading.value = true;

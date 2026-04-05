@@ -222,6 +222,11 @@ class ProductRepository
             ->whereNull('products.deleted_at')
             ->whereNull('master_products.deleted_at')
             ->whereNull('brands.deleted_at')
+            ->whereExists(function ($query) {
+                $query->selectRaw('1')
+                    ->from('purchase_items')
+                    ->whereColumn('purchase_items.product_id', 'products.id');
+            })
             ->where('products.stok', '>', 0)
             ->select(
                 'brands.nama as brand',
