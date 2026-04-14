@@ -70,7 +70,9 @@ class SaleResource extends JsonResource
             'items' => $this->whenLoaded(
                 'items',
                 fn() =>
-                $this->items->map(fn($item) => [
+                $this->items
+                    ->values()
+                    ->map(fn($item) => [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
                     'product' => $item->product ? [
@@ -79,6 +81,7 @@ class SaleResource extends JsonResource
                         'nama' => $item->product->masterProduct?->nama,
                         'imei1' => $item->product->imei1,
                         'imei2' => $item->product->imei2,
+                        'stok' => (int) ($item->product->stok ?? 0),
                         'brand' => $item->product->masterProduct?->brand?->nama,
                         'unit' => $item->product->unit?->nama,
                         'grade' => $item->product->grade?->nama,

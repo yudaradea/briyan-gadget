@@ -13,6 +13,7 @@ class PurchaseItem extends Model
     protected $fillable = [
         'purchase_id',
         'product_id',
+        'line_order',
         'qty',
         'harga_beli',
         'subtotal',
@@ -21,6 +22,7 @@ class PurchaseItem extends Model
     protected function casts(): array
     {
         return [
+            'line_order' => 'integer',
             'qty' => 'integer',
             'harga_beli' => 'decimal:2',
             'subtotal' => 'decimal:2',

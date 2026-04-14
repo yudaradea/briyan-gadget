@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Purchase;
 
+use App\Models\MasterProduct;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -17,8 +18,6 @@ class PurchaseItemUpdateRequest extends FormRequest
     {
         return [
             'master_product_id' => 'nullable|uuid|exists:master_products,id',
-            'nama'              => 'sometimes|string|max:255',
-            'brand_id'          => 'nullable|uuid|exists:brands,id',
             'category_id'       => 'nullable|uuid|exists:categories,id',
             'grade_id'          => 'nullable|uuid|exists:grades,id',
             'unit_id'           => 'nullable|uuid|exists:units,id',
@@ -36,8 +35,6 @@ class PurchaseItemUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nama.max'           => 'Nama produk maksimal 255 karakter.',
-            'brand_id.exists'    => 'Merk tidak ditemukan.',
             'category_id.exists' => 'Kategori tidak ditemukan.',
             'grade_id.exists'    => 'Grade tidak ditemukan.',
             'unit_id.exists'     => 'Satuan tidak ditemukan.',
@@ -70,11 +67,21 @@ class PurchaseItemUpdateRequest extends FormRequest
                 $query->where('purchase_id', $purchaseId)->where('id', $itemId);
             })->with('masterProduct')->first();
 
-            if (!$product || !$product->masterProduct) {
+            if (!$product) {
                 return;
             }
 
-            $identifierType = $product->masterProduct->identifier_type ?? 'none';
+            $masterProduct = $product->masterProduct;
+
+            if ($this->filled('master_product_id')) {
+                $masterProduct = MasterProduct::find($this->input('master_product_id'));
+            }
+
+            if (!$masterProduct) {
+                return;
+            }
+
+            $identifierType = $masterProduct->identifier_type ?? 'none';
             $qty = (int) $this->input('qty', $product->purchaseItems()->where('purchase_id', $purchaseId)->where('id', $itemId)->value('qty') ?? 1);
 
             if (in_array($identifierType, ['imei1', 'imei2', 'serial'], true) && $qty !== 1) {

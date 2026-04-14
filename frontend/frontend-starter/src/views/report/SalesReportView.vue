@@ -47,23 +47,65 @@ const detailModal = ref({
 const detailPerPage = ref(10);
 const detailPage = ref(1);
 
-const detailItems = computed(() => detailModal.value.data?.items || []);
+const rawDetailItems = computed(() => detailModal.value.data?.items || []);
+
+const discountedDetailItems = computed(() => {
+    const items = rawDetailItems.value;
+    const subtotal = Number(detailModal.value.data?.subtotal || 0);
+    const totalDiscount = Math.min(
+        Number(detailModal.value.data?.diskon_nominal || 0),
+        subtotal
+    );
+
+    if (!items.length) {
+        return [];
+    }
+
+    let allocatedDiscount = 0;
+
+    return items.map((item, index) => {
+        const itemSubtotal = Number(item.subtotal || 0);
+        let itemDiscount = 0;
+
+        if (totalDiscount > 0 && subtotal > 0) {
+            if (index === items.length - 1) {
+                itemDiscount = totalDiscount - allocatedDiscount;
+            } else {
+                itemDiscount = Math.round((itemSubtotal / subtotal) * totalDiscount);
+                allocatedDiscount += itemDiscount;
+            }
+        }
+
+        const subtotalAfterDiscount = Math.max(itemSubtotal - itemDiscount, 0);
+        const modal = Number(item.hpp_total || 0);
+
+        return {
+            ...item,
+            allocated_discount: itemDiscount,
+            subtotal_after_discount: subtotalAfterDiscount,
+            laba_after_discount: subtotalAfterDiscount - modal,
+        };
+    });
+});
 
 const detailPageCount = computed(() =>
-    Math.max(1, Math.ceil(detailItems.value.length / detailPerPage.value))
+    Math.max(
+        1,
+        Math.ceil(discountedDetailItems.value.length / detailPerPage.value)
+    )
 );
 
 const detailItemsPaged = computed(() => {
     const start = (detailPage.value - 1) * detailPerPage.value;
-    return detailItems.value.slice(start, start + detailPerPage.value);
+    return discountedDetailItems.value.slice(start, start + detailPerPage.value);
 });
 
 const detailTotals = computed(() =>
-    detailItems.value.reduce(
+    discountedDetailItems.value.reduce(
         (acc, item) => {
             const qty = Number(item.qty || 0);
             const modal = Number(item.hpp_total || 0);
-            const hargaJual = Number(item.subtotal || 0);
+            const hargaJual = Number(item.subtotal_after_discount || 0);
             const laba = hargaJual - modal;
 
             acc.qty += qty;
@@ -75,6 +117,13 @@ const detailTotals = computed(() =>
         { qty: 0, modal: 0, harga_jual: 0, laba: 0 }
     )
 );
+
+const detailFinancialSummary = computed(() => ({
+    subtotal: Number(detailModal.value.data?.subtotal || 0),
+    diskon: Number(detailModal.value.data?.diskon_nominal || 0),
+    pajak: Number(detailModal.value.data?.tax_nominal || 0),
+    grand_total: Number(detailModal.value.data?.grand_total || 0),
+}));
 
 function formatCurrency(value) {
     return new Intl.NumberFormat("id-ID", {
@@ -280,8 +329,14 @@ async function saveEdit() {
         toast.success("Harga modal berhasil diubah");
         // Update main table row immediately
         const row = rows.value.find((r) => r.id === editModal.value.saleId);
+        const rawItem = detailModal.value.data?.items?.find(
+            (detailItem) => detailItem.id === item.id
+        );
+        if (rawItem) {
+            rawItem.hpp_total = editModal.value.newValue;
+        }
         if (row) {
-            const newHpp = detailItems.value.reduce(
+            const newHpp = rawDetailItems.value.reduce(
                 (sum, i) => sum + Number(i.hpp_total || 0),
                 0
             );
@@ -1068,7 +1123,7 @@ onMounted(() => {
                                             >
                                                 {{
                                                     formatCurrency(
-                                                        item.subtotal || 0
+                                                        item.subtotal_after_discount || 0
                                                     )
                                                 }}
                                             </td>
@@ -1077,7 +1132,7 @@ onMounted(() => {
                                                 :style="{
                                                     color:
                                                         Number(
-                                                            item.subtotal || 0
+                                                            item.subtotal_after_discount || 0
                                                         ) -
                                                             Number(
                                                                 item.hpp_total ||
@@ -1091,7 +1146,7 @@ onMounted(() => {
                                                 {{
                                                     formatCurrency(
                                                         Number(
-                                                            item.subtotal || 0
+                                                            item.subtotal_after_discount || 0
                                                         ) -
                                                             Number(
                                                                 item.hpp_total ||
@@ -1159,12 +1214,60 @@ onMounted(() => {
                             </div>
 
                             <div
+                                class="grid grid-cols-2 gap-3 mt-4 text-xs md:grid-cols-4"
+                            >
+                                <div class="p-3 rounded-lg bg-slate-50">
+                                    <div class="text-slate-500">Subtotal</div>
+                                    <div class="font-bold text-slate-800">
+                                        {{
+                                            formatCurrency(
+                                                detailFinancialSummary.subtotal
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-rose-50">
+                                    <div class="text-rose-500">Diskon</div>
+                                    <div class="font-bold text-rose-600">
+                                        -
+                                        {{
+                                            formatCurrency(
+                                                detailFinancialSummary.diskon
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-amber-50">
+                                    <div class="text-amber-600">Pajak</div>
+                                    <div class="font-bold text-amber-700">
+                                        {{
+                                            formatCurrency(
+                                                detailFinancialSummary.pajak
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-emerald-50">
+                                    <div class="text-emerald-600">
+                                        Total Bayar
+                                    </div>
+                                    <div class="font-bold text-emerald-700">
+                                        {{
+                                            formatCurrency(
+                                                detailFinancialSummary.grand_total
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
                                 class="flex items-center justify-between mt-3 text-xs text-slate-500"
                             >
                                 <span>
                                     Menampilkan
                                     {{
-                                        detailItems.length
+                                        discountedDetailItems.length
                                             ? (detailPage - 1) * detailPerPage +
                                               1
                                             : 0
@@ -1173,10 +1276,10 @@ onMounted(() => {
                                     {{
                                         Math.min(
                                             detailPage * detailPerPage,
-                                            detailItems.length
+                                            discountedDetailItems.length
                                         )
                                     }}
-                                    dari {{ detailItems.length }} item
+                                    dari {{ discountedDetailItems.length }} item
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <button
@@ -1254,7 +1357,3 @@ onMounted(() => {
         </Teleport>
     </div>
 </template>
-
-
-
-

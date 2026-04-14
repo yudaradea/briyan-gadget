@@ -139,7 +139,7 @@ class SaleRepository
             ]);
 
             // Add Items and REDUCE stock
-            foreach ($items as $item) {
+            foreach ($items as $index => $item) {
                 $product = Product::with('masterProduct')->lockForUpdate()->findOrFail($item['product_id']);
                 $consumptions = $this->consumeStockFifo($product, (int) $item['qty']);
                 $hppTotal = collect($consumptions)->sum('subtotal_hpp');
@@ -147,6 +147,7 @@ class SaleRepository
                 /** @var SaleItem $saleItem */
                 $saleItem = $sale->items()->create([
                     'product_id' => $product->id,
+                    'line_order' => $index + 1,
                     'qty' => $item['qty'],
                     'harga_satuan' => $item['harga_satuan'],
                     'subtotal' => $item['qty'] * $item['harga_satuan'],
@@ -254,7 +255,7 @@ class SaleRepository
 
             // 4. Delete old items and Add new items
             $sale->items()->delete();
-            foreach ($items as $item) {
+            foreach ($items as $index => $item) {
                 $product = Product::with('masterProduct')->lockForUpdate()->findOrFail($item['product_id']);
                 $consumptions = $this->consumeStockFifo($product, (int) $item['qty']);
                 $hppTotal = collect($consumptions)->sum('subtotal_hpp');
@@ -262,6 +263,7 @@ class SaleRepository
                 /** @var SaleItem $saleItem */
                 $saleItem = $sale->items()->create([
                     'product_id' => $product->id,
+                    'line_order' => $index + 1,
                     'qty' => $item['qty'],
                     'harga_satuan' => $item['harga_satuan'],
                     'subtotal' => $item['qty'] * $item['harga_satuan'],

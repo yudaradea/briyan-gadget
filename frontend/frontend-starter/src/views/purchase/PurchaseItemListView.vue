@@ -4,6 +4,7 @@ import DateInput from "../../components/DateInput.vue";
 import api from "../../api";
 import ConfirmDialog from "../../components/ConfirmDialog.vue";
 import CurrencyInput from "../../components/CurrencyInput.vue";
+import SearchableSelect from "../../components/SearchableSelect.vue";
 import { useRouter } from "vue-router";
 import { useToast } from "../../composables/useToast";
 import { useAuthStore } from "../../stores/auth";
@@ -17,7 +18,9 @@ const canDelete = computed(() => !authStore.isKasir);
 const items = ref([]);
 const suppliers = ref([]);
 const brands = ref([]);
+const grades = ref([]);
 const units = ref([]);
+const masterProducts = ref([]);
 const isLoading = ref(false);
 const searchQuery = ref("");
 const perPage = ref(10);
@@ -40,12 +43,21 @@ const filters = ref({
 const showDelete = ref(false);
 const deleteId = ref(null);
 const deleting = ref(false);
+const showQuickMasterProduct = ref(false);
+const creatingMasterProduct = ref(false);
+const quickMasterError = ref("");
+const quickMasterForm = ref({
+    nama: "",
+    brand_id: "",
+});
 
 onMounted(() => {
     fetchItems();
     fetchSuppliers();
     fetchBrands();
+    fetchGrades();
     fetchUnits();
+    fetchMasterProducts();
 });
 
 async function fetchUnits() {
@@ -63,6 +75,24 @@ async function fetchBrands() {
         brands.value = data.data;
     } catch (e) {
         console.error("Gagal memuat merk", e);
+    }
+}
+
+async function fetchGrades() {
+    try {
+        const { data } = await api.get("/grades/all");
+        grades.value = data.data;
+    } catch (e) {
+        console.error("Gagal memuat grade", e);
+    }
+}
+
+async function fetchMasterProducts() {
+    try {
+        const { data } = await api.get("/master-products/all");
+        masterProducts.value = data.data;
+    } catch (e) {
+        console.error("Gagal memuat master product", e);
     }
 }
 
@@ -99,7 +129,11 @@ async function fetchItems(page = 1) {
             total: data.data.total,
             per_page: data.data.per_page,
         };
-        summary.value = data.data.summary ?? { total_item: 0, total_modal: 0, total_jual: 0 };
+        summary.value = data.data.summary ?? {
+            total_item: 0,
+            total_modal: 0,
+            total_jual: 0,
+        };
     } catch (err) {
         toast.error("Gagal memuat detail stok");
     } finally {
@@ -200,21 +234,31 @@ async function doDelete() {
 const editModal = ref({
     show: false,
     title: "",
-    type: "", // 'unit', 'imei1', 'imei2', 'harga_beli', 'harga_jual'
+    type: "", // 'nama', 'unit', 'grade', 'imei1', 'imei2', 'harga_beli', 'harga_jual'
     item: null,
     oldValueDisplay: "",
     newValue: "",
 });
 const savingEdit = ref(false);
+const selectedModalMasterProduct = computed(() =>
+    masterProducts.value.find((item) => item.id === editModal.value.newValue)
+);
 
 function openEditModal(type, item) {
     editModal.value.type = type;
     editModal.value.item = item;
     editModal.value.show = true;
+    editModal.value.oldValueDisplay = "";
 
-    if (type === "unit") {
+    if (type === "nama") {
+        editModal.value.title = "Update Nama Barang";
+        editModal.value.newValue = item.product?.master_product_id || "";
+    } else if (type === "unit") {
         editModal.value.title = "Update Satuan";
         editModal.value.newValue = item.product?.unit_id || "";
+    } else if (type === "grade") {
+        editModal.value.title = "Update Grade";
+        editModal.value.newValue = item.product?.grade_id || "";
     } else if (type === "imei1") {
         editModal.value.title = "Update IMEI 1";
         editModal.value.newValue = item.product?.imei1 || "";
@@ -238,11 +282,18 @@ async function saveEdit() {
     if (!editModal.value.item) return;
     const item = editModal.value.item;
     const type = editModal.value.type;
+    if (type === "nama" && !editModal.value.newValue) {
+        toast.error("Pilih nama barang dari master data terlebih dahulu");
+        return;
+    }
 
     savingEdit.value = true;
     try {
         const payload = {};
+        if (type === "nama")
+            payload.master_product_id = editModal.value.newValue;
         if (type === "unit") payload.unit_id = editModal.value.newValue;
+        if (type === "grade") payload.grade_id = editModal.value.newValue;
         if (type === "imei1") payload.imei1 = editModal.value.newValue;
         if (type === "imei2") payload.imei2 = editModal.value.newValue;
         if (type === "harga_beli")
@@ -264,9 +315,46 @@ async function saveEdit() {
     }
 }
 
+function openQuickMasterProduct() {
+    quickMasterError.value = "";
+    quickMasterForm.value = {
+        nama: "",
+        brand_id: "",
+    };
+    showQuickMasterProduct.value = true;
+}
+
+async function submitQuickMasterProduct() {
+    if (!quickMasterForm.value.brand_id) {
+        quickMasterError.value =
+            "Pilih merk sebelum menambahkan produk katalog.";
+        return;
+    }
+
+    creatingMasterProduct.value = true;
+    quickMasterError.value = "";
+
+    try {
+        const { data } = await api.post("/master-products", {
+            nama: quickMasterForm.value.nama,
+            brand_id: quickMasterForm.value.brand_id,
+        });
+
+        await fetchMasterProducts();
+        editModal.value.newValue = data.data.id;
+        showQuickMasterProduct.value = false;
+        toast.success("Produk katalog berhasil ditambahkan");
+    } catch (err) {
+        quickMasterError.value =
+            err.response?.data?.message || "Gagal menambahkan produk katalog";
+    } finally {
+        creatingMasterProduct.value = false;
+    }
+}
+
 const copyAmountStok = computed(() => summary.value.total_item);
 const copyTotalModal = computed(() => summary.value.total_modal);
-const copyTotalJual  = computed(() => summary.value.total_jual);
+const copyTotalJual = computed(() => summary.value.total_jual);
 </script>
 
 <template>
@@ -387,19 +475,42 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
                                 Lihat &amp; copy daftar stok
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 text-xs font-semibold opacity-80 mt-2">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        <div
+                            class="flex items-center gap-1.5 text-xs font-semibold opacity-80 mt-2"
+                        >
+                            <svg
+                                class="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                />
                             </svg>
                             Buka &rarr;
                         </div>
-                        <div class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-40">
-                            <span class="w-2 h-3 rounded-sm bg-purple-900/30"></span>
-                            <span class="w-2 h-6 rounded-sm bg-purple-900/30"></span>
-                            <span class="w-2 h-10 rounded-sm bg-purple-900/30"></span>
-                            <span class="w-2 h-5 rounded-sm bg-purple-900/30"></span>
-                            <span class="w-2 h-8 rounded-sm bg-purple-900/30"></span>
+                        <div
+                            class="absolute inset-y-0 right-0 flex items-end gap-1 pb-3 pr-3 opacity-40"
+                        >
+                            <span
+                                class="w-2 h-3 rounded-sm bg-purple-900/30"
+                            ></span>
+                            <span
+                                class="w-2 h-6 rounded-sm bg-purple-900/30"
+                            ></span>
+                            <span
+                                class="w-2 h-10 rounded-sm bg-purple-900/30"
+                            ></span>
+                            <span
+                                class="w-2 h-5 rounded-sm bg-purple-900/30"
+                            ></span>
+                            <span
+                                class="w-2 h-8 rounded-sm bg-purple-900/30"
+                            ></span>
                         </div>
                     </router-link>
                 </div>
@@ -706,7 +817,13 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
                                 class="px-2 py-2 text-slate-800 break-words text-[12px] line-clamp-2 max-w-[200px]"
                                 style="display: table-cell"
                             >
-                                {{ item.product?.nama }}
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('nama', item)"
+                                    class="font-medium text-blue-600 hover:underline"
+                                >
+                                    {{ item.product?.nama || "INPUT" }}
+                                </a>
                             </td>
                             <td
                                 class="px-2 py-2 text-blue-600 whitespace-nowrap text-[12px] uppercase font-medium"
@@ -725,7 +842,13 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
                                 {{ item.product?.brand || "-" }}
                             </td>
                             <td class="px-2 py-2 whitespace-nowrap text-[12px]">
-                                {{ item.product?.grade || "-" }}
+                                <a
+                                    href="javascript:void(0)"
+                                    @click="openEditModal('grade', item)"
+                                    class="font-medium text-blue-600 hover:underline"
+                                >
+                                    {{ item.product?.grade || "INPUT" }}
+                                </a>
                             </td>
                             <td
                                 class="px-2 py-2 font-medium text-blue-600 whitespace-nowrap text-[12px]"
@@ -971,13 +1094,98 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
             @cancel="showDelete = false"
         />
 
+        <div
+            v-if="showQuickMasterProduct"
+            class="fixed inset-0 z-[110] flex items-center justify-center p-4"
+            @click.self="showQuickMasterProduct = false"
+        >
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+            <div
+                class="relative z-10 w-full max-w-lg p-6 bg-white shadow-2xl rounded-xl"
+            >
+                <h3 class="mb-4 text-lg font-semibold text-slate-800">
+                    Tambah Produk Katalog
+                </h3>
+                <form @submit.prevent="submitQuickMasterProduct">
+                    <div class="space-y-3">
+                        <div>
+                            <label
+                                class="block mb-1 text-sm font-medium text-slate-600"
+                                >Nama Produk *</label
+                            >
+                            <input
+                                v-model="quickMasterForm.nama"
+                                type="text"
+                                required
+                                class="w-full px-3 py-2 border rounded-lg border-slate-200 focus:ring-2 focus:ring-blue-500"
+                                @input="
+                                    quickMasterForm.nama =
+                                        $event.target.value.toUpperCase()
+                                "
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                class="block mb-1 text-sm font-medium text-slate-600"
+                                >Merk *</label
+                            >
+                            <select
+                                v-model="quickMasterForm.brand_id"
+                                required
+                                class="w-full px-3 py-2 border rounded-lg border-slate-200 focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">Pilih Merk</option>
+                                <option
+                                    v-for="brand in brands"
+                                    :key="brand.id"
+                                    :value="brand.id"
+                                >
+                                    {{ brand.nama }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <p
+                            v-if="quickMasterError"
+                            class="text-sm text-rose-500"
+                        >
+                            {{ quickMasterError }}
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-5">
+                        <button
+                            type="button"
+                            @click="showQuickMasterProduct = false"
+                            class="px-4 py-2 text-sm font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="creatingMasterProduct"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {{
+                                creatingMasterProduct
+                                    ? "Menyimpan..."
+                                    : "Simpan"
+                            }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Inline Edit Modal -->
         <div
             v-if="editModal.show"
             class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
         >
             <div
-                class="w-full max-w-md overflow-hidden bg-white rounded-lg shadow-2xl"
+                class="w-full overflow-hidden bg-white rounded-lg shadow-2xl"
+                :class="editModal.type === 'nama' ? 'max-w-3xl' : 'max-w-md'"
             >
                 <div
                     class="flex items-center justify-between px-4 py-3 text-white bg-blue-600"
@@ -1003,7 +1211,35 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
                     </button>
                 </div>
 
-                <div class="px-5 py-6">
+                <div
+                    class="px-5 py-6"
+                    :class="editModal.type === 'nama' ? 'min-h-[420px]' : ''"
+                >
+                    <div
+                        v-if="editModal.type === 'nama'"
+                        class="flex flex-col gap-2"
+                    >
+                        <label class="text-sm font-bold text-slate-700"
+                            >Nama Barang</label
+                        >
+                        <SearchableSelect
+                            v-model="editModal.newValue"
+                            :options="masterProducts"
+                            placeholder="Pilih Produk"
+                        />
+                        <button
+                            type="button"
+                            @click="openQuickMasterProduct"
+                            class="self-start text-xs text-blue-600 hover:text-blue-700"
+                        >
+                            + Tambah produk katalog baru
+                        </button>
+                        <div class="text-xs text-slate-500">
+                            Merk:
+                            {{ selectedModalMasterProduct?.brand?.nama || "-" }}
+                        </div>
+                    </div>
+
                     <!-- For Unit -->
                     <div
                         v-if="editModal.type === 'unit'"
@@ -1023,6 +1259,28 @@ const copyTotalJual  = computed(() => summary.value.total_jual);
                                 :value="u.id"
                             >
                                 {{ u.nama }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div
+                        v-if="editModal.type === 'grade'"
+                        class="flex items-center gap-3"
+                    >
+                        <label class="w-24 text-sm font-bold text-slate-700"
+                            >Grade :</label
+                        >
+                        <select
+                            v-model="editModal.newValue"
+                            class="flex-1 px-3 py-2 text-sm border rounded border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                            <option value="">Pilih Grade</option>
+                            <option
+                                v-for="grade in grades"
+                                :key="grade.id"
+                                :value="grade.id"
+                            >
+                                {{ grade.nama }}
                             </option>
                         </select>
                     </div>

@@ -192,10 +192,9 @@ async function fetchSaleDetails() {
             id: item.product_id,
             kode: item.product?.barcode,
             nama: item.product?.nama,
-            imei: [item.product?.imei1, item.product?.imei2]
-                .filter(Boolean)
-                .join(" / "),
-            satuan: item.product?.masterProduct?.unit?.nama || "-",
+            imei1: item.product?.imei1 || "-",
+            imei2: item.product?.imei2 || "-",
+            satuan: item.product?.unit || "-",
             harga_jual: parseFloat(item.harga_satuan),
             qty: item.qty,
             stok: (item.product?.stok || 0) + item.qty,

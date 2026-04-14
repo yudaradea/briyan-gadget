@@ -44,6 +44,7 @@ class PurchaseItemResource extends JsonResource
                 'id' => $this->product->id,
                 'barcode' => $this->product->barcode,
                 'nama' => $this->product->masterProduct?->nama,
+                'master_product_id' => $this->product->master_product_id,
                 'imei1' => $this->product->imei1,
                 'imei2' => $this->product->imei2,
                 'stok' => $this->product->stok,

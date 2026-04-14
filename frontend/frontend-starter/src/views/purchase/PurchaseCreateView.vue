@@ -64,6 +64,10 @@ const selectedMasterProduct = computed(() =>
     masterProducts.value.find((m) => m.id === itemForm.value.master_product_id),
 );
 
+const selectedEditMasterProduct = computed(() =>
+    masterProducts.value.find((m) => m.id === editForm.value.master_product_id),
+);
+
 const selectedIdentifierType = computed(
     () => selectedMasterProduct.value?.identifier_type || "none",
 );
@@ -148,6 +152,7 @@ const showQuickGrade = ref(false);
 const showQuickMasterProduct = ref(false);
 const creatingMasterProduct = ref(false);
 const quickMasterError = ref("");
+const quickMasterTarget = ref("create");
 const quickMasterForm = ref({
     nama: "",
     brand_id: "",
@@ -273,7 +278,7 @@ async function addItem() {
             fd,
             { headers: { "Content-Type": undefined } },
         );
-        items.value.unshift(data.data.item);
+        items.value.push(data.data.item);
         purchaseTotal.value = data.data.purchase_total;
         resetItemForm();
         toast.success("Barang berhasil ditambahkan");
@@ -308,8 +313,7 @@ function resetItemForm() {
 function startEdit(item) {
     editingItemId.value = item.id;
     editForm.value = {
-        nama: item.product?.nama || "",
-        brand_id: item.product?.brand_id || "",
+        master_product_id: item.product?.master_product_id || "",
         category_id: item.product?.category_id || "",
         grade_id: item.product?.grade_id || "",
         unit_id: item.product?.unit_id || "",
@@ -321,6 +325,13 @@ function startEdit(item) {
     };
     editFoto.value = null;
     editFotoPreview.value = storageUrl(item.product?.foto);
+}
+
+function onEditMasterProductChange() {
+    const selected = selectedEditMasterProduct.value;
+    if (!selected) return;
+
+    editForm.value.master_product_id = selected.id;
 }
 
 function cancelEdit() {
@@ -339,6 +350,11 @@ function onEditFotoChange(e) {
 }
 
 async function saveEdit(itemId) {
+    if (!editForm.value.master_product_id) {
+        toast.error("Pilih nama barang dari master data terlebih dahulu");
+        return;
+    }
+
     savingEdit.value = true;
     try {
         const fd = new FormData();
@@ -416,6 +432,18 @@ async function quickGradeCreated(result) {
 }
 
 function openQuickMasterProduct() {
+    quickMasterTarget.value = "create";
+    quickMasterError.value = "";
+    quickMasterForm.value = {
+        nama: "",
+        brand_id: "",
+        keterangan: "",
+    };
+    showQuickMasterProduct.value = true;
+}
+
+function openQuickMasterProductForEdit() {
+    quickMasterTarget.value = "edit";
     quickMasterError.value = "";
     quickMasterForm.value = {
         nama: "",
@@ -444,8 +472,13 @@ async function submitQuickMasterProduct() {
 
         const res = await api.post("/master-products", payload);
         await loadDropdowns();
-        itemForm.value.master_product_id = res.data.data.id;
-        onMasterProductChange();
+        if (quickMasterTarget.value === "edit") {
+            editForm.value.master_product_id = res.data.data.id;
+            onEditMasterProductChange();
+        } else {
+            itemForm.value.master_product_id = res.data.data.id;
+            onMasterProductChange();
+        }
         showQuickMasterProduct.value = false;
         toast.success("Produk katalog berhasil ditambahkan");
     } catch (err) {
@@ -1009,30 +1042,33 @@ onMounted(() => {
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >Nama Produk</label
                                 >
-                                <input
-                                    v-model="editForm.nama"
-                                    type="text"
-                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 transition"
+                                <SearchableSelect
+                                    v-model="editForm.master_product_id"
+                                    :options="filteredMasterProducts"
+                                    placeholder="Pilih Produk"
+                                    @change="onEditMasterProductChange"
                                 />
+                                <button
+                                    type="button"
+                                    @click="openQuickMasterProductForEdit"
+                                    class="mt-1.5 text-xs text-blue-600 hover:text-blue-700"
+                                >
+                                    + Tambah produk katalog baru
+                                </button>
                             </div>
                             <div>
                                 <label
                                     class="block text-[11px] font-medium text-slate-500 mb-1"
                                     >Merk</label
                                 >
-                                <select
-                                    v-model="editForm.brand_id"
-                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 transition"
+                                <div
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-100 text-slate-600"
                                 >
-                                    <option value="">Pilih Merk</option>
-                                    <option
-                                        v-for="b in brands"
-                                        :key="b.id"
-                                        :value="b.id"
-                                    >
-                                        {{ b.nama }}
-                                    </option>
-                                </select>
+                                    {{
+                                        selectedEditMasterProduct?.brand?.nama ||
+                                        "-"
+                                    }}
+                                </div>
                             </div>
                             <div>
                                 <label

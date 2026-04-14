@@ -103,7 +103,9 @@ class SalesTransaction extends Model
 
     public function items()
     {
-        return $this->hasMany(SaleItem::class);
+        return $this->hasMany(SaleItem::class)
+            ->orderBy('line_order')
+            ->orderBy('created_at');
     }
 
     public function serviceOrder()

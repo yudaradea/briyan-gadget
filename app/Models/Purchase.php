@@ -58,7 +58,9 @@ class Purchase extends Model
 
     public function items()
     {
-        return $this->hasMany(PurchaseItem::class);
+        return $this->hasMany(PurchaseItem::class)
+            ->orderBy('line_order')
+            ->orderBy('created_at');
     }
 
     /**

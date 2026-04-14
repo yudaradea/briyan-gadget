@@ -192,10 +192,12 @@ class PurchaseRepository
             $qty = $data['qty'] ?? 1;
             $hargaBeli = $data['harga_beli'];
             $subtotal = $qty * $hargaBeli;
+            $nextLineOrder = ((int) $purchase->items()->max('line_order')) + 1;
 
             $item = PurchaseItem::create([
                 'purchase_id' => $purchase->id,
                 'product_id' => $product->id,
+                'line_order' => $nextLineOrder,
                 'qty' => $qty,
                 'harga_beli' => $hargaBeli,
                 'subtotal' => $subtotal,
@@ -243,7 +245,7 @@ class PurchaseRepository
         return DB::transaction(function () use ($purchaseId, $itemId, $data) {
             $purchase = $this->model->findOrFail($purchaseId);
             $item = PurchaseItem::where('purchase_id', $purchaseId)->findOrFail($itemId);
-            $product = $item->product;
+            $product = $item->product()->with('masterProduct')->firstOrFail();
 
             // Update product fields
             $productData = [];
