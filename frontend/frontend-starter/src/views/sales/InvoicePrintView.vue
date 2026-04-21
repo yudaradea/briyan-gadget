@@ -16,7 +16,7 @@ const returnTo = route.query.from || "/dashboard/sales";
 // Detect mobile — on mobile: no auto-print, no auto-navigate after print
 const isMobile =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
+        navigator.userAgent
     ) || window.innerWidth < 768;
 
 const originalTitle = document.title;
@@ -50,7 +50,9 @@ onMounted(async () => {
         nextTick(() => {
             setTimeout(() => {
                 if (sale.value) {
-                    const pelanggan = (sale.value.pelanggan || "Umum").toUpperCase();
+                    const pelanggan = (
+                        sale.value.pelanggan || "Umum"
+                    ).toUpperCase();
                     document.title = `${sale.value.no_invoice} - ${pelanggan}`;
                     window.print();
                 }
@@ -113,7 +115,11 @@ function printInvoice() {
                 class="flex items-center justify-between gap-3 p-3 mb-4 border bg-slate-50 rounded-xl border-slate-200"
             >
                 <p class="text-xs text-slate-500 font-mono uppercase">
-                    {{ isMobile ? "Scroll untuk lihat invoice" : "Siap cetak..." }}
+                    {{
+                        isMobile
+                            ? "Scroll untuk lihat invoice"
+                            : "Siap cetak..."
+                    }}
                 </p>
                 <button
                     @click="printInvoice"
@@ -178,38 +184,67 @@ function printInvoice() {
                                 <p class="font-black text-[12px] mb-2">
                                     {{ store?.name }}
                                 </p>
-                                <p class="text-slate-600">{{ store?.address }}</p>
+                                <p class="text-slate-600">
+                                    {{ store?.address }}
+                                </p>
                                 <p class="mt-4 font-bold">
                                     No Telp :
-                                    <span class="text-black">{{ store?.phone }}</span>
+                                    <span class="text-black">{{
+                                        store?.phone
+                                    }}</span>
                                 </p>
                                 <p v-if="store?.email">
                                     Email :
-                                    <span class="text-black">{{ store?.email }}</span>
+                                    <span class="text-black">{{
+                                        store?.email
+                                    }}</span>
                                 </p>
                             </div>
                         </td>
                         <td class="w-1/2 align-top">
                             <table class="w-full border-collapse">
                                 <tr>
-                                    <td class="w-32 py-1 font-bold uppercase">No. Invoice</td>
+                                    <td class="w-32 py-1 font-bold uppercase">
+                                        No. Invoice
+                                    </td>
                                     <td class="w-4 py-1 text-center">:</td>
-                                    <td class="py-1 font-bold text-right">{{ sale.no_invoice }}</td>
+                                    <td class="py-1 font-bold text-right">
+                                        {{ sale.no_invoice }}
+                                    </td>
                                 </tr>
                                 <tr v-if="sale.tipe === 'service'">
-                                    <td class="py-1 font-bold uppercase">No. Service</td>
+                                    <td class="py-1 font-bold uppercase">
+                                        No. Service
+                                    </td>
                                     <td class="py-1 text-center">:</td>
-                                    <td class="py-1 font-bold text-right uppercase">{{ sale.service_order?.no_service || "-" }}</td>
+                                    <td
+                                        class="py-1 font-bold text-right uppercase"
+                                    >
+                                        {{
+                                            sale.service_order?.no_service ||
+                                            "-"
+                                        }}
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="py-1 font-bold uppercase">Tanggal</td>
+                                    <td class="py-1 font-bold uppercase">
+                                        Tanggal
+                                    </td>
                                     <td class="py-1 text-center">:</td>
-                                    <td class="py-1 text-right">{{ formatDisplayDate(sale.tanggal) }}</td>
+                                    <td class="py-1 text-right">
+                                        {{ formatDisplayDate(sale.tanggal) }}
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="py-1 font-bold uppercase">Pelanggan</td>
+                                    <td class="py-1 font-bold uppercase">
+                                        Pelanggan
+                                    </td>
                                     <td class="py-1 text-center">:</td>
-                                    <td class="py-1 font-bold text-right uppercase">{{ sale.pelanggan || "Umum" }}</td>
+                                    <td
+                                        class="py-1 font-bold text-right uppercase"
+                                    >
+                                        {{ sale.pelanggan || "Umum" }}
+                                    </td>
                                 </tr>
                             </table>
                         </td>
@@ -220,19 +255,47 @@ function printInvoice() {
                 <div
                     class="text-[10px] font-black mb-4 uppercase tracking-widest border-l-4 border-black pl-3 py-0.5"
                 >
-                    {{ sale.tipe === "service" ? "Rincian Service" : "Daftar Pembelian" }}
+                    {{
+                        sale.tipe === "service"
+                            ? "Rincian Service"
+                            : "Daftar Pembelian"
+                    }}
                 </div>
 
                 <!-- Items Table -->
-                <table class="w-full mb-6 border border-collapse border-slate-300">
+                <table
+                    class="w-full mb-6 border border-collapse border-slate-300"
+                >
                     <thead>
                         <tr class="border-b bg-slate-50 border-slate-300">
-                            <th class="border-r border-slate-300 p-2 text-center w-10 font-bold">No</th>
-                            <th class="border-r border-slate-300 p-2 text-left w-70 font-bold">Nama Produk</th>
-                            <th class="border-r border-slate-300 p-2 text-center w-20 font-bold">Satuan</th>
-                            <th class="border-r border-slate-300 p-2 text-right w-27.5 font-bold">Harga</th>
-                            <th class="border-r border-slate-300 p-2 text-center w-15 font-bold">Qty</th>
-                            <th class="p-2 text-right w-32.5 font-bold">Total</th>
+                            <th
+                                class="border-r border-slate-300 p-2 text-center w-10 font-bold"
+                            >
+                                No
+                            </th>
+                            <th
+                                class="border-r border-slate-300 p-2 text-left w-70 font-bold"
+                            >
+                                Nama Produk
+                            </th>
+                            <th
+                                class="border-r border-slate-300 p-2 text-center w-20 font-bold"
+                            >
+                                Satuan
+                            </th>
+                            <th
+                                class="border-r border-slate-300 p-2 text-right w-27.5 font-bold"
+                            >
+                                Harga
+                            </th>
+                            <th
+                                class="border-r border-slate-300 p-2 text-center w-15 font-bold"
+                            >
+                                Qty
+                            </th>
+                            <th class="p-2 text-right w-32.5 font-bold">
+                                Total
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -241,47 +304,140 @@ function printInvoice() {
                             :key="idx"
                             class="align-top border-b border-slate-200"
                         >
-                            <td class="p-3 text-center border-r border-slate-200 text-slate-500">{{ idx + 1 }}</td>
+                            <td
+                                class="p-3 text-center border-r border-slate-200 text-slate-500"
+                            >
+                                {{ idx + 1 }}
+                            </td>
                             <td class="p-3 border-r border-slate-200">
-                                <div class="mb-1 font-bold leading-tight text-black uppercase">{{ item.product?.nama }}</div>
-                                <div class="text-[9px] text-slate-500 uppercase">{{ item.product?.brand || "-" }}</div>
+                                <div
+                                    class="mb-1 font-bold leading-tight text-black uppercase"
+                                >
+                                    {{ item.product?.nama }}
+                                </div>
+                                <div
+                                    class="text-[9px] text-slate-500 uppercase"
+                                >
+                                    {{ item.product?.brand || "-" }}
+                                </div>
                                 <div
                                     v-if="sale.tipe !== 'service'"
                                     class="text-[8px] text-blue-800 font-mono mt-2 pt-1 border-t border-slate-100 border-dashed"
                                 >
                                     <div
-                                        v-for="(line, lineIndex) in getProductIdentifierLines(item.product)"
+                                        v-for="(
+                                            line, lineIndex
+                                        ) in getProductIdentifierLines(
+                                            item.product
+                                        )"
                                         :key="`identifier-${idx}-${lineIndex}`"
-                                    >{{ line }}</div>
+                                    >
+                                        {{ line }}
+                                    </div>
                                 </div>
                             </td>
-                            <td class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500">{{ item.product?.unit || "Unit" }}</td>
-                            <td class="p-3 text-right border-r border-slate-200">Rp.{{ formatCurrency(item.harga_satuan) }},-</td>
-                            <td class="p-3 font-bold text-center border-r border-slate-200">{{ item.qty }}</td>
-                            <td class="p-3 font-bold text-right text-black">Rp.{{ formatCurrency(item.subtotal) }},-</td>
+                            <td
+                                class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500"
+                            >
+                                {{ item.product?.unit || "Unit" }}
+                            </td>
+                            <td
+                                class="p-3 text-right border-r border-slate-200"
+                            >
+                                <span class="currency-text">
+                                    Rp.{{ formatCurrency(item.harga_satuan) }},-
+                                </span>
+                            </td>
+                            <td
+                                class="p-3 font-bold text-center border-r border-slate-200"
+                            >
+                                {{ item.qty }}
+                            </td>
+                            <td class="p-3 font-bold text-right text-black">
+                                <span class="currency-text">
+                                    Rp.{{ formatCurrency(item.subtotal) }},-
+                                </span>
+                            </td>
                         </tr>
                         <tr
-                            v-if="sale.tipe === 'service' && (sale.service_order?.biaya_jasa || 0) > 0"
+                            v-if="
+                                sale.tipe === 'service' &&
+                                (sale.service_order?.biaya_jasa || 0) > 0
+                            "
                             class="align-top border-b border-slate-200"
                         >
-                            <td class="p-3 text-center border-r border-slate-200 text-slate-500">{{ (sale.items?.length || 0) + 1 }}</td>
-                            <td class="p-3 border-r border-slate-200">
-                                <div class="mb-1 font-bold leading-tight text-black uppercase">Biaya Jasa Service</div>
-                                <div class="text-[9px] text-slate-500 uppercase">Jasa Perbaikan</div>
+                            <td
+                                class="p-3 text-center border-r border-slate-200 text-slate-500"
+                            >
+                                {{ (sale.items?.length || 0) + 1 }}
                             </td>
-                            <td class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500">Jasa</td>
-                            <td class="p-3 text-right border-r border-slate-200">Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-</td>
-                            <td class="p-3 font-bold text-center border-r border-slate-200">-</td>
-                            <td class="p-3 font-bold text-right text-black">Rp.{{ formatCurrency(sale.service_order?.biaya_jasa || 0) }},-</td>
+                            <td class="p-3 border-r border-slate-200">
+                                <div
+                                    class="mb-1 font-bold leading-tight text-black uppercase"
+                                >
+                                    Biaya Jasa Service
+                                </div>
+                                <div
+                                    class="text-[9px] text-slate-500 uppercase"
+                                >
+                                    Jasa Perbaikan
+                                </div>
+                            </td>
+                            <td
+                                class="p-3 italic text-center uppercase border-r border-slate-200 text-slate-500"
+                            >
+                                Jasa
+                            </td>
+                            <td
+                                class="p-3 text-right border-r border-slate-200"
+                            >
+                                <span class="currency-text">
+                                    Rp.{{
+                                        formatCurrency(
+                                            sale.service_order?.biaya_jasa || 0
+                                        )
+                                    }},-
+                                </span>
+                            </td>
+                            <td
+                                class="p-3 font-bold text-center border-r border-slate-200"
+                            >
+                                -
+                            </td>
+                            <td class="p-3 font-bold text-right text-black">
+                                <span class="currency-text">
+                                    Rp.{{
+                                        formatCurrency(
+                                            sale.service_order?.biaya_jasa || 0
+                                        )
+                                    }},-
+                                </span>
+                            </td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr class="font-black bg-slate-50">
-                            <td colspan="4" class="p-3 text-right uppercase tracking-widest text-[9px]">Total Kuantitas</td>
-                            <td class="p-3 text-center border-x border-slate-200">
-                                {{ sale.items.reduce((acc, item) => acc + item.qty, 0) }}
+                            <td
+                                colspan="4"
+                                class="p-3 text-right uppercase tracking-widest text-[9px]"
+                            >
+                                Total Kuantitas
                             </td>
-                            <td class="p-3 font-black text-right">Rp.{{ formatCurrency(sale.subtotal) }},-</td>
+                            <td
+                                class="p-3 text-center border-x border-slate-200"
+                            >
+                                {{
+                                    sale.items.reduce(
+                                        (acc, item) => acc + item.qty,
+                                        0
+                                    )
+                                }}
+                            </td>
+                            <td class="p-3 font-black text-right">
+                                <span class="currency-text">
+                                    Rp.{{ formatCurrency(sale.subtotal) }},-
+                                </span>
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
@@ -290,54 +446,153 @@ function printInvoice() {
                 <table class="w-full table-fixed">
                     <tr>
                         <td class="w-1/2 pr-8 align-top">
-                            <div class="p-4 uppercase border rounded border-slate-200 bg-slate-50">
-                                <p class="font-bold text-slate-400 mb-2 text-[9px] tracking-widest">INFO PEMBAYARAN</p>
+                            <div
+                                class="p-4 uppercase border rounded border-slate-200 bg-slate-50"
+                            >
+                                <p
+                                    class="font-bold text-slate-400 mb-2 text-[9px] tracking-widest"
+                                >
+                                    INFO PEMBAYARAN
+                                </p>
                                 <div v-if="sale.metode_pembayaran === 'cash'">
-                                    <p class="text-sm font-black text-black">TUNAI / CASH</p>
+                                    <p class="text-sm font-black text-black">
+                                        TUNAI / CASH
+                                    </p>
                                 </div>
-                                <div v-else-if="sale.metode_pembayaran === 'transfer'">
-                                    <p class="mb-1 text-xs font-black text-blue-800">TRANSFER BANK</p>
-                                    <p class="mb-1 text-[11px] font-bold text-slate-700">{{ store?.bank_name || "BANK" }} {{ store?.bank_account }}</p>
-                                    <p class="font-bold text-black uppercase">A/N : {{ store?.bank_account_name || "FEBRYANA NURUDIN ARANIRI" }}</p>
-                                    <p v-if="sale.keterangan" class="text-[9px] text-slate-500 mt-2 normal-case italic">Ket: {{ sale.keterangan }}</p>
+                                <div
+                                    v-else-if="
+                                        sale.metode_pembayaran === 'transfer'
+                                    "
+                                >
+                                    <p
+                                        class="mb-1 text-xs font-black text-blue-800"
+                                    >
+                                        TRANSFER BANK
+                                    </p>
+                                    <p
+                                        class="mb-1 text-[11px] font-bold text-slate-700"
+                                    >
+                                        {{ store?.bank_name || "BANK" }}
+                                        {{ store?.bank_account }}
+                                    </p>
+                                    <p class="font-bold text-black uppercase">
+                                        A/N :
+                                        {{
+                                            store?.bank_account_name ||
+                                            "FEBRYANA NURUDIN ARANIRI"
+                                        }}
+                                    </p>
+                                    <p
+                                        v-if="sale.keterangan"
+                                        class="text-[9px] text-slate-500 mt-2 normal-case italic"
+                                    >
+                                        Ket: {{ sale.keterangan }}
+                                    </p>
                                 </div>
-                                <div v-else-if="sale.metode_pembayaran === 'qris'" class="flex flex-col items-center">
-                                    <p class="self-start mb-1 text-xs font-bold">QRIS</p>
-                                    <img v-if="store?.qris_image_url" :src="store.qris_image_url" class="object-contain w-20 h-20" />
-                                    <div v-else class="text-[8px] text-slate-400 italic">QRIS Belum Diunggah</div>
+                                <div
+                                    v-else-if="
+                                        sale.metode_pembayaran === 'qris'
+                                    "
+                                    class="flex flex-col items-center"
+                                >
+                                    <p
+                                        class="self-start mb-1 text-xs font-bold"
+                                    >
+                                        QRIS
+                                    </p>
+                                    <img
+                                        v-if="store?.qris_image_url"
+                                        :src="store.qris_image_url"
+                                        class="object-contain w-20 h-20"
+                                    />
+                                    <div
+                                        v-else
+                                        class="text-[8px] text-slate-400 italic"
+                                    >
+                                        QRIS Belum Diunggah
+                                    </div>
                                 </div>
                                 <div v-else>
-                                    <p class="mb-1 font-bold">{{ sale.metode_pembayaran }}</p>
-                                    <p v-if="sale.keterangan" class="text-slate-600 text-[10px]">{{ sale.keterangan }}</p>
+                                    <p class="mb-1 font-bold">
+                                        {{ sale.metode_pembayaran }}
+                                    </p>
+                                    <p
+                                        v-if="sale.keterangan"
+                                        class="text-slate-600 text-[10px]"
+                                    >
+                                        {{ sale.keterangan }}
+                                    </p>
                                 </div>
                             </div>
                         </td>
                         <td class="w-1/2 align-top">
                             <table class="w-full border-collapse">
                                 <tr class="border-b border-slate-100">
-                                    <td class="py-2 font-bold uppercase text-slate-500">Sub Total</td>
-                                    <td class="py-2 font-bold text-right">Rp.{{ formatCurrency(sale.subtotal) }},-</td>
-                                </tr>
-                                <tr class="border-b border-slate-100">
-                                    <td class="py-2 font-bold uppercase text-slate-500">Diskon</td>
-                                    <td class="py-2 font-bold text-right text-red-600">
-                                        <span v-if="sale.diskon_persen > 0">({{ sale.diskon_persen }}%)</span>
-                                        Rp.{{ formatCurrency(sale.diskon_nominal) }},-
+                                    <td
+                                        class="py-2 font-bold uppercase text-slate-500"
+                                    >
+                                        Sub Total
+                                    </td>
+                                    <td class="py-2 font-bold text-right">
+                                        <span class="currency-text">
+                                            Rp.{{ formatCurrency(sale.subtotal) }},-
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr class="border-b border-slate-100">
-                                    <td class="py-2 font-bold uppercase text-slate-500">
+                                    <td
+                                        class="py-2 font-bold uppercase text-slate-500"
+                                    >
+                                        Diskon
+                                    </td>
+                                    <td
+                                        class="py-2 font-bold text-right text-red-600"
+                                    >
+                                        <span v-if="sale.diskon_persen > 0"
+                                            >({{ sale.diskon_persen }}%)</span
+                                        >
+                                        <span class="currency-text">
+                                            Rp.{{
+                                                formatCurrency(
+                                                    sale.diskon_nominal
+                                                )
+                                            }},-
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td
+                                        class="py-2 font-bold uppercase text-slate-500"
+                                    >
                                         Pajak
-                                        <span v-if="sale.tax_persen > 0">({{ sale.tax_persen }}%)</span>
+                                        <span v-if="sale.tax_persen > 0"
+                                            >({{ sale.tax_persen }}%)</span
+                                        >
                                         <span v-else>(0%)</span>
                                     </td>
                                     <td class="py-2 font-bold text-right">
-                                        Rp.{{ formatCurrency(sale.tax_nominal) }},-
+                                        <span class="currency-text">
+                                            Rp.{{
+                                                formatCurrency(sale.tax_nominal)
+                                            }},-
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr class="border-t-2 border-black">
-                                    <td class="py-4 font-black uppercase text-[12px]">GRAND TOTAL</td>
-                                    <td class="py-4 text-right font-black text-[16px]">Rp.{{ formatCurrency(sale.grand_total) }},-</td>
+                                    <td
+                                        class="py-4 font-black uppercase text-[12px]"
+                                    >
+                                        GRAND TOTAL
+                                    </td>
+                                    <td
+                                        class="py-4 text-right font-black text-[16px]"
+                                    >
+                                        <span class="currency-text">
+                                            Rp.{{
+                                                formatCurrency(sale.grand_total)
+                                            }},-
+                                        </span>
+                                    </td>
                                 </tr>
                             </table>
                         </td>
@@ -345,14 +600,25 @@ function printInvoice() {
                     <tr>
                         <td class="pt-10 align-bottom">
                             <div>
-                                <p class="font-bold text-slate-400 text-[9px] tracking-widest mb-1">TERIMA KASIH ATAS</p>
-                                <p class="font-black text-[11px] uppercase">KEPERCAYAAN & PEMBELIAN ANDA</p>
+                                <p
+                                    class="font-bold text-slate-400 text-[9px] tracking-widest mb-1"
+                                >
+                                    TERIMA KASIH ATAS
+                                </p>
+                                <p class="font-black text-[11px] uppercase">
+                                    KEPERCAYAAN & PEMBELIAN ANDA
+                                </p>
                             </div>
                         </td>
                         <td class="pt-10 text-right align-bottom">
                             <div class="mb-0">
-                                <p class="font-signature text-[18pt] text-slate-800 leading-none whitespace-nowrap">
-                                    {{ store?.signature_name || "Febryana Nurudin Araniri" }}
+                                <p
+                                    class="font-signature text-[18pt] text-slate-800 leading-none whitespace-nowrap"
+                                >
+                                    {{
+                                        store?.signature_name ||
+                                        "Febryana Nurudin Araniri"
+                                    }}
                                 </p>
                             </div>
                         </td>
@@ -368,6 +634,12 @@ function printInvoice() {
 
 .font-signature {
     font-family: "Courgette", cursive !important;
+}
+
+.currency-text {
+    font-family:
+        ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif !important;
 }
 
 @media print {
