@@ -611,9 +611,9 @@ function printInvoice() {
                             </div>
                         </td>
                         <td class="pt-10 text-right align-bottom">
-                            <div class="mb-0">
+                            <div class="mb-0 signature-block">
                                 <p
-                                    class="font-signature text-[18pt] text-slate-800 leading-none whitespace-nowrap"
+                                    class="font-signature signature-text text-slate-800"
                                 >
                                     {{
                                         store?.signature_name ||
@@ -634,6 +634,32 @@ function printInvoice() {
 
 .font-signature {
     font-family: "Courgette", cursive !important;
+}
+
+.signature-block {
+    width: 100%;
+}
+
+.signature-text {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    font-size: 14pt;
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    text-align: right;
+}
+
+@media (min-width: 640px) {
+    .signature-text {
+        font-size: 18pt;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
 }
 
 .currency-text {
