@@ -110,11 +110,11 @@ function printInvoice() {
         class="min-h-screen bg-white print:min-h-0 print:bg-transparent"
     >
         <!-- Print Button (Hidden in Print) -->
-        <div class="max-w-200 mx-auto pt-4 px-4 print:hidden">
+        <div class="px-4 pt-4 mx-auto max-w-200 print:hidden">
             <div
                 class="flex items-center justify-between gap-3 p-3 mb-4 border bg-slate-50 rounded-xl border-slate-200"
             >
-                <p class="text-xs text-slate-500 font-mono uppercase">
+                <p class="font-mono text-xs uppercase text-slate-500">
                     {{
                         isMobile
                             ? "Scroll untuk lihat invoice"
@@ -269,17 +269,17 @@ function printInvoice() {
                     <thead>
                         <tr class="border-b bg-slate-50 border-slate-300">
                             <th
-                                class="border-r border-slate-300 p-2 text-center w-10 font-bold"
+                                class="w-10 p-2 font-bold text-center border-r border-slate-300"
                             >
                                 No
                             </th>
                             <th
-                                class="border-r border-slate-300 p-2 text-left w-70 font-bold"
+                                class="p-2 font-bold text-left border-r border-slate-300 w-70"
                             >
                                 Nama Produk
                             </th>
                             <th
-                                class="border-r border-slate-300 p-2 text-center w-20 font-bold"
+                                class="w-20 p-2 font-bold text-center border-r border-slate-300"
                             >
                                 Satuan
                             </th>
@@ -289,7 +289,7 @@ function printInvoice() {
                                 Harga
                             </th>
                             <th
-                                class="border-r border-slate-300 p-2 text-center w-15 font-bold"
+                                class="p-2 font-bold text-center border-r border-slate-300 w-15"
                             >
                                 Qty
                             </th>
@@ -535,7 +535,9 @@ function printInvoice() {
                                     </td>
                                     <td class="py-2 font-bold text-right">
                                         <span class="currency-text">
-                                            Rp.{{ formatCurrency(sale.subtotal) }},-
+                                            Rp.{{
+                                                formatCurrency(sale.subtotal)
+                                            }},-
                                         </span>
                                     </td>
                                 </tr>
@@ -573,7 +575,9 @@ function printInvoice() {
                                     <td class="py-2 font-bold text-right">
                                         <span class="currency-text">
                                             Rp.{{
-                                                formatCurrency(sale.tax_nominal)
+                                                formatCurrency(
+                                                    sale.tax_nominal
+                                                )
                                             }},-
                                         </span>
                                     </td>
@@ -589,7 +593,9 @@ function printInvoice() {
                                     >
                                         <span class="currency-text">
                                             Rp.{{
-                                                formatCurrency(sale.grand_total)
+                                                formatCurrency(
+                                                    sale.grand_total
+                                                )
                                             }},-
                                         </span>
                                     </td>
@@ -643,9 +649,8 @@ function printInvoice() {
 }
 
 .currency-text {
-    font-family:
-        ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif !important;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif !important;
 }
 
 @media print {
@@ -714,8 +719,11 @@ function printInvoice() {
     }
 
     #invoice-printable .signature-text {
-        font-size: 13pt !important;
+        display: block;
+        box-sizing: border-box;
         letter-spacing: -0.02em;
+        padding-right: 12px;
+        padding-bottom: 6px;
         white-space: nowrap !important;
     }
 
