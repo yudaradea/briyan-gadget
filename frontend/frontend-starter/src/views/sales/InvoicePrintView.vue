@@ -611,7 +611,7 @@ function printInvoice() {
                             </div>
                         </td>
                         <td class="pt-10 text-right align-bottom">
-                            <div class="mb-0 signature-block">
+                            <div class="mb-0">
                                 <p
                                     class="font-signature signature-text text-slate-800"
                                 >
@@ -636,30 +636,10 @@ function printInvoice() {
     font-family: "Courgette", cursive !important;
 }
 
-.signature-block {
-    width: 100%;
-}
-
 .signature-text {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    margin-left: auto;
-    font-size: 14pt;
-    line-height: 1.15;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    text-align: right;
-}
-
-@media (min-width: 640px) {
-    .signature-text {
-        font-size: 18pt;
-        white-space: nowrap;
-        overflow-wrap: normal;
-        word-break: normal;
-    }
+    font-size: 18pt;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .currency-text {
@@ -727,6 +707,16 @@ function printInvoice() {
     #invoice-printable h1 {
         font-family: "Space Mono", monospace !important;
         color: black !important;
+    }
+
+    #invoice-printable .font-signature {
+        font-family: "Courgette", cursive !important;
+    }
+
+    #invoice-printable .signature-text {
+        font-size: 13pt !important;
+        letter-spacing: -0.02em;
+        white-space: nowrap !important;
     }
 
     img {
