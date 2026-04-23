@@ -22,13 +22,14 @@ class DashboardRepository
 
         $user = Auth::user();
         $isKasir = $user->hasRole('kasir');
-        $userId = $isKasir ? $user->id : null;
+        $isPersonalScope = $user->hasAnyRole(['admin', 'kasir']);
+        $userId = $isPersonalScope ? $user->id : null;
 
-        $salesQuery = fn() => $isKasir
-            ? SalesTransaction::where('user_id', $userId)
+        $salesQuery = fn() => $isPersonalScope
+            ? SalesTransaction::query()->involvingUser($user)
             : SalesTransaction::query();
 
-        $purchaseQuery = fn() => $isKasir
+        $purchaseQuery = fn() => $isPersonalScope
             ? Purchase::where('user_id', $userId)
             : Purchase::query();
 
@@ -37,10 +38,10 @@ class DashboardRepository
         $salesYear  = (float) $salesQuery()->whereDate('tanggal', '>=', $yearStart)->sum('grand_total');
         $salesTotal = (float) $salesQuery()->sum('grand_total');
 
-        $hppToday = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', $today)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
-        $hppMonth = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $monthStart)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
-        $hppYear  = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $yearStart)->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
-        $hppTotal = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->when($isKasir, fn($q) => $q->where('user_id', $userId)))->sum('hpp_total');
+        $hppToday = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', $today)->when($isPersonalScope, fn($q) => $q->involvingUser($user)))->sum('hpp_total');
+        $hppMonth = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $monthStart)->when($isPersonalScope, fn($q) => $q->involvingUser($user)))->sum('hpp_total');
+        $hppYear  = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->whereDate('tanggal', '>=', $yearStart)->when($isPersonalScope, fn($q) => $q->involvingUser($user)))->sum('hpp_total');
+        $hppTotal = (float) SaleItem::whereHas('salesTransaction', fn($q) => $q->when($isPersonalScope, fn($q) => $q->involvingUser($user)))->sum('hpp_total');
 
         $purchaseToday = (float) $purchaseQuery()->whereDate('tanggal', $today)->sum('total');
         $purchaseMonth = (float) $purchaseQuery()->whereDate('tanggal', '>=', $monthStart)->sum('total');
@@ -66,7 +67,10 @@ class DashboardRepository
             ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
             ->selectRaw('DATE(sales_transactions.tanggal) as tgl, SUM(sale_items.hpp_total) as total')
             ->whereDate('sales_transactions.tanggal', '>=', Carbon::today()->subDays(13))
-            ->when($isKasir, fn($q) => $q->where('sales_transactions.user_id', $userId))
+            ->when($isPersonalScope, fn($q) => $q->where(function ($subQuery) use ($userId) {
+                $subQuery->where('sales_transactions.user_id', $userId)
+                    ->orWhere('sales_transactions.sales_rep_id', $userId);
+            }))
             ->groupBy('tgl')
             ->pluck('total', 'tgl');
 
@@ -96,7 +100,10 @@ class DashboardRepository
             ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
             ->selectRaw('MONTH(sales_transactions.tanggal) as bulan, SUM(sale_items.hpp_total) as total')
             ->whereYear('sales_transactions.tanggal', now()->year)
-            ->when($isKasir, fn($q) => $q->where('sales_transactions.user_id', $userId))
+            ->when($isPersonalScope, fn($q) => $q->where(function ($subQuery) use ($userId) {
+                $subQuery->where('sales_transactions.user_id', $userId)
+                    ->orWhere('sales_transactions.sales_rep_id', $userId);
+            }))
             ->groupBy('bulan')
             ->pluck('total', 'bulan');
 
@@ -106,6 +113,7 @@ class DashboardRepository
 
         $data = [
             'is_kasir' => $isKasir,
+            'is_personal_scope' => $isPersonalScope,
             'current_user_name' => $user?->name,
             'cards' => [
                 'sales' => [
@@ -127,9 +135,9 @@ class DashboardRepository
                     'total' => $purchaseTotal,
                 ],
                 'summary' => [
-                    'purchase_invoices' => Purchase::count(),
+                    'purchase_invoices' => $purchaseQuery()->count(),
                     'available_products' => Product::where('stok', '>', 0)->count(),
-                    'sales_invoices' => SalesTransaction::count(),
+                    'sales_invoices' => $salesQuery()->count(),
                     'kasir_users' => User::role('kasir')->count(),
                     'suppliers' => Supplier::count(),
                 ],

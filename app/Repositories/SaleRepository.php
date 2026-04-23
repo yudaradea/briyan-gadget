@@ -33,9 +33,9 @@ class SaleRepository
             ->search($search)
             ->dateRange($startDate, $endDate)
             ->tipe($tipe)
-            ->user($userId)
-            ->when($isKasir, fn($q) => $q->where('user_id', $authUser->id))
-            ->salesRep($salesRepId)
+            ->when($isKasir, fn($q) => $q->involvingUser($authUser))
+            ->when(!$isKasir, fn($q) => $q->user($userId))
+            ->when(!$isKasir, fn($q) => $q->salesRep($salesRepId))
             ->latest('tanggal')
             ->latest('created_at');
 
@@ -61,7 +61,7 @@ class SaleRepository
 
         $baseQuery = $this->model->newQuery()
             ->when($tipe, fn($q) => $q->where('tipe', $tipe))
-            ->when($isKasir, fn($q) => $q->where('user_id', $authUser->id));
+            ->when($isKasir, fn($q) => $q->involvingUser($authUser));
 
         $stats = [
             'today' => (float) (clone $baseQuery)->where('tanggal', '>=', $today)->sum('grand_total'),
@@ -91,7 +91,7 @@ class SaleRepository
             'items.product.masterProduct.brand',
             'items.product.unit',
             'items.product.grade',
-        ])->when($isKasir, fn($q) => $q->where('user_id', $authUser->id))
+        ])->when($isKasir, fn($q) => $q->involvingUser($authUser))
             ->findOrFail($id);
 
         return ResponseHelper::success(new SaleResource($sale), 'Sale retrieved successfully');

@@ -37,16 +37,21 @@ const roleBadge = computed(() => {
     if (authStore.isSuperAdmin)
         return {
             label: "Super Admin",
-            class: "bg-purple-100 text-purple-700 border-purple-200",
+            class: "bg-purple-100 text-purple-700 border-purple-200 px-2 py-0.5 rounded-xl",
+        };
+    if (authStore.isOwner)
+        return {
+            label: "Owner",
+            class: "bg-amber-100 text-amber-700 border-amber-200 px-2 py-0.5 rounded-xl",
         };
     if (authStore.isAdmin)
         return {
             label: "Admin",
-            class: "bg-blue-100 text-blue-700 border-blue-200",
+            class: "bg-blue-100 text-blue-700 border-blue-200 px-2 py-0.5 rounded-xl",
         };
     return {
         label: "Kasir",
-        class: "bg-green-100 text-green-700 border-green-200",
+        class: "bg-green-100 text-green-700 border-green-200 px-2 py-0.5 rounded-xl",
     };
 });
 
@@ -553,7 +558,8 @@ onUnmounted(() => {
                                     {{ authStore.user?.name }}
                                 </p>
                                 <span
-                                    class="text-[10px] text-slate-500 font-medium"
+                                    class="text-[11px] font-medium"
+                                    :class="roleBadge.class"
                                     >{{ roleBadge.label }}</span
                                 >
                             </div>

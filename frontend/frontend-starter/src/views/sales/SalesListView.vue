@@ -15,6 +15,14 @@ const route = useRoute();
 const isServiceMode = computed(() => route.name === "service-transaction-list");
 const isKasir = computed(() => authStore.isKasir);
 const kasirName = computed(() => authStore.user?.name || "Kasir");
+const ownSalesRep = computed(() =>
+    authStore.user?.id
+        ? {
+              id: authStore.user.id,
+              nama: authStore.user.name || "Sales",
+          }
+        : null,
+);
 const transactionType = computed(() =>
     isServiceMode.value ? "service" : "penjualan",
 );
@@ -42,6 +50,7 @@ const salesReps = ref([]);
 onMounted(() => {
     if (isKasir.value && authStore.user?.id) {
         filters.value.user_id = authStore.user.id;
+        filters.value.sales_rep_id = authStore.user.id;
     }
     fetchSales();
     fetchStats();
@@ -50,21 +59,20 @@ onMounted(() => {
 
 const loadFilterOptions = async () => {
     try {
-        const requests = [];
-        if (!isKasir.value) {
-            requests.push(api.get("/user/all?role=kasir"));
+        if (isKasir.value) {
+            users.value = [];
+            salesReps.value = ownSalesRep.value ? [ownSalesRep.value] : [];
+            return;
         }
+
+        const requests = [api.get("/user/all?role=kasir")];
         if (!isServiceMode.value) {
             requests.push(api.get("/sales-reps/all"));
         }
-        const responses = await Promise.all(requests);
-        if (!isKasir.value) {
-            users.value = responses[0]?.data?.data || [];
-            salesReps.value = responses[1]?.data?.data || [];
-        } else {
-            users.value = [];
-            salesReps.value = responses[0]?.data?.data || [];
-        }
+
+        const [usersResponse, salesRepsResponse] = await Promise.all(requests);
+        users.value = usersResponse?.data?.data || [];
+        salesReps.value = salesRepsResponse?.data?.data || [];
     } catch (e) {
         console.error("Gagal memuat opsi filter", e);
     }
@@ -96,7 +104,9 @@ const fetchSales = async (page = 1) => {
                     : filters.value.user_id,
                 sales_rep_id: isServiceMode.value
                     ? undefined
-                    : filters.value.sales_rep_id,
+                    : isKasir.value
+                      ? undefined
+                      : filters.value.sales_rep_id,
                 tipe: transactionType.value,
             },
         });
@@ -123,7 +133,8 @@ watch(searchQuery, () => {
 });
 
 watch(transactionType, () => {
-    filters.value.sales_rep_id = "";
+    filters.value.sales_rep_id =
+        isKasir.value && authStore.user?.id ? authStore.user.id : "";
     fetchSales(1);
     fetchStats();
     loadFilterOptions();
@@ -258,7 +269,9 @@ async function saveEditModal() {
         editModalData.value.show = false;
         toast.success("Harga modal berhasil diubah");
     } catch (err) {
-        toast.error(err.response?.data?.message || "Gagal mengubah harga modal");
+        toast.error(
+            err.response?.data?.message || "Gagal mengubah harga modal",
+        );
     } finally {
         savingEditModal.value = false;
     }
@@ -276,7 +289,9 @@ function servicePartsSummary(sale) {
 
 <template>
     <div class="px-4 py-6 mx-auto space-y-6 md:px-8">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <h1 class="text-2xl font-bold text-slate-800">
                 {{
                     isServiceMode
@@ -429,7 +444,6 @@ function servicePartsSummary(sale) {
                             >Mulai</label
                         >
                         <DateInput
-                            
                             v-model="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
                         />
@@ -440,7 +454,6 @@ function servicePartsSummary(sale) {
                             >Sampai</label
                         >
                         <DateInput
-                            
                             v-model="filters.end_date"
                             :min="filters.start_date"
                             class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
@@ -487,7 +500,10 @@ function servicePartsSummary(sale) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1" v-if="!isServiceMode">
+                    <div
+                        class="flex flex-col gap-1 col-span-2 md:col-span-1"
+                        v-if="!isServiceMode"
+                    >
                         <label
                             class="text-[10px] font-bold text-slate-400 uppercase"
                             >Sales</label
@@ -495,9 +511,12 @@ function servicePartsSummary(sale) {
                         <div class="relative">
                             <select
                                 v-model="filters.sales_rep_id"
-                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[140px] pr-8"
+                                :disabled="isKasir"
+                                class="appearance-none w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white min-w-[140px] pr-8 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                             >
-                                <option value="">Semua Sales</option>
+                                <option v-if="!isKasir" value="">
+                                    Semua Sales
+                                </option>
                                 <option
                                     v-for="s in salesReps"
                                     :key="s.id"
@@ -525,22 +544,39 @@ function servicePartsSummary(sale) {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block">Reset</label>
+                    <div
+                        class="flex flex-col gap-1 col-span-2 md:col-span-1 lg:justify-end"
+                    >
+                        <label
+                            class="text-[10px] font-bold text-slate-400 uppercase invisible hidden md:block"
+                            >Reset</label
+                        >
                         <button
                             @click="
                                 filters = {
                                     start_date: '',
                                     end_date: '',
                                     user_id: isKasir ? authStore.user?.id : '',
-                                    sales_rep_id: '',
+                                    sales_rep_id: isKasir
+                                        ? authStore.user?.id
+                                        : '',
                                 }
                             "
                             class="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50 border border-slate-200 bg-white rounded-lg transition md:p-2 md:border-0 md:bg-transparent md:rounded-none md:justify-start"
                             title="Reset Filter"
                         >
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <svg
+                                class="w-4 h-4 shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
                             </svg>
                             <span class="md:hidden">Reset Filter</span>
                         </button>
@@ -1053,7 +1089,10 @@ function servicePartsSummary(sale) {
                                         Qty
                                     </th>
                                     <th
-                                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                                        v-if="
+                                            authStore.isSuperAdmin ||
+                                            authStore.isAdmin
+                                        "
                                         class="px-4 py-3 text-xs tracking-wider text-right uppercase"
                                     >
                                         Modal
@@ -1068,7 +1107,12 @@ function servicePartsSummary(sale) {
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="detailLoading">
                                     <td
-                                        :colspan="(authStore.isSuperAdmin || authStore.isAdmin) ? 6 : 5"
+                                        :colspan="
+                                            authStore.isSuperAdmin ||
+                                            authStore.isAdmin
+                                                ? 6
+                                                : 5
+                                        "
                                         class="py-8 italic text-center text-slate-400"
                                     >
                                         <div
@@ -1088,7 +1132,12 @@ function servicePartsSummary(sale) {
                                     "
                                 >
                                     <td
-                                        :colspan="(authStore.isSuperAdmin || authStore.isAdmin) ? 6 : 5"
+                                        :colspan="
+                                            authStore.isSuperAdmin ||
+                                            authStore.isAdmin
+                                                ? 6
+                                                : 5
+                                        "
                                         class="py-8 italic text-center text-slate-400"
                                     >
                                         {{
@@ -1143,7 +1192,10 @@ function servicePartsSummary(sale) {
                                         {{ item.qty }}
                                     </td>
                                     <td
-                                        v-if="authStore.isSuperAdmin || authStore.isAdmin"
+                                        v-if="
+                                            authStore.isSuperAdmin ||
+                                            authStore.isAdmin
+                                        "
                                         class="px-4 py-3 text-right align-top whitespace-nowrap"
                                     >
                                         <a
@@ -1151,7 +1203,10 @@ function servicePartsSummary(sale) {
                                             @click="openEditModalItem(item)"
                                             class="font-semibold text-amber-600 hover:text-amber-700 hover:underline underline-offset-2 cursor-pointer"
                                             title="Klik untuk ubah harga modal"
-                                        >{{ formatCurrency(item.hpp_total) }}</a>
+                                            >{{
+                                                formatCurrency(item.hpp_total)
+                                            }}</a
+                                        >
                                     </td>
                                     <td
                                         class="px-4 py-3 font-bold text-right text-blue-600 align-top whitespace-nowrap"
@@ -1343,37 +1398,71 @@ function servicePartsSummary(sale) {
             style="z-index: 9999"
             @click.self="editModalData.show = false"
         >
-            <div class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl">
-                <div class="flex items-center justify-between px-4 py-3 text-white bg-amber-600">
+            <div
+                class="w-full max-w-sm overflow-hidden bg-white rounded-xl shadow-2xl"
+            >
+                <div
+                    class="flex items-center justify-between px-4 py-3 text-white bg-amber-600"
+                >
                     <h3 class="text-sm font-bold">Update Harga Modal</h3>
-                    <button @click="editModalData.show = false" class="text-white hover:text-rose-300">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <button
+                        @click="editModalData.show = false"
+                        class="text-white hover:text-rose-300"
+                    >
+                        <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
                 </div>
                 <div class="px-5 py-5 flex flex-col gap-3">
                     <div class="text-sm text-slate-600">
-                        <span class="font-semibold text-slate-800">{{ editModalData.item?.product?.nama }}</span>
+                        <span class="font-semibold text-slate-800">{{
+                            editModalData.item?.product?.nama
+                        }}</span>
                     </div>
                     <div class="text-xs text-slate-500">
-                        Harga lama: <span class="font-bold text-amber-600">{{ editModalData.oldValueDisplay }}</span>
+                        Harga lama:
+                        <span class="font-bold text-amber-600">{{
+                            editModalData.oldValueDisplay
+                        }}</span>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Harga Modal Baru</label>
-                        <CurrencyInput v-model="editModalData.newValue" :allowThousands="true" />
+                        <label
+                            class="block text-sm font-bold text-slate-700 mb-1.5"
+                            >Harga Modal Baru</label
+                        >
+                        <CurrencyInput
+                            v-model="editModalData.newValue"
+                            :allowThousands="true"
+                        />
                     </div>
                 </div>
-                <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50">
+                <div
+                    class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50"
+                >
                     <button
                         @click="editModalData.show = false"
                         class="px-4 py-1.5 text-sm font-semibold text-slate-600 bg-slate-200 hover:bg-slate-300 rounded transition"
-                    >Batal</button>
+                    >
+                        Batal
+                    </button>
                     <button
                         @click="saveEditModal"
                         :disabled="savingEditModal"
                         class="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded transition disabled:opacity-50"
-                    >{{ savingEditModal ? "Menyimpan..." : "Simpan" }}</button>
+                    >
+                        {{ savingEditModal ? "Menyimpan..." : "Simpan" }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -1389,7 +1478,3 @@ function servicePartsSummary(sale) {
         />
     </div>
 </template>
-
-
-
-

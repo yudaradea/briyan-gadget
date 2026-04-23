@@ -7,6 +7,11 @@ const toast = useToast();
 const loading = ref(true);
 const summary = ref(null);
 const isKasir = computed(() => Boolean(summary.value?.is_kasir));
+const isPersonalScope = computed(() =>
+    summary.value?.is_personal_scope !== undefined
+        ? Boolean(summary.value?.is_personal_scope)
+        : isKasir.value,
+);
 const kasirName = computed(() => summary.value?.current_user_name || "Kasir");
 
 const colors = {
@@ -97,9 +102,9 @@ function maxValue(rows, includeProfit = true, includePurchases = true) {
             Math.max(
                 r.sales || 0,
                 includePurchases ? r.purchases || 0 : 0,
-                includeProfit ? r.profit || 0 : 0
-            )
-        )
+                includeProfit ? r.profit || 0 : 0,
+            ),
+        ),
     );
 }
 
@@ -108,12 +113,20 @@ const chartsData = computed(() => [
     {
         title: "Grafik Penjualan Perhari",
         rows: dailyRows.value,
-        max: maxValue(dailyRows.value, !isKasir.value, !isKasir.value),
+        max: maxValue(
+            dailyRows.value,
+            !isPersonalScope.value,
+            !isPersonalScope.value,
+        ),
     },
     {
         title: `Grafik Bulanan (${new Date().getFullYear()})`,
         rows: monthlyRows.value,
-        max: maxValue(monthlyRows.value, !isKasir.value, !isKasir.value),
+        max: maxValue(
+            monthlyRows.value,
+            !isPersonalScope.value,
+            !isPersonalScope.value,
+        ),
     },
 ]);
 
@@ -189,14 +202,14 @@ onMounted(fetchSummary);
                 <div
                     v-for="(section, idx) in [
                         {
-                            title: isKasir
+                            title: isPersonalScope
                                 ? `Penjualan ${kasirName}`
                                 : 'Penjualan',
                             cards: salesCards,
                             color: colors.sales,
                         },
                     ].concat(
-                        isKasir
+                        isPersonalScope
                             ? []
                             : [
                                   {
@@ -209,7 +222,7 @@ onMounted(fetchSummary);
                                       cards: purchaseCards,
                                       color: colors.purchases,
                                   },
-                              ]
+                              ],
                     )"
                     :key="idx"
                     class="space-y-4"
@@ -243,7 +256,7 @@ onMounted(fetchSummary);
                     </div>
                 </div>
 
-                <div v-if="!isKasir" class="space-y-4">
+                <div v-if="!isPersonalScope" class="space-y-4">
                     <h2
                         class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400"
                     >
@@ -298,7 +311,7 @@ onMounted(fetchSummary);
                                     Penjualan
                                 </span>
                                 <span
-                                    v-if="!isKasir"
+                                    v-if="!isPersonalScope"
                                     class="flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-100 px-3 py-1.5 text-amber-600"
                                 >
                                     <span
@@ -307,7 +320,7 @@ onMounted(fetchSummary);
                                     Laba
                                 </span>
                                 <span
-                                    v-if="!isKasir"
+                                    v-if="!isPersonalScope"
                                     class="flex items-center gap-1.5 rounded-full bg-slate-50 border border-slate-100 px-3 py-1.5 text-rose-600"
                                 >
                                     <span
@@ -367,43 +380,43 @@ onMounted(fetchSummary);
                                                         :style="{
                                                             height: barHeight(
                                                                 item.sales,
-                                                                chart.max
+                                                                chart.max,
                                                             ),
                                                         }"
                                                         :title="`Penjualan: ${currency.format(
-                                                            item.sales
+                                                            item.sales,
                                                         )}`"
                                                     ></div>
                                                     <div
                                                         v-if="
-                                                            !isKasir &&
+                                                            !isPersonalScope &&
                                                             item.profit > 0
                                                         "
                                                         class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-amber-500 to-amber-300 transition-opacity hover:opacity-80 cursor-pointer"
                                                         :style="{
                                                             height: barHeight(
                                                                 item.profit,
-                                                                chart.max
+                                                                chart.max,
                                                             ),
                                                         }"
                                                         :title="`Laba: ${currency.format(
-                                                            item.profit
+                                                            item.profit,
                                                         )}`"
                                                     ></div>
                                                     <div
                                                         v-if="
-                                                            !isKasir &&
+                                                            !isPersonalScope &&
                                                             item.purchases > 0
                                                         "
                                                         class="w-full max-w-[14px] rounded-t-sm bg-gradient-to-t from-rose-600 to-rose-400 transition-opacity hover:opacity-80 cursor-pointer"
                                                         :style="{
                                                             height: barHeight(
                                                                 item.purchases,
-                                                                chart.max
+                                                                chart.max,
                                                             ),
                                                         }"
                                                         :title="`Pembelian: ${currency.format(
-                                                            item.purchases
+                                                            item.purchases,
                                                         )}`"
                                                     ></div>
                                                 </div>

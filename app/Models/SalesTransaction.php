@@ -79,6 +79,18 @@ class SalesTransaction extends Model
         return $query;
     }
 
+    public function scopeInvolvingUser($query, ?User $user)
+    {
+        if (!$user) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+                ->orWhere('sales_rep_id', $user->id);
+        });
+    }
+
     // === Relationships ===
 
     public function user()

@@ -12,7 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('UPDATE products p JOIN master_products mp ON mp.id = p.master_product_id SET p.unit_id = mp.unit_id WHERE p.unit_id IS NULL');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('UPDATE products SET unit_id = (SELECT unit_id FROM master_products WHERE master_products.id = products.master_product_id) WHERE unit_id IS NULL');
+        } else {
+            DB::statement('UPDATE products p JOIN master_products mp ON mp.id = p.master_product_id SET p.unit_id = mp.unit_id WHERE p.unit_id IS NULL');
+        }
 
         Schema::table('master_products', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
