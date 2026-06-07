@@ -15,6 +15,7 @@ const route = useRoute();
 
 const editId = ref(route.query.edit_id || null);
 const isEditing = computed(() => !!editId.value);
+const canViewHargaModal = computed(() => authStore.isOwner);
 
 const cart = ref([]);
 const taxOptions = ref([]);
@@ -686,7 +687,7 @@ function cancelTransaction() {
                         />
                     </div>
 
-                    <!-- <div class="flex flex-col gap-1">
+                    <div v-if="canViewHargaModal" class="flex flex-col gap-1">
                         <label
                             class="text-[11px] font-extrabold uppercase text-slate-600"
                             >Modal</label
@@ -697,7 +698,7 @@ function cancelTransaction() {
                             readonly
                             class="px-3 py-2 text-sm font-bold border rounded-sm outline-none cursor-not-allowed bg-slate-100 border-slate-200 text-slate-700"
                         />
-                    </div> -->
+                    </div>
 
                     <div class="flex flex-col gap-1">
                         <label
