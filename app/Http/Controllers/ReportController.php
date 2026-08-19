@@ -216,7 +216,7 @@ class ReportController extends Controller implements HasMiddleware
             ->join('sales_transactions', 'sale_items.sales_transaction_id', '=', 'sales_transactions.id')
             ->whereNull('sales_transactions.deleted_at')
             ->with([
-                'salesTransaction:id,no_invoice,tanggal,pelanggan,user_id,sales_rep_id',
+                'salesTransaction:id,no_invoice,tanggal,pelanggan,user_id,sales_rep_id,subtotal,diskon_persen,diskon_nominal',
                 'salesTransaction.user:id,name',
                 'salesTransaction.salesRep:id,nama',
                 'product:id,barcode,imei1,imei2,master_product_id,grade_id,unit_id',
@@ -250,8 +250,11 @@ class ReportController extends Controller implements HasMiddleware
                         ->orWhere('imei2', 'like', '%' . $validated['search'] . '%'));
             }));
 
-        $totalModal     = (float) (clone $summaryBase)->sum('sale_items.hpp_total');
-        $totalHargaJual = (float) (clone $summaryBase)->sum('sale_items.subtotal');
+        $summaryItems = (clone $summaryBase)
+            ->with('salesTransaction:id,subtotal,diskon_persen,diskon_nominal')
+            ->get();
+        $totalModal     = (float) $summaryItems->sum('hpp_total');
+        $totalHargaJual = (float) $summaryItems->sum(fn($item) => $this->resolveDiscountedSubtotal($item));
 
         $summary = [
             'total_modal'      => $totalModal,
@@ -340,6 +343,7 @@ class ReportController extends Controller implements HasMiddleware
             'total_stok'       => $totalStok,
             'total_modal'      => $totalModal,
             'total_harga_jual' => $totalHJ,
+            'total_laba'       => $totalHJ - $totalModal,
         ];
 
         if (($validated['export'] ?? null) === 'excel') {
@@ -376,7 +380,7 @@ class ReportController extends Controller implements HasMiddleware
     private function formatSaleDetailRow(SaleItem $item): array
     {
         $modal     = (float) $item->hpp_total;
-        $hargaJual = (float) $item->subtotal;
+        $hargaJual = $this->resolveDiscountedSubtotal($item);
         return [
             'id'                   => $item->id,
             'sales_transaction_id' => $item->sales_transaction_id,
@@ -416,8 +420,31 @@ class ReportController extends Controller implements HasMiddleware
             'stok'        => (int) ($item->product?->stok ?? 0),
             'modal'       => (float) $item->harga_beli,
             'harga_jual'  => $hargaJual,
+            'laba'        => $hargaJual - (float) $item->harga_beli,
             'is_sold'     => $item->product?->saleItems?->isNotEmpty() ?? false,
         ];
+    }
+
+    private function resolveDiscountedSubtotal(SaleItem $item): float
+    {
+        $subtotal = (float) $item->subtotal;
+        $transaction = $item->salesTransaction;
+
+        if (!$transaction || $subtotal == 0) {
+            return $subtotal;
+        }
+
+        $transactionSubtotal = (float) $transaction->subtotal;
+        if ($transactionSubtotal == 0) {
+            return $subtotal;
+        }
+
+        $discount = (float) $transaction->diskon_nominal;
+        if ((float) $transaction->diskon_persen > 0) {
+            $discount = $transactionSubtotal * ((float) $transaction->diskon_persen / 100);
+        }
+
+        return $subtotal - ($discount * ($subtotal / $transactionSubtotal));
     }
 
     private function exportSalesDetailCsv($rows, array $summary)
@@ -426,7 +453,7 @@ class ReportController extends Controller implements HasMiddleware
         $data = [];
         foreach ($rows as $item) {
             $modal     = (float) ($item->hpp_total ?? 0);
-            $hargaJual = (float) ($item->subtotal ?? 0);
+            $hargaJual = $this->resolveDiscountedSubtotal($item);
             $data[] = [
                 $item->salesTransaction?->no_invoice,
                 $item->product?->barcode,
@@ -453,7 +480,7 @@ class ReportController extends Controller implements HasMiddleware
 
     private function exportPurchasesDetailCsv($rows, array $summary)
     {
-        $headings = ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual'];
+        $headings = ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual', 'Laba'];
         $data = [];
         foreach ($rows as $item) {
             $hargaJual = $this->resolveHargaJual($item->product);
@@ -470,10 +497,11 @@ class ReportController extends Controller implements HasMiddleware
                 $item->product?->imei2,
                 (float) $item->harga_beli,
                 $hargaJual,
+                $hargaJual - (float) $item->harga_beli,
             ];
         }
         $data[] = [];
-        $data[] = ['TOTAL', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual']];
+        $data[] = ['TOTAL', '', '', '', '', '', '', '', '', '', $summary['total_modal'], $summary['total_harga_jual'], $summary['total_laba']];
 
         return Excel::download(new SimpleArrayExport($headings, $data), 'rekap-pembelian-detail.xlsx');
     }
@@ -508,7 +536,7 @@ class ReportController extends Controller implements HasMiddleware
             $dateLabel = ' | ' . ($filters['start_date'] ?? '') . ' s/d ' . ($filters['end_date'] ?? '');
         }
 
-        $displayKeys = ['no_invoice', 'supplier', 'kode', 'tanggal', 'nama_produk', 'merk', 'grade', 'satuan', 'imei1', 'imei2', 'modal', 'harga_jual'];
+        $displayKeys = ['no_invoice', 'supplier', 'kode', 'tanggal', 'nama_produk', 'merk', 'grade', 'satuan', 'imei1', 'imei2', 'modal', 'harga_jual', 'laba'];
         $displayRows = $rows->map(function ($item) use ($displayKeys) {
             $row = $this->formatPurchaseDetailRow($item);
             return array_map(fn($k) => $row[$k] ?? '-', $displayKeys);
@@ -516,9 +544,9 @@ class ReportController extends Controller implements HasMiddleware
 
         $html = $this->buildDetailHtml(
             'Rekap Pembelian Detail' . $dateLabel,
-            ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual'],
+            ['No Invoice', 'Supplier', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Modal', 'Harga Jual', 'Laba'],
             $displayRows,
-            [number_format($summary['total_modal'], 0, ',', '.'), number_format($summary['total_harga_jual'], 0, ',', '.')]
+            [number_format($summary['total_modal'], 0, ',', '.'), number_format($summary['total_harga_jual'], 0, ',', '.'), number_format($summary['total_laba'], 0, ',', '.')]
         );
 
         return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);

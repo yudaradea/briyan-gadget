@@ -25,7 +25,7 @@ const pagination = ref({
     total: 0,
 });
 const perPage = ref(25);
-const summary = ref({ total_stok: 0, total_modal: 0, total_harga_jual: 0 });
+const summary = ref({ total_stok: 0, total_modal: 0, total_harga_jual: 0, total_laba: 0 });
 
 function formatCurrency(v) {
     return "Rp." + Number(v || 0).toLocaleString("id-ID") + ",-";
@@ -65,6 +65,7 @@ async function fetchData(page = 1) {
             total_stok: 0,
             total_modal: 0,
             total_harga_jual: 0,
+            total_laba: 0,
         };
         pagination.value = {
             current_page: d.current_page,
@@ -169,6 +170,7 @@ function buildPdfHtml(dataRows, summ) {
             <td>${row.imei2 || "-"}</td>
             <td style="text-align:right;">${formatCurrency(row.modal)}</td>
             <td style="text-align:right;">${formatCurrency(row.harga_jual)}</td>
+            <td style="text-align:right;">${formatCurrency(row.laba)}</td>
         </tr>`).join("");
 
     return `<html><head><title>${title}</title><style>
@@ -189,12 +191,14 @@ function buildPdfHtml(dataRows, summ) {
                 <th>IMEI 1</th><th>IMEI 2</th>
                 <th style="text-align:right;">Modal</th>
                 <th style="text-align:right;">Harga Jual</th>
+                <th style="text-align:right;">Laba</th>
             </tr></thead>
             <tbody>${bodyRows}</tbody>
             <tfoot><tr>
                 <td colspan="11" style="text-align:right;">TOTAL</td>
                 <td style="text-align:right;">${formatCurrency(summ.total_modal || 0)}</td>
                 <td style="text-align:right;">${formatCurrency(summ.total_harga_jual || 0)}</td>
+                <td style="text-align:right;">${formatCurrency(summ.total_laba || 0)}</td>
             </tr></tfoot>
         </table>
     </body></html>`;
@@ -292,7 +296,7 @@ onMounted(() => {
         </div>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div
                 class="relative p-4 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 shadow-slate-500/20"
             >
@@ -327,6 +331,18 @@ onMounted(() => {
                 </div>
                 <div class="mt-1 text-xl font-black">
                     {{ formatCurrency(summary.total_harga_jual) }}
+                </div>
+            </div>
+            <div
+                class="relative p-4 overflow-hidden text-white shadow-lg rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-rose-600 shadow-orange-500/20"
+            >
+                <div
+                    class="text-xs font-semibold tracking-wider uppercase opacity-80"
+                >
+                    Total Laba
+                </div>
+                <div class="mt-1 text-xl font-black">
+                    {{ formatCurrency(summary.total_laba) }}
                 </div>
             </div>
         </div>
@@ -472,12 +488,13 @@ onMounted(() => {
                             <th class="px-2 py-2.5 text-right w-[8%]">
                                 Harga Jual
                             </th>
+                            <th class="px-2 py-2.5 text-right w-[8%]">Laba</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <tr v-if="isLoading">
                             <td
-                                colspan="13"
+                                colspan="11"
                                 class="py-16 text-center text-slate-400"
                             >
                                 Memuat data...
@@ -485,7 +502,7 @@ onMounted(() => {
                         </tr>
                         <tr v-else-if="rows.length === 0">
                             <td
-                                colspan="13"
+                                colspan="14"
                                 class="py-16 text-center text-slate-400"
                             >
                                 Tidak ada data
@@ -566,6 +583,12 @@ onMounted(() => {
                             >
                                 {{ formatCurrency(row.harga_jual) }}
                             </td>
+                            <td
+                                class="px-2 py-2 font-black text-right whitespace-nowrap"
+                                :class="row.laba >= 0 ? 'text-emerald-600' : 'text-rose-600'"
+                            >
+                                {{ formatCurrency(row.laba) }}
+                            </td>
                         </tr>
                     </tbody>
                     <tfoot
@@ -588,6 +611,12 @@ onMounted(() => {
                                 class="px-2 py-2 font-black text-right text-emerald-700 whitespace-nowrap"
                             >
                                 {{ formatCurrency(summary.total_harga_jual) }}
+                            </td>
+                            <td
+                                class="px-2 py-2 font-black text-right whitespace-nowrap"
+                                :class="summary.total_laba >= 0 ? 'text-emerald-700' : 'text-rose-700'"
+                            >
+                                {{ formatCurrency(summary.total_laba) }}
                             </td>
                         </tr>
                     </tfoot>
