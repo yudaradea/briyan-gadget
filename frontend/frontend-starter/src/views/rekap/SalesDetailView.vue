@@ -25,7 +25,7 @@ const perPage = ref(25);
 const summary = ref({ total_modal: 0, total_harga_jual: 0, total_laba: 0 });
 
 function formatCurrency(v) {
-    return "Rp." + Number(v || 0).toLocaleString("id-ID") + ",-";
+    return "Rp." + Math.round(Number(v || 0)).toLocaleString("id-ID") + ",-";
 }
 function formatDate(d) {
     if (!d) return "-";

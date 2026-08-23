@@ -444,7 +444,7 @@ class ReportController extends Controller implements HasMiddleware
             $discount = $transactionSubtotal * ((float) $transaction->diskon_persen / 100);
         }
 
-        return $subtotal - ($discount * ($subtotal / $transactionSubtotal));
+        return round($subtotal - ($discount * ($subtotal / $transactionSubtotal)));
     }
 
     private function exportSalesDetailCsv($rows, array $summary)
