@@ -253,8 +253,10 @@ class ReportController extends Controller implements HasMiddleware
         $summaryItems = (clone $summaryBase)
             ->with('salesTransaction:id,subtotal,diskon_persen,diskon_nominal')
             ->get();
+        $summaryDiscountMap = $this->buildDiscountedSubtotalMap($summaryItems);
+
         $totalModal     = (float) $summaryItems->sum('hpp_total');
-        $totalHargaJual = (float) $summaryItems->sum(fn($item) => $this->resolveDiscountedSubtotal($item));
+        $totalHargaJual = (float) $summaryItems->sum(fn($item) => $summaryDiscountMap[$item->id] ?? $this->resolveDiscountedSubtotal($item));
 
         $summary = [
             'total_modal'      => $totalModal,
@@ -271,7 +273,8 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         $data = $query->paginate($perPage);
-        $rows = $data->getCollection()->map(fn($item) => $this->formatSaleDetailRow($item))->values();
+        $pageDiscountMap = $this->resolveDiscountedSubtotalMapForItems($data->getCollection());
+        $rows = $data->getCollection()->map(fn($item) => $this->formatSaleDetailRow($item, $pageDiscountMap))->values();
         $data->setCollection($rows);
 
         return ResponseHelper::success([
@@ -377,10 +380,68 @@ class ReportController extends Controller implements HasMiddleware
         return $saleItem ? (float) $saleItem->harga_satuan : (float) $product->harga_jual;
     }
 
-    private function formatSaleDetailRow(SaleItem $item): array
+    private function buildDiscountedSubtotalMap($saleItems): array
+    {
+        $map = [];
+        $grouped = $saleItems->groupBy('sales_transaction_id');
+
+        foreach ($grouped as $txId => $items) {
+            $transaction = $items->first()->salesTransaction;
+            if (!$transaction) {
+                foreach ($items as $it) {
+                    $map[$it->id] = (float) $it->subtotal;
+                }
+                continue;
+            }
+
+            $txSubtotal = (float) $transaction->subtotal;
+            $discount = (float) $transaction->diskon_nominal;
+            if ((float) $transaction->diskon_persen > 0) {
+                $discount = $txSubtotal * ((float) $transaction->diskon_persen / 100);
+            }
+
+            if ($txSubtotal == 0 || $discount == 0) {
+                foreach ($items as $it) {
+                    $map[$it->id] = (float) $it->subtotal;
+                }
+                continue;
+            }
+
+            $cumSubtotal = 0;
+            $prevCumDiscount = 0;
+            foreach ($items as $it) {
+                $cumSubtotal += (float) $it->subtotal;
+                $cumDiscount = (float) round($discount * ($cumSubtotal / $txSubtotal));
+                $itemDiscount = $cumDiscount - $prevCumDiscount;
+                $prevCumDiscount = $cumDiscount;
+                $map[$it->id] = (float) $it->subtotal - $itemDiscount;
+            }
+        }
+
+        return $map;
+    }
+
+    private function resolveDiscountedSubtotalMapForItems($items): array
+    {
+        $txIds = $items->pluck('sales_transaction_id')->unique()->filter();
+        if ($txIds->isEmpty()) {
+            return [];
+        }
+
+        $allTxItems = SaleItem::query()
+            ->whereIn('sales_transaction_id', $txIds)
+            ->with('salesTransaction:id,subtotal,diskon_persen,diskon_nominal')
+            ->orderBy('sales_transaction_id')
+            ->orderBy('id')
+            ->get();
+
+        return $this->buildDiscountedSubtotalMap($allTxItems);
+    }
+
+    private function formatSaleDetailRow(SaleItem $item, ?array $discountMap = null): array
     {
         $modal     = (float) $item->hpp_total;
-        $hargaJual = $this->resolveDiscountedSubtotal($item);
+        $hargaJual = $discountMap[$item->id] ?? $this->resolveDiscountedSubtotal($item);
         return [
             'id'                   => $item->id,
             'sales_transaction_id' => $item->sales_transaction_id,
@@ -450,10 +511,11 @@ class ReportController extends Controller implements HasMiddleware
     private function exportSalesDetailCsv($rows, array $summary)
     {
         $headings = ['No Invoice', 'Kode', 'Tanggal', 'Nama Produk', 'Merk', 'Grade', 'Satuan', 'IMEI 1', 'IMEI 2', 'Pelanggan', 'Kasir', 'Sales', 'Modal', 'Harga Jual', 'Laba'];
+        $discountMap = $this->resolveDiscountedSubtotalMapForItems($rows);
         $data = [];
         foreach ($rows as $item) {
             $modal     = (float) ($item->hpp_total ?? 0);
-            $hargaJual = $this->resolveDiscountedSubtotal($item);
+            $hargaJual = $discountMap[$item->id] ?? $this->resolveDiscountedSubtotal($item);
             $data[] = [
                 $item->salesTransaction?->no_invoice,
                 $item->product?->barcode,
@@ -514,8 +576,9 @@ class ReportController extends Controller implements HasMiddleware
         }
 
         $displayKeys = ['no_invoice', 'kode', 'tanggal', 'nama_produk', 'merk', 'grade', 'satuan', 'imei1', 'imei2', 'pelanggan', 'kasir', 'sales', 'modal', 'harga_jual', 'laba'];
-        $displayRows = $rows->map(function ($item) use ($displayKeys) {
-            $row = $this->formatSaleDetailRow($item);
+        $discountMap = $this->resolveDiscountedSubtotalMapForItems($rows);
+        $displayRows = $rows->map(function ($item) use ($displayKeys, $discountMap) {
+            $row = $this->formatSaleDetailRow($item, $discountMap);
             return array_map(fn($k) => $row[$k] ?? '-', $displayKeys);
         })->toArray();
 
