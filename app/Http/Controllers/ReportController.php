@@ -248,7 +248,8 @@ class ReportController extends Controller implements HasMiddleware
                     ->orWhere('sales_transactions.pelanggan', 'like', '%' . $validated['search'] . '%')
                     ->orWhereHas('product', fn($pq) => $pq->where('imei1', 'like', '%' . $validated['search'] . '%')
                         ->orWhere('imei2', 'like', '%' . $validated['search'] . '%'));
-            }));
+            }))
+            ->select('sale_items.*');
 
         $summaryItems = (clone $summaryBase)
             ->with('salesTransaction:id,subtotal,diskon_persen,diskon_nominal')
